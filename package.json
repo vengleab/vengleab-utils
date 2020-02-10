@@ -1,19 +1,24 @@
 {
-  "name": "nextjs-boilerplate",
+  "name": "vengleab-utils",
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
   "scripts": {
-    "dev": "next",
+    "prod": "next start",
     "build": "next build",
-    "start": "next start"
+    "start": "next"
   },
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "@zeit/next-sass": "1.0.1",
     "express": "^4.17.1",
-    "next": "^9.0.4",
+    "next": "9.2.1",
+    "now": "^17.0.3",
     "react": "^16.9.0",
-    "react-dom": "^16.9.0"
-  }
+    "react-dom": "^16.9.0",
+    "react-json-view": "^1.19.1",
+    "semantic-ui-react": "0.88.2"
+  },
+  "keywords": []
 }
