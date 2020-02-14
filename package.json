@@ -4,6 +4,8 @@
   "description": "",
   "main": "index.js",
   "scripts": {
+    "lint": "eslint --ignore-path .gitignore .",
+    "lint:fix": "eslint --ignore-path .gitignore . --fix",
     "prod": "next start",
     "build": "next build",
     "start": "next"
@@ -22,6 +24,13 @@
   },
   "keywords": [],
   "devDependencies": {
-    "node-sass": "^4.13.1"
+    "eslint": "^6.1.0",
+    "eslint-config-airbnb": "^18.0.1",
+    "eslint-plugin-import": "^2.20.1",
+    "eslint-plugin-jsx-a11y": "^6.2.3",
+    "eslint-plugin-react": "^7.18.3",
+    "eslint-plugin-react-hooks": "^1.7.0",
+    "node-sass": "^4.13.1",
+    "prettier": "^1.19.1"
   }
 }
