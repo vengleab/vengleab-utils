@@ -9,7 +9,7 @@ const  ReactSelect = (props)=>{
 }
 
 import dynamic from "next/dynamic";
-const ReactJson = dynamic(() => import('react-json-view'))
+const ReactJson = dynamic(() => import('react-json-view'),{ ssr: false })
 //index entrypoint component
 export default class Demo extends React.PureComponent {
     constructor(props) {
