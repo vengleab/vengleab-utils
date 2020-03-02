@@ -3,7 +3,6 @@ import Layout from '../components/Layout';
 import PageContext from '../contexts/page';
 import { PAGE } from '../constants/PageURL';
 import Demo from "../components/demo";
-const ReactJson = dynamic(() => import('react-json-view'))
 
 // use the component in your app!
 
