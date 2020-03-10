@@ -1,18 +1,21 @@
 import React from 'react';
-import { Select } from 'semantic-ui-react';
+import { Select, Grid } from 'semantic-ui-react';
 
 import dynamic from 'next/dynamic';
 
 const ReactSelect = (props) => (
   <Select
     {...props}
+    style={{
+      minWidth: '100%',
+    }}
     onChange={(e, data) => {
       props.onChange(data);
     }}
   />
 );
 const ReactJson = dynamic(() => import('react-json-view'), { ssr: false });
-// index entrypoint component
+
 export default class Demo extends React.PureComponent {
   constructor(props) {
     super(props);
@@ -33,7 +36,6 @@ export default class Demo extends React.PureComponent {
       collapsed,
       indentWidth,
       displayDataTypes,
-      src,
       theme = 'monokai',
     } = this.state;
     const style = {
@@ -41,93 +43,105 @@ export default class Demo extends React.PureComponent {
       borderRadius: '3px',
       margin: '10px 0px',
     };
+    let json;
+    try {
+      json = JSON.parse(this.props.json);
+    } catch (error) {
+      console.log(error);
+    }
 
     return (
       <div className="rjv-demo">
-        <ReactJson
-          name={false}
-          collapsed={collapsed}
-          style={style}
-          theme={theme}
-          src={src}
-          collapseStringsAfterLength={collapseStringsAfter}
-          onEdit={
-            onEdit
-              ? (e) => {
-                this.setState({ src: e.updated_src });
-              }
-              : false
-          }
-          onDelete={
-            onDelete
-              ? (e) => {
-                this.setState({ src: e.updated_src });
-              }
-              : false
-          }
-          onAdd={
-            onAdd
-              ? (e) => {
-                this.setState({ src: e.updated_src });
-              }
-              : false
-          }
-          displayObjectSize={displayObjectSize}
-          enableClipboard={enableClipboard}
-          indentWidth={indentWidth}
-          displayDataTypes={displayDataTypes}
-          iconStyle={iconStyle}
-        />
-
-        <div className="rjv-settings">
-          <div className="rjv-input">
-            <div className="rjv-text">Theme:</div>
-            {this.getThemeInput(theme)}
-          </div>
-          <div className="rjv-input">
-            <div className="rjv-text">Icon Style:</div>
-            {this.getIconStyleInput(iconStyle)}
-          </div>
-          <div className="rjv-input">
-            <div className="rjv-text">Enable Edit:</div>
-            {this.getEditInput(onEdit)}
-          </div>
-          <div className="rjv-input">
-            <div className="rjv-text">Enable Add:</div>
-            {this.getAddInput(onAdd)}
-          </div>
-          <div className="rjv-input">
-            <div className="rjv-text">Enable Delete:</div>
-            {this.getDeleteInput(onDelete)}
-          </div>
-          <div className="rjv-input">
-            <div className="rjv-text">Enable Clipboard:</div>
-            {this.getEnableClipboardInput(enableClipboard)}
-          </div>
-        </div>
-
-        <div className="rjv-settings">
-          <div className="rjv-input">
-            <div className="rjv-text">Display Data Types:</div>
-            {this.getDataTypesInput(displayDataTypes)}
-          </div>
-          <div className="rjv-input">
-            <div className="rjv-text">Display Object Size:</div>
-            {this.getObjectSizeInput(displayObjectSize)}
-          </div>
-          <div className="rjv-input">
-            <div className="rjv-text">Indent Width:</div>
-            {this.getIndentWidthInput(indentWidth)}
-          </div>
-          <div className="rjv-input">
-            <div className="rjv-text">Collapsed:</div>
-            {this.getCollapsedInput(collapsed)}
-          </div>
-          <div className="rjv-input">
-            <div className="rjv-text">Collapse Strings After Length:</div>
-            {this.getCollapsedStringsInput(collapseStringsAfter)}
-          </div>
-        </div>
+        <Grid>
+          <Grid.Row>
+            <Grid.Column width={10}>
+              <ReactJson
+                name={false}
+                collapsed={collapsed}
+                style={style}
+                theme={theme}
+                src={json}
+                collapseStringsAfterLength={collapseStringsAfter}
+                onEdit={
+                  onEdit
+                    ? (e) => {
+                      this.setState({ src: e.updated_src });
+                    }
+                    : false
+                }
+                onDelete={
+                  onDelete
+                    ? (e) => {
+                      this.setState({ src: e.updated_src });
+                    }
+                    : false
+                }
+                onAdd={
+                  onAdd
+                    ? (e) => {
+                      this.setState({ src: e.updated_src });
+                    }
+                    : false
+                }
+                displayObjectSize={displayObjectSize}
+                enableClipboard={enableClipboard}
+                indentWidth={indentWidth}
+                displayDataTypes={displayDataTypes}
+                iconStyle={iconStyle}
+              />
+            </Grid.Column>
+            <Grid.Column width={6} divided>
+              <Grid columns={2} divided>
+                <Grid.Row>
+                  <Grid.Column>
+                    <div className="rjv-text">Theme:</div>
+                    {this.getThemeInput(theme)}
+                  </Grid.Column>
+                  <Grid.Column>
+                    <div className="rjv-text">Icon Style:</div>
+                    {this.getIconStyleInput(iconStyle)}
+                  </Grid.Column>
+                  <Grid.Column>
+                    <div className="rjv-text">Enable Edit:</div>
+                    {this.getEditInput(onEdit)}
+                  </Grid.Column>
+                  <Grid.Column>
+                    <div className="rjv-text">Enable Add:</div>
+                    {this.getAddInput(onAdd)}
+                  </Grid.Column>
+                  <Grid.Column>
+                    <div className="rjv-text">Enable Delete:</div>
+                    {this.getDeleteInput(onDelete)}
+                  </Grid.Column>
+                  <Grid.Column>
+                    <div className="rjv-text">Enable Clipboard:</div>
+                    {this.getEnableClipboardInput(enableClipboard)}
+                  </Grid.Column>
+                  <Grid.Column>
+                    <div className="rjv-text">Display Data Types:</div>
+                    {this.getDataTypesInput(displayDataTypes)}
+                  </Grid.Column>
+                  <Grid.Column>
+                    <div className="rjv-text">Display Object Size:</div>
+                    {this.getObjectSizeInput(displayObjectSize)}
+                  </Grid.Column>
+                  <Grid.Column>
+                    <div className="rjv-text">Indent Width:</div>
+                    {this.getIndentWidthInput(indentWidth)}
+                  </Grid.Column>
+                  <Grid.Column>
+                    <div className="rjv-text">Collapsed:</div>
+                    {this.getCollapsedInput(collapsed)}
+                  </Grid.Column>
+                  <Grid.Column>
+                    <div className="rjv-text">Collapse Strings After Length:</div>
+                    {this.getCollapsedStringsInput(collapseStringsAfter)}
+                  </Grid.Column>
+                </Grid.Row>
+              </Grid>
+            </Grid.Column>
+          </Grid.Row>
+        </Grid>
 
         {this.getNotes(onEdit, onAdd)}
       </div>
@@ -139,29 +153,29 @@ export default class Demo extends React.PureComponent {
     if (onEditEnable) {
       notes.push(
         <span>
-          To edit a value, try <Code>ctrl/cmd + click</Code> enter edit mode
+          To edit a value, try <code>ctrl/cmd + click</code> enter edit mode
         </span>,
       );
       notes.push(
         <span>
-          When editing a value, try <Code>ctrl/cmd + Enter</Code> to submit changes
+          When editing a value, try <code>ctrl/cmd + Enter</code> to submit changes
         </span>,
       );
       notes.push(
         <span>
-          When editing a value, try <Code>Escape</Code> key to cancel
+          When editing a value, try <code>Escape</code> key to cancel
         </span>,
       );
     }
     if (onAddEnable) {
       notes.push(
         <span>
-          When adding a new key, try <Code>Enter</Code> to submit
+          When adding a new key, try <code>Enter</code> to submit
         </span>,
       );
       notes.push(
         <span>
-          When adding a new key, try <Code>Escape</Code> to cancel
+          When adding a new key, try <code>Escape</code> to cancel
         </span>,
       );
     }
