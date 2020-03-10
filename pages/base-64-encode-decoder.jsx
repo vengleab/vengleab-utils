@@ -1,11 +1,5 @@
 import {
-  Segment,
-  Grid,
-  Form,
-  Divider,
-  Icon,
-  Header,
-  TextArea,
+  Segment, Grid, Form, Divider, Icon, Header, TextArea,
 } from 'semantic-ui-react';
 import { useState } from 'react';
 import Layout from '../components/Layout';
