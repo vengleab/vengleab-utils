@@ -39,15 +39,16 @@ export default class Demo extends React.PureComponent {
       theme = 'monokai',
     } = this.state;
     const style = {
+      minHeight: '350px',
       padding: '10px',
       borderRadius: '3px',
       margin: '10px 0px',
     };
     let json;
     try {
-      json = JSON.parse(this.props.json);
+      json = this.props.json ? JSON.parse(this.props.json) : {};
     } catch (error) {
-      console.log(error);
+      // console.log(error);
     }
 
     return (
