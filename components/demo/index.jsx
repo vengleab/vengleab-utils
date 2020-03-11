@@ -53,7 +53,7 @@ export default class Demo extends React.PureComponent {
     return (
       <div className="rjv-demo">
         <Grid>
-          <Grid.Row>
+          <Grid.Row divided>
             <Grid.Column width={10}>
               <ReactJson
                 name={false}
@@ -90,8 +90,8 @@ export default class Demo extends React.PureComponent {
                 iconStyle={iconStyle}
               />
             </Grid.Column>
-            <Grid.Column width={6} divided>
-              <Grid columns={2} divided>
+            <Grid.Column width={6}>
+              <Grid columns={2}>
                 <Grid.Row>
                   <Grid.Column>
                     <div className="rjv-text">Theme:</div>
