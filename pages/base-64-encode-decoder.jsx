@@ -1,24 +1,36 @@
 import {
   Segment, Grid, Form, Divider, Icon, Header, TextArea,
 } from 'semantic-ui-react';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Layout from '../components/Layout';
 import PageContext from '../contexts/page';
 import { PAGE } from '../constants/PageURL';
 import { encodeToBase64, decodeToBase64 } from '../utils/base64';
+import Base64Storage from '../utils/storage/Base64';
 
 export default function Base64Decoder() {
   const [text, setText] = useState('');
   const [encode, setEncode] = useState('');
-  function handleTextChange(e) {
-    const { value } = e.target;
+
+  function textUpdate(value) {
     setText(value);
+    Base64Storage.set('text', value);
     setEncode(encodeToBase64(value));
   }
+
+  useEffect(() => {
+    textUpdate(Base64Storage.get('text'));
+  }, []);
+
+  function handleTextChange(e) {
+    const { value } = e.target;
+    textUpdate(value);
+  }
+
   function handleDecodeBase64(e) {
     const { value } = e.target;
-    setEncode(value);
-    setText(decodeToBase64(value));
+    const txt = decodeToBase64(value);
+    textUpdate(txt);
   }
 
   return (

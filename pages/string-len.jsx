@@ -1,25 +1,33 @@
 import {
   Form,
   TextArea,
-  Container,
   Statistic,
   Segment,
   Header,
   Icon,
   Divider,
 } from 'semantic-ui-react';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Layout from '../components/Layout';
 import PageContext from '../contexts/page';
 import { PAGE } from '../constants/PageURL';
+import StringLengthStorage from '../utils/storage/StringLength';
 
 export default function StringLength() {
   const [text, setText] = useState('');
-  const handleOnChange = (e) => setText(e.target.value);
+
+  useEffect(() => {
+    setText(StringLengthStorage.get('text'));
+  }, []);
+
+  const handleOnChange = (e) => {
+    const { value } = e.target;
+    setText(value);
+    StringLengthStorage.set('text', value);
+  };
   return (
     <PageContext.Provider value={{ activeItem: PAGE.STRING_LEN }}>
       <Layout title="String Length">
-        <Container>
           <Segment>
             <Header as="h3">Please input text you want to count</Header>
             <Form>
@@ -44,7 +52,6 @@ export default function StringLength() {
               </Statistic>
             </Statistic.Group>
           </Segment>
-        </Container>
       </Layout>
     </PageContext.Provider>
   );
