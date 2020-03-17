@@ -1,5 +1,7 @@
 import React from 'react';
-import { Select, Grid } from 'semantic-ui-react';
+import {
+  Select, Grid, Sidebar, Menu, Ref, Icon,
+} from 'semantic-ui-react';
 
 import dynamic from 'next/dynamic';
 
@@ -36,6 +38,7 @@ export default class Demo extends React.PureComponent {
       collapsed,
       indentWidth,
       displayDataTypes,
+      visible,
       theme = 'monokai',
     } = this.state;
     const style = {
@@ -51,98 +54,120 @@ export default class Demo extends React.PureComponent {
       // console.log(error);
     }
 
+    const segmentRef = React.createRef();
     return (
       <div className="rjv-demo">
-        <Grid>
-          <Grid.Row divided>
-            <Grid.Column width={10}>
-              <ReactJson
-                name={false}
-                collapsed={collapsed}
-                style={style}
-                theme={theme}
-                src={json}
-                collapseStringsAfterLength={collapseStringsAfter}
-                onEdit={
-                  onEdit
-                    ? (e) => {
-                      this.setState({ src: e.updated_src });
+        <div onClick={() => this.setState({ visible: !this.state.visible })} ><Icon size="big" name="options"/></div>
+        <Sidebar.Pushable style={{ overflow: 'initial' }} raised>
+          <Sidebar
+            as={Menu}
+            animation="overlay"
+            icon="labeled"
+            onHide={() => this.setState({ visible: false })}
+            vertical
+            target={segmentRef}
+            visible={visible}
+            width="very wide"
+            style={{ padding: '10px', overflow: 'hidden', paddingTop: '30px' }}
+          >
+            <Grid>
+              <Grid.Row>
+                <Grid.Column width={16}>
+                  <Grid columns={2}>
+                    <Grid.Row>
+                      <Grid.Column>
+                        <div className="rjv-text">Theme:</div>
+                        {this.getThemeInput(theme)}
+                      </Grid.Column>
+                      <Grid.Column>
+                        <div className="rjv-text">Icon Style:</div>
+                        {this.getIconStyleInput(iconStyle)}
+                      </Grid.Column>
+                      <Grid.Column>
+                        <div className="rjv-text">Enable Edit:</div>
+                        {this.getEditInput(onEdit)}
+                      </Grid.Column>
+                      <Grid.Column>
+                        <div className="rjv-text">Enable Add:</div>
+                        {this.getAddInput(onAdd)}
+                      </Grid.Column>
+                      <Grid.Column>
+                        <div className="rjv-text">Enable Delete:</div>
+                        {this.getDeleteInput(onDelete)}
+                      </Grid.Column>
+                      <Grid.Column>
+                        <div className="rjv-text">Enable Clipboard:</div>
+                        {this.getEnableClipboardInput(enableClipboard)}
+                      </Grid.Column>
+                      <Grid.Column>
+                        <div className="rjv-text">Display Data Types:</div>
+                        {this.getDataTypesInput(displayDataTypes)}
+                      </Grid.Column>
+                      <Grid.Column>
+                        <div className="rjv-text">Display Object Size:</div>
+                        {this.getObjectSizeInput(displayObjectSize)}
+                      </Grid.Column>
+                      <Grid.Column>
+                        <div className="rjv-text">Indent Width:</div>
+                        {this.getIndentWidthInput(indentWidth)}
+                      </Grid.Column>
+                      <Grid.Column>
+                        <div className="rjv-text">Collapsed:</div>
+                        {this.getCollapsedInput(collapsed)}
+                      </Grid.Column>
+                      <Grid.Column>
+                        <div className="rjv-text">Collapse Strings After Length:</div>
+                        {this.getCollapsedStringsInput(collapseStringsAfter)}
+                      </Grid.Column>
+                    </Grid.Row>
+                  </Grid>
+                </Grid.Column>
+              </Grid.Row>
+            </Grid>
+          </Sidebar>
+          <Ref innerRef={segmentRef}>
+            <Grid>
+              <Grid.Row divided>
+                <Grid.Column>
+                  <ReactJson
+                    name={false}
+                    collapsed={collapsed}
+                    style={style}
+                    theme={theme}
+                    src={json}
+                    collapseStringsAfterLength={collapseStringsAfter}
+                    onEdit={
+                      onEdit
+                        ? (e) => {
+                          this.setState({ src: e.updated_src });
+                        }
+                        : false
                     }
-                    : false
-                }
-                onDelete={
-                  onDelete
-                    ? (e) => {
-                      this.setState({ src: e.updated_src });
+                    onDelete={
+                      onDelete
+                        ? (e) => {
+                          this.setState({ src: e.updated_src });
+                        }
+                        : false
                     }
-                    : false
-                }
-                onAdd={
-                  onAdd
-                    ? (e) => {
-                      this.setState({ src: e.updated_src });
+                    onAdd={
+                      onAdd
+                        ? (e) => {
+                          this.setState({ src: e.updated_src });
+                        }
+                        : false
                     }
-                    : false
-                }
-                displayObjectSize={displayObjectSize}
-                enableClipboard={enableClipboard}
-                indentWidth={indentWidth}
-                displayDataTypes={displayDataTypes}
-                iconStyle={iconStyle}
-              />
-            </Grid.Column>
-            <Grid.Column width={6}>
-              <Grid columns={2}>
-                <Grid.Row>
-                  <Grid.Column>
-                    <div className="rjv-text">Theme:</div>
-                    {this.getThemeInput(theme)}
-                  </Grid.Column>
-                  <Grid.Column>
-                    <div className="rjv-text">Icon Style:</div>
-                    {this.getIconStyleInput(iconStyle)}
-                  </Grid.Column>
-                  <Grid.Column>
-                    <div className="rjv-text">Enable Edit:</div>
-                    {this.getEditInput(onEdit)}
-                  </Grid.Column>
-                  <Grid.Column>
-                    <div className="rjv-text">Enable Add:</div>
-                    {this.getAddInput(onAdd)}
-                  </Grid.Column>
-                  <Grid.Column>
-                    <div className="rjv-text">Enable Delete:</div>
-                    {this.getDeleteInput(onDelete)}
-                  </Grid.Column>
-                  <Grid.Column>
-                    <div className="rjv-text">Enable Clipboard:</div>
-                    {this.getEnableClipboardInput(enableClipboard)}
-                  </Grid.Column>
-                  <Grid.Column>
-                    <div className="rjv-text">Display Data Types:</div>
-                    {this.getDataTypesInput(displayDataTypes)}
-                  </Grid.Column>
-                  <Grid.Column>
-                    <div className="rjv-text">Display Object Size:</div>
-                    {this.getObjectSizeInput(displayObjectSize)}
-                  </Grid.Column>
-                  <Grid.Column>
-                    <div className="rjv-text">Indent Width:</div>
-                    {this.getIndentWidthInput(indentWidth)}
-                  </Grid.Column>
-                  <Grid.Column>
-                    <div className="rjv-text">Collapsed:</div>
-                    {this.getCollapsedInput(collapsed)}
-                  </Grid.Column>
-                  <Grid.Column>
-                    <div className="rjv-text">Collapse Strings After Length:</div>
-                    {this.getCollapsedStringsInput(collapseStringsAfter)}
-                  </Grid.Column>
-                </Grid.Row>
-              </Grid>
-            </Grid.Column>
-          </Grid.Row>
-        </Grid>
+                    displayObjectSize={displayObjectSize}
+                    enableClipboard={enableClipboard}
+                    indentWidth={indentWidth}
+                    displayDataTypes={displayDataTypes}
+                    iconStyle={iconStyle}
+                  />
+                </Grid.Column>
+              </Grid.Row>
+            </Grid>
+          </Ref>
+        </Sidebar.Pushable>
 
         {this.getNotes(onEdit, onAdd)}
       </div>
