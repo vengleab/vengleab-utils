@@ -18,12 +18,10 @@ const ReactSelect = (props) => (
 );
 const ReactJson = dynamic(() => import('react-json-view'), { ssr: false });
 
-export default class Demo extends React.PureComponent {
+export default class JSONView extends React.PureComponent {
   constructor(props) {
     super(props);
-    this.state = {
-      src: this.getExampleJson(),
-    };
+    this.state = {};
   }
 
   render() {
@@ -47,18 +45,13 @@ export default class Demo extends React.PureComponent {
       borderRadius: '3px',
       margin: '10px 0px',
     };
-    let json;
-    try {
-      json = this.props.json ? JSON.parse(this.props.json) : {};
-    } catch (error) {
-      // console.log(error);
-    }
+    const {json} = this.props
 
     const segmentRef = React.createRef();
     return (
       <div className="rjv-demo">
         <div onClick={() => this.setState({ visible: !this.state.visible })} ><Icon size="big" name="options"/></div>
-        <Sidebar.Pushable style={{ overflow: 'initial' }} raised>
+        <Sidebar.Pushable style={{ overflow: 'initial' }} raised="true">
           <Sidebar
             as={Menu}
             animation="overlay"
@@ -440,20 +433,4 @@ export default class Demo extends React.PureComponent {
     state[field] = value.value;
     this.setState(state);
   };
-
-  // just a function to get an example JSON object
-  getExampleJson = () => ({
-    string: 'this is a test string',
-    integer: 42,
-    array: [1, 2, 3, 'test', NaN],
-    float: 3.14159,
-    undefined,
-    object: {
-      'first-child': true,
-      'second-child': false,
-      'last-child': null,
-    },
-    string_number: '1234',
-    date: new Date(),
-  });
 }

@@ -5,7 +5,7 @@ import { useState, useEffect } from 'react';
 import Layout from '../components/Layout';
 import PageContext from '../contexts/page';
 import { PAGE } from '../constants/PageURL';
-import Demo from '../components/demo';
+import JsonViewer from '../components/JsonViewer';
 import JSONBeautifierStorage from '../utils/storage/JSON';
 
 export default function JSONBeautifier() {
@@ -20,6 +20,14 @@ export default function JSONBeautifier() {
     setJSONText(value);
     JSONBeautifierStorage.set('JSONText', value);
   }
+
+  let json;
+  try {
+    json = JSON.parse(JSONText);
+  } catch (error) {
+    json = {};
+  }
+  
   return (
     <PageContext.Provider value={{ activeItem: PAGE.JSON_BEAUTIFIER }}>
       <Layout title="JSON Beautifier">
@@ -34,7 +42,7 @@ export default function JSONBeautifier() {
             />
           </Form>
           <Divider />
-          <Demo json={JSONText} />
+          <JsonViewer json={json} />
         </Segment>
       </Layout>
     </PageContext.Provider>
