@@ -21,6 +21,17 @@
   left: 15%;
   background: aliceblue;
   flex: 1;
-  overflow: scroll
-  ;
+  overflow: scroll;
+}
+@media only screen and (max-width: 1280px) {
+  html {
+    font-size: 50%; /* font-size 1em = 10px on default browser settings */
+  }
+}
+
+
+@media only screen and (max-width: 1376px) {
+  html {
+    font-size: 75%; /* font-size 1em = 10px on default browser settings */
+  }
 }

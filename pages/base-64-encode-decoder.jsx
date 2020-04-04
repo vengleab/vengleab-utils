@@ -50,7 +50,7 @@ export default function Base64Decoder() {
               </Form>
             </Grid.Column>
 
-            <Grid.Column verticalAlign="middle" stackable>
+            <Grid.Column verticalAlign="middle" stackable="true">
               <Header>base64 text</Header>
               <Form>
                 <TextArea
