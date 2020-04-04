@@ -3,5 +3,9 @@ export function encodeToBase64(str) {
 }
 
 export function decodeToBase64(base64Str) {
-  return atob(base64Str);
+  try {
+    return atob(base64Str);
+  } catch (error) {
+    return 'The string to be decoded is not correctly encoded';
+  }
 }
