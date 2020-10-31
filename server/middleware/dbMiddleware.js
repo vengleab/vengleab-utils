@@ -1,7 +1,7 @@
 import nextConnect from 'next-connect';
 
 const mongoose = require('mongoose');
-const env = require('../constants/env');
+const env = require('../../constants/env');
 
 const connection = mongoose.connect(env.MONG_URL, {
   user: env.MONG_USER,
