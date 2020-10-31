@@ -45,7 +45,7 @@ export default class JSONView extends React.PureComponent {
       borderRadius: '3px',
       margin: '10px 0px',
     };
-    const {json} = this.props
+    const { json } = this.props;
 
     const segmentRef = React.createRef();
     return (
