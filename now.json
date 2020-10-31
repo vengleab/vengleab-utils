@@ -2,6 +2,7 @@
     "env": {
       "MONG_USER": "@mong_user",
       "MONG_DB": "@mong_db",
-      "MONG_URL": "@mong_url"
+      "MONG_URL": "@mong_url",
+      "JWT_TOKEN": "@jwt_token"
     }
   }
