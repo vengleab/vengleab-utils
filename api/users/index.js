@@ -1,5 +1,5 @@
 import nextConnect from 'next-connect';
-import middleware from '../../server/dbMiddleware';
+import middleware from '../../server/middleware/dbMiddleware';
 import UserModel from '../../server/models/user';
 import Success from '../../server/responses/Success';
 import BadRequest from '../../server/responses/BadRequest';
@@ -8,7 +8,7 @@ const handler = nextConnect();
 
 handler.use(middleware);
 
-async function me(req, res) {
+async function users(req, res) {
   try {
     const user = await UserModel.find({});
 
@@ -24,7 +24,7 @@ async function me(req, res) {
 async function creatUser(req, res) {
   try {
     const { username, password, email } = req.body;
-    if (!username || !password || !email) {
+    if (!password || !email) {
       return new BadRequest(res).send("You haven't input enough info");
     }
 
@@ -35,7 +35,7 @@ async function creatUser(req, res) {
   }
 }
 
-handler.get(me);
+handler.get(users);
 handler.post(creatUser);
 
 export default handler;
