@@ -3,6 +3,7 @@ import Cors from 'cors';
 
 const cors = Cors({
   origin: '*',
+  methods: ['GET', 'HEAD', 'POST', 'PATCH', 'PUT'],
   optionsSuccessStatus: 200, // some legacy browsers (IE11, various SmartTVs) choke on 204
 });
 
@@ -30,9 +31,8 @@ function runMiddleware(req, res, fn) {
 }
 
 async function database(req, res, next) {
-  runMiddleware(req, res, cors);
   req.connection = connection;
-  await cors(req, res);
+  await runMiddleware(req, res, cors);
   return next();
 }
 
