@@ -16,15 +16,15 @@ handler.use(middleware).post(async (req, res) => {
     if (email && password) {
       const user = await UserModel.findOne({ email });
       if (user && bcrypt.compareSync(password, user.password)) {
-        new Success(res).send({
+        return new Success(res).send({
           token: JWTUtils.sign(user._id),
         });
-      } else {
-        new UnauthorizedAccess(res).send();
       }
+      return new UnauthorizedAccess(res).send();
     }
+    return new UnauthorizedAccess(res).send();
   } catch (error) {
-    new BadRequest(res).send(error);
+    return new BadRequest(res).send(error);
   }
 });
 
