@@ -6,7 +6,7 @@
   "scripts": {
     "lint": "eslint --ignore-path .gitignore .",
     "lint:fix": "eslint --ignore-path .gitignore . --fix",
-    "prod": "next start",
+    "prod": "now --prod",
     "build": "next build",
     "start": "now dev"
   },
