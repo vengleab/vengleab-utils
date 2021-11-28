@@ -8,7 +8,8 @@ const menuItems = {
   str_len: { name: 'String Length', page: PAGE.STRING_LEN },
   base_64_encode_decoder: { name: 'Base 64 encode and decoder', page: PAGE.BASE_64_ENCODE_DECODER },
   json_beautifier: { name: 'JSON Beautifier', page: PAGE.JSON_BEAUTIFIER },
-  jwt_token_viewer: { name: 'JWT Token Viewer', page: PAGE.JWT_TOKEN_VIEWER }
+  jwt_token_viewer: { name: 'JWT Token Viewer', page: PAGE.JWT_TOKEN_VIEWER },
+  emi: { name: 'Loan Calculator', page: PAGE.LOAN_CALCULATOR },
 };
 
 export default function MySideBar() {
