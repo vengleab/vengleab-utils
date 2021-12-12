@@ -5,3 +5,12 @@
     margin: 20px !important;
   }
 }
+
+.date-picker, .date-picker > .field {
+  cursor: pointer;
+  width: 100% !important;
+  
+  .field {
+    margin-bottom: 0;
+  }
+}

@@ -1,15 +1,24 @@
 import {
-  Form, Segment, Header, Input, Dropdown, Statistic, Icon, Grid,
+  Form,
+  Segment,
+  Header,
+  Input,
+  Dropdown,
+  Statistic,
+  Icon,
+  Grid,
+  Table,
 } from 'semantic-ui-react';
 import { useState } from 'react';
-import MaskedInput from 'react-text-mask';
-import createNumberMask from 'text-mask-addons/dist/createNumberMask';
 import FormatNumber from 'format-number';
-import _noop from 'lodash/noop';
+import SemanticDatepicker from 'react-semantic-ui-datepickers';
+import moment from 'moment';
 import Layout from '../../components/Layout';
 import PageContext from '../../contexts/page';
 import { PAGE } from '../../constants/PageURL';
 import './index.scss';
+import 'react-semantic-ui-datepickers/dist/react-semantic-ui-datepickers.css';
+import InputMast from '../../components/InputMask';
 
 const TERM = {
   MONTHLY: 'month',
@@ -17,32 +26,50 @@ const TERM = {
 };
 const DollarFormatter = FormatNumber({ prefix: '$ ', round: 2 });
 const options = Object.entries(TERM).map(([key, value]) => ({ key, value, text: key }));
-const EMICalculator = (principle, monthlyRate, totalMonths) => (principle * monthlyRate * (1 + monthlyRate) ** totalMonths)
-  / ((1 + monthlyRate) ** totalMonths - 1);
 
-const getTotalMonths = (period, term) => (term === TERM.MONTHLY ? period : period * 12);
+function EMICalculator({
+  principle, monthlyRate, totalMonths,
+}) {
+  // eslint-disable-next-line max-len
+  return (principle * monthlyRate * (1 + monthlyRate) ** totalMonths) / ((1 + monthlyRate) ** totalMonths - 1);
+}
 
-const getMonthRate = (rate, term) => (term === TERM.MONTHLY ? rate : rate / 12);
+function getTotalMonths(period, term) {
+  return (term === TERM.MONTHLY ? period : period * 12);
+}
 
-const CustomInput = ({ mask = {}, onChange = _noop, ...props }) => {
-  const { suffix = '', prefix = '' } = mask;
+function getMonthRate(rate, term) {
+  return (term === TERM.MONTHLY ? rate : rate / 12);
+}
 
-  function handleInputChange(_, e) {
-    const { value = '' } = e;
-
-    onChange(value.substring(prefix.length, value.length - suffix.length).replaceAll(',', ''));
+function toOrdinalNumber(number) {
+  switch (number) {
+    case 1:
+      return '1st';
+    case 2:
+      return '2nd';
+    default:
+      return `${number}th`;
   }
+}
 
-  return (
-    <Input
-      onChange={handleInputChange}
-      input={(e, inputProps) => (
-        <MaskedInput mask={createNumberMask(mask)} guide={true} {...inputProps} />
-      )}
-      {...props}
-    />
-  );
-};
+function generatePaymentTable({
+  principle, emi, monthlyRate, totalMonths,
+}) {
+  let remain = principle;
+  const table = [];
+  // eslint-disable-next-line no-plusplus
+  for (let month = 0; month < totalMonths; month++) {
+    const interest = remain * monthlyRate;
+    const row = {
+      principle: remain,
+      remain: (remain -= emi - interest),
+      interest,
+    };
+    table.push(row);
+  }
+  return table;
+}
 
 export default function LoadCalculator() {
   const [principle, setPrinciple] = useState();
@@ -51,7 +78,9 @@ export default function LoadCalculator() {
   const [term, setTerm] = useState(TERM.YEARLY);
   const totalMonths = getTotalMonths(period, term);
   const monthlyRate = getMonthRate(rate, term) / 100;
-  const emi = EMICalculator(principle, monthlyRate, totalMonths);
+  const emi = EMICalculator({ principle, monthlyRate, totalMonths });
+  const [startPayingDate, setStartPayingDate] = useState(new Date());
+  const onChange = (event, data) => setStartPayingDate(data.value);
 
   return (
     <PageContext.Provider value={{ activeItem: PAGE.LOAN_CALCULATOR }}>
@@ -62,10 +91,10 @@ export default function LoadCalculator() {
           </Header>
           <Grid>
             <Grid.Row divided>
-              <Grid.Column width={7}>
+              <Grid.Column computer={7} mobile={16}>
                 <Form>
                   <Form.Field>
-                    <CustomInput
+                    <InputMast
                       label={{
                         color: 'teal',
                         content: 'Principle ( Loan amount )',
@@ -76,7 +105,7 @@ export default function LoadCalculator() {
                     />
                   </Form.Field>
                   <Form.Field>
-                    <CustomInput
+                    <InputMast
                       action={
                         <Dropdown
                           button
@@ -101,7 +130,7 @@ export default function LoadCalculator() {
                     />
                   </Form.Field>
                   <Form.Field>
-                    <CustomInput
+                    <InputMast
                       label={{
                         color: 'teal',
                         labelPosition: 'left',
@@ -118,9 +147,24 @@ export default function LoadCalculator() {
                       }}
                     />
                   </Form.Field>
+                  <Form.Field>
+                    <Input
+                      label={{
+                        color: 'teal',
+                        labelPosition: 'left',
+                        content: 'Start Date ( Optional )',
+                        width: '50px',
+                      }}
+                      input={(props) => (
+                        <div className="date-picker">
+                          <SemanticDatepicker {...props} inverted onChange={onChange} />
+                        </div>
+                      )}
+                    ></Input>
+                  </Form.Field>
                 </Form>
               </Grid.Column>
-              <Grid.Column width={9}>
+              <Grid.Column computer={9} mobile={16}>
                 <Statistic.Group size="mini" className="result">
                   <Statistic>
                     <Statistic.Label>
@@ -128,7 +172,7 @@ export default function LoadCalculator() {
                       Monthly payment <br />
                       &nbsp;
                     </Statistic.Label>
-                    <Statistic.Value>{!isNaN(emi) ? DollarFormatter(emi) : '--'}</Statistic.Value>
+                    <Statistic.Value>{!Number.isNaN(emi) ? DollarFormatter(emi) : '--'}</Statistic.Value>
                   </Statistic>
                   <Statistic>
                     <Statistic.Label>
@@ -137,7 +181,7 @@ export default function LoadCalculator() {
                       <br />
                       &nbsp;
                     </Statistic.Label>
-                    <Statistic.Value>{!isNaN(emi) ? totalMonths : '--'}</Statistic.Value>
+                    <Statistic.Value>{!Number.isNaN(emi) ? totalMonths : '--'}</Statistic.Value>
                   </Statistic>
                   <Statistic>
                     <Statistic.Label>
@@ -146,11 +190,52 @@ export default function LoadCalculator() {
                       (Principal + Interest)
                     </Statistic.Label>
                     <Statistic.Value>
-                      {!isNaN(emi) ? DollarFormatter(totalMonths * emi) : '--'}
+                      {!Number.isNaN(emi) ? DollarFormatter(totalMonths * emi) : '--'}
                     </Statistic.Value>
                   </Statistic>
                 </Statistic.Group>
               </Grid.Column>
+            </Grid.Row>
+            <Grid.Row>
+              <Table inverted stackable size="large">
+                <Table.Header>
+                  <Table.Row textAlign="center">
+                    <Table.HeaderCell># No (payment)</Table.HeaderCell>
+                    <Table.HeaderCell>Date</Table.HeaderCell>
+                    <Table.HeaderCell>Remaining</Table.HeaderCell>
+                    <Table.HeaderCell>Monthly payment</Table.HeaderCell>
+                    <Table.HeaderCell>Principle</Table.HeaderCell>
+                    <Table.HeaderCell>Interest</Table.HeaderCell>
+                    <Table.HeaderCell>Remain Balance</Table.HeaderCell>
+                  </Table.Row>
+                </Table.Header>
+                <Table.Body>
+                  {!Number.isNaN(emi)
+                    && generatePaymentTable({
+                      principle,
+                      monthlyRate,
+                      emi,
+                      totalMonths,
+                    }).map((row, index) => (
+                      <Table.Row textAlign="center" key={index}>
+                        <Table.Cell>
+                          {toOrdinalNumber(index + 1)} (
+                          {toOrdinalNumber(Math.ceil((index + 1) / 12))} year)
+                        </Table.Cell>
+                        <Table.Cell>
+                          {moment(startPayingDate)
+                            .add(index, 'months')
+                            .format('DD MMM YYYY')}
+                        </Table.Cell>
+                        <Table.Cell>{DollarFormatter(row.principle)}</Table.Cell>
+                        <Table.Cell>{DollarFormatter(emi)}</Table.Cell>
+                        <Table.Cell>{DollarFormatter(emi - row.interest)}</Table.Cell>
+                        <Table.Cell>{DollarFormatter(row.interest)}</Table.Cell>
+                        <Table.Cell>{DollarFormatter(row.remain)}</Table.Cell>
+                      </Table.Row>
+                    ))}
+                </Table.Body>
+              </Table>
             </Grid.Row>
           </Grid>
         </Segment>

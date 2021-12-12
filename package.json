@@ -9,7 +9,7 @@
     "prod": "now --prod",
     "build": "next build",
     "local": "now dev --listen 3001",
-    "start": "next"
+    "start": "next -p 3001"
   },
   "author": "",
   "license": "ISC",
@@ -22,6 +22,7 @@
     "format-number": "^3.0.0",
     "jsonwebtoken": "^8.5.1",
     "lodash": "^4.17.21",
+    "moment": "^2.29.1",
     "mongoose": "^5.9.5",
     "next": "^10.0.0",
     "next-compose-plugins": "^2.2.1",
@@ -30,6 +31,7 @@
     "react": "^16.9.0",
     "react-dom": "^16.9.0",
     "react-json-view": "^1.19.1",
+    "react-semantic-ui-datepickers": "^2.15.0",
     "react-text-mask": "^5.4.3",
     "sass": "^1.43.5",
     "semantic-ui-css": "^2.4.1",
