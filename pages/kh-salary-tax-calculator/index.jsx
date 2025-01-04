@@ -1,14 +1,19 @@
 import {
-  Form, Segment, Statistic, Icon, Grid, Divider,
-} from 'semantic-ui-react';
-import { useState } from 'react';
-import FormatNumber from 'format-number';
-import InputMast from '../../components/InputMask';
-import Layout from '../../components/Layout';
-import PageContext from '../../contexts/page';
-import { PAGE } from '../../constants/PageURL';
+  Form,
+  Segment,
+  Statistic,
+  Icon,
+  Grid,
+  Divider
+} from "semantic-ui-react";
+import { useState } from "react";
+import FormatNumber from "format-number";
+import InputMast from "../../components/InputMask";
+import Layout from "../../components/Layout";
+import PageContext from "../../contexts/page";
+import { PAGE } from "../../constants/PageURL";
 
-const DollarFormatter = FormatNumber({ prefix: '$ ', round: 2 });
+const DollarFormatter = FormatNumber({ prefix: "$ ", round: 2 });
 
 export default function JSONBeautifier() {
   const [net, setNetSalary] = useState();
@@ -24,7 +29,7 @@ export default function JSONBeautifier() {
       { limit: 2000000 / exchangeRate, rate: 0.05 },
       { limit: 8500000 / exchangeRate, rate: 0.1 },
       { limit: 12500000 / exchangeRate, rate: 0.15 },
-      { limit: Infinity, rate: 0.2 },
+      { limit: Infinity, rate: 0.2 }
     ];
 
     let cumulativeTax = 0;
@@ -36,7 +41,10 @@ export default function JSONBeautifier() {
       const updatedCumulativeTax = currentRangeTaxable + cumulativeTax;
       const currentNetMax = limit - updatedCumulativeTax;
 
-      if (netSalary > lastNetMax && netSalary < currentNetMax) {
+      if (
+        netSalary > lastNetMax &&
+        (netSalary <= currentNetMax || limit === Infinity)
+      ) {
         const currentTaxable = (netSalary - lastNetMax) / (1 - rate);
         return currentTaxable + prevLimit;
       }
@@ -61,10 +69,10 @@ export default function JSONBeautifier() {
                   <Form.Field>
                     <InputMast
                       label={{
-                        color: 'teal',
-                        content: 'Expected Net Salary',
+                        color: "teal",
+                        content: "Expected Net Salary"
                       }}
-                      mask={{ prefix: '$ ', allowDecimal: true }}
+                      mask={{ prefix: "$ ", allowDecimal: true }}
                       onChange={setNetSalary}
                       placeholder="Amount you expect from your employer"
                     />
@@ -73,10 +81,10 @@ export default function JSONBeautifier() {
                   <Form.Field>
                     <InputMast
                       label={{
-                        color: 'teal',
-                        content: 'Exchange Rage',
+                        color: "teal",
+                        content: "Exchange Rage"
                       }}
-                      mask={{ prefix: 'KHR ' }}
+                      mask={{ prefix: "KHR " }}
                       value={exchangeRate}
                       onChange={setExchangeRate}
                       placeholder="Exchange Rate"
@@ -93,7 +101,9 @@ export default function JSONBeautifier() {
                       &nbsp;
                     </Statistic.Label>
                     <Statistic.Value>
-                      {!Number.isNaN(grossSalary) ? DollarFormatter(grossSalary) : '--'}
+                      {!Number.isNaN(grossSalary)
+                        ? DollarFormatter(grossSalary)
+                        : "--"}
                     </Statistic.Value>
                   </Statistic>
                   <Statistic>
@@ -104,7 +114,7 @@ export default function JSONBeautifier() {
                       &nbsp;
                     </Statistic.Label>
                     <Statistic.Value>
-                      {!Number.isNaN(net) ? DollarFormatter(net) : '--'}
+                      {!Number.isNaN(net) ? DollarFormatter(net) : "--"}
                     </Statistic.Value>
                   </Statistic>
                 </Statistic.Group>
