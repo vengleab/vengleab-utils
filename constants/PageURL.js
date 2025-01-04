@@ -6,4 +6,5 @@ export const PAGE = {
   JSON_BEAUTIFIER: 'json-beautifier',
   JWT_TOKEN_VIEWER: 'jwt-token-viewer',
   LOAN_CALCULATOR: 'loan-calculator',
+  KH_SALARY_TAX_CALCULATOR: 'kh-salary-tax-calculator',
 };

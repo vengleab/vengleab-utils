@@ -7,7 +7,8 @@ const InputMast = ({ mask = {}, onChange = _noop, ...props }) => {
   const { suffix = '', prefix = '' } = mask;
   function handleInputChange(_, e) {
     const { value = '' } = e;
-    onChange(value.substring(prefix.length, value.length - suffix.length).replaceAll(',', ''));
+    const floatValue = parseFloat(value.substring(prefix.length, value.length - suffix.length).replaceAll(',', ''));
+    onChange(floatValue);
   }
 
   return (

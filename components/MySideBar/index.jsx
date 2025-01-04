@@ -9,7 +9,8 @@ const menuItems = {
   base_64_encode_decoder: { name: 'Base 64 encode and decoder', page: PAGE.BASE_64_ENCODE_DECODER },
   json_beautifier: { name: 'JSON Beautifier', page: PAGE.JSON_BEAUTIFIER },
   jwt_token_viewer: { name: 'JWT Token Viewer', page: PAGE.JWT_TOKEN_VIEWER },
-  emi: { name: 'Loan Calculator', page: PAGE.LOAN_CALCULATOR },
+  emi: { name: 'Loan Calculator (EMI)', page: PAGE.LOAN_CALCULATOR },
+  kh_tax: { name: 'Cambodia Salary Calculator', page: PAGE.KH_SALARY_TAX_CALCULATOR },
 };
 
 export default function MySideBar() {

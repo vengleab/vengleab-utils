@@ -9,14 +9,20 @@ import Demo from '../components/JsonViewer';
 import JWTStorage from '../utils/storage/JWT';
 import { decodeToBase64 } from '../utils/base64';
 
-const uncatchFunction = (fn) => (...args) =>{
-  try { return fn(...args); } catch (error) {}
-}
+const uncatchFunction = (fn) => (...args) => {
+  try {
+    return fn(...args);
+  } catch (error) {
+    return undefined;
+  }
+};
 
 export default function JWT() {
   const [JWTText, setJWTText] = useState('');
-  const [header, payload] = JWTText.split('.').map(decodeToBase64).map(uncatchFunction(JSON.parse));
-  const json = {header, payload};
+  const [header, payload] = JWTText.split('.')
+    .map(decodeToBase64)
+    .map(uncatchFunction(JSON.parse));
+  const json = { header, payload };
 
   useEffect(() => {
     setJWTText(JWTStorage.get('JWTText'));
@@ -28,7 +34,7 @@ export default function JWT() {
     JWTStorage.set('JWTText', value);
   }
   return (
-    <PageContext.Provider value={{ activeItem: PAGE.JWT }}>
+    <PageContext.Provider value={{ activeItem: PAGE.JWT_TOKEN_VIEWER }}>
       <Layout title="JWT">
         <Segment>
           <Form>
