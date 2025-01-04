@@ -1,15 +1,16 @@
-.result{
+.result {
   margin: 20px !important;
-
-  &  > .ui.statistic {
-    margin: 20px !important;
-  }
 }
 
-.date-picker, .date-picker > .field {
+.result > .ui.statistic {
+  margin: 20px !important;
+}
+
+.date-picker,
+.date-picker > .field {
   cursor: pointer;
   width: 100% !important;
-  
+
   .field {
     margin-bottom: 0;
   }

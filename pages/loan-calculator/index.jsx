@@ -16,7 +16,7 @@ import moment from 'moment';
 import Layout from '../../components/Layout';
 import PageContext from '../../contexts/page';
 import { PAGE } from '../../constants/PageURL';
-import './index.scss';
+import './index.module.css';
 import 'react-semantic-ui-datepickers/dist/react-semantic-ui-datepickers.css';
 import InputMast from '../../components/InputMask';
 
