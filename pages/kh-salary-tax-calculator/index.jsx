@@ -20,7 +20,7 @@ export default function JSONBeautifier() {
   const [exchangeRate, setExchangeRate] = useState(4000);
 
   function calculateGrossSalary(netSalary) {
-    if (Number.isNaN(netSalary) || netSalary <= 0) {
+    if (Number.isNaN(netSalary) || netSalary <= 0 || exchangeRate <= 0) {
       return 0;
     }
 
@@ -85,7 +85,7 @@ export default function JSONBeautifier() {
                         content: "Exchange Rage"
                       }}
                       mask={{ prefix: "KHR " }}
-                      value={exchangeRate}
+                      value={exchangeRate || 0}
                       onChange={setExchangeRate}
                       placeholder="Exchange Rate"
                     />
