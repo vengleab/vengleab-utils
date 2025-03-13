@@ -117,6 +117,19 @@ export default function JSONBeautifier() {
                       {!Number.isNaN(net) ? DollarFormatter(net) : "--"}
                     </Statistic.Value>
                   </Statistic>
+                  <Statistic>
+                    <Statistic.Label>
+                      <Icon name="chart line" />
+                      Total Tax
+                      <br />
+                      &nbsp;
+                    </Statistic.Label>
+                    <Statistic.Value>
+                      {!Number.isNaN(net) && !Number.isNaN(grossSalary)
+                        ? DollarFormatter(grossSalary - net)
+                        : "--"}
+                    </Statistic.Value>
+                  </Statistic>
                 </Statistic.Group>
               </Grid.Column>
             </Grid.Row>
