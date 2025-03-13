@@ -4,7 +4,7 @@ import {
   Statistic,
   Icon,
   Grid,
-  Divider,
+  Divider
 } from "semantic-ui-react";
 import { useEffect, useState } from "react";
 import FormatNumber from "format-number";
@@ -24,7 +24,7 @@ export default function JSONBeautifier() {
     { limit: 2000000 / exchangeRate, rate: 0.05 },
     { limit: 8500000 / exchangeRate, rate: 0.1 },
     { limit: 12500000 / exchangeRate, rate: 0.15 },
-    { limit: Infinity, rate: 0.2 },
+    { limit: Infinity, rate: 0.2 }
   ];
 
   function calculateNetSalary(grossSalary) {
@@ -34,19 +34,20 @@ export default function JSONBeautifier() {
       const { limit, rate } = brackets[i];
 
       if (grossSalary > prevLimit) {
-            if (grossSalary > limit) {
+        if (grossSalary > limit) {
           const tax = (limit - prevLimit) * rate;
           netSalary -= tax;
         } else {
           const tax = (grossSalary - prevLimit) * rate;
           netSalary -= tax;
+          return netSalary; // Return here if grossSalary is within the current bracket
         }
       } else {
-        return netSalary;
+        return netSalary; // Return here if grossSalary is within previous brackets
       }
       prevLimit = limit;
     }
-    return grossSalary;
+    return netSalary; // Should return the correct netSalary after all tax deductions
   }
 
   useEffect(() => {
@@ -54,7 +55,9 @@ export default function JSONBeautifier() {
   }, [grossSalary, exchangeRate]);
 
   return (
-    <PageContext.Provider value={{ activeItem: PAGE.KH_SALARY_TAX_CALCULATOR_GROSS }}>
+    <PageContext.Provider
+      value={{ activeItem: PAGE.KH_SALARY_TAX_CALCULATOR_GROSS }}
+    >
       <Layout title="JSON Beautifier">
         <Segment>
           <Grid>
@@ -65,7 +68,7 @@ export default function JSONBeautifier() {
                     <InputMast
                       label={{
                         color: "teal",
-                        content: "Gross Salary",
+                        content: "Gross Salary"
                       }}
                       value={grossSalary || 0}
                       mask={{ prefix: "$ ", allowDecimal: true }}
@@ -77,7 +80,7 @@ export default function JSONBeautifier() {
                     <InputMast
                       label={{
                         color: "teal",
-                        content: "Exchange Rage",
+                        content: "Exchange Rage"
                       }}
                       mask={{ prefix: "KHR " }}
                       value={exchangeRate || 0}
@@ -110,6 +113,19 @@ export default function JSONBeautifier() {
                     </Statistic.Label>
                     <Statistic.Value>
                       {!Number.isNaN(net) ? DollarFormatter(net) : "--"}
+                    </Statistic.Value>
+                  </Statistic>
+                  <Statistic>
+                    <Statistic.Label>
+                      <Icon name="chart line" />
+                      Total Tax
+                      <br />
+                      &nbsp;
+                    </Statistic.Label>
+                    <Statistic.Value>
+                      {!Number.isNaN(net) && !Number.isNaN(grossSalary)
+                        ? DollarFormatter(grossSalary - net)
+                        : "--"}
                     </Statistic.Value>
                   </Statistic>
                 </Statistic.Group>
