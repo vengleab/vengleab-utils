@@ -4,9 +4,9 @@ import {
   Statistic,
   Icon,
   Grid,
-  Divider
+  Divider,
 } from "semantic-ui-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import FormatNumber from "format-number";
 import InputMast from "../../components/InputMask";
 import Layout from "../../components/Layout";
@@ -17,49 +17,44 @@ const DollarFormatter = FormatNumber({ prefix: "$ ", round: 2 });
 
 export default function JSONBeautifier() {
   const [net, setNetSalary] = useState(0);
+  const [grossSalary, setGrossSalary] = useState(0);
   const [exchangeRate, setExchangeRate] = useState(4000);
+  const brackets = [
+    { limit: 1500000 / exchangeRate, rate: 0 },
+    { limit: 2000000 / exchangeRate, rate: 0.05 },
+    { limit: 8500000 / exchangeRate, rate: 0.1 },
+    { limit: 12500000 / exchangeRate, rate: 0.15 },
+    { limit: Infinity, rate: 0.2 },
+  ];
 
-  function calculateGrossSalary(netSalary) {
-    if (Number.isNaN(netSalary) || netSalary <= 0 || exchangeRate <= 0) {
-      return 0;
-    }
-
-    const brackets = [
-      { limit: 1500000 / exchangeRate, rate: 0 },
-      { limit: 2000000 / exchangeRate, rate: 0.05 },
-      { limit: 8500000 / exchangeRate, rate: 0.1 },
-      { limit: 12500000 / exchangeRate, rate: 0.15 },
-      { limit: Infinity, rate: 0.2 }
-    ];
-
-    let cumulativeTax = 0;
-    let lastNetMax = 0;
+  function calculateNetSalary(grossSalary) {
+    let netSalary = grossSalary;
     let prevLimit = 0;
     for (let i = 0; i < brackets.length; i += 1) {
       const { limit, rate } = brackets[i];
-      const currentRangeTaxable = (limit - prevLimit) * rate;
-      const updatedCumulativeTax = currentRangeTaxable + cumulativeTax;
-      const currentNetMax = limit - updatedCumulativeTax;
 
-      if (
-        netSalary > lastNetMax &&
-        (netSalary <= currentNetMax || limit === Infinity)
-      ) {
-        const currentTaxable = (netSalary - lastNetMax) / (1 - rate);
-        return currentTaxable + prevLimit;
+      if (grossSalary > prevLimit) {
+            if (grossSalary > limit) {
+          const tax = (limit - prevLimit) * rate;
+          netSalary -= tax;
+        } else {
+          const tax = (grossSalary - prevLimit) * rate;
+          netSalary -= tax;
+        }
+      } else {
+        return netSalary;
       }
-
       prevLimit = limit;
-      cumulativeTax = updatedCumulativeTax;
-      lastNetMax = currentNetMax;
     }
-    return 0;
+    return grossSalary;
   }
 
-  const grossSalary = calculateGrossSalary(net);
+  useEffect(() => {
+    setNetSalary(calculateNetSalary(grossSalary));
+  }, [grossSalary, exchangeRate]);
 
   return (
-    <PageContext.Provider value={{ activeItem: PAGE.KH_SALARY_TAX_CALCULATOR }}>
+    <PageContext.Provider value={{ activeItem: PAGE.KH_SALARY_TAX_CALCULATOR_GROSS }}>
       <Layout title="JSON Beautifier">
         <Segment>
           <Grid>
@@ -70,19 +65,19 @@ export default function JSONBeautifier() {
                     <InputMast
                       label={{
                         color: "teal",
-                        content: "Expected Net Salary"
+                        content: "Gross Salary",
                       }}
+                      value={grossSalary || 0}
                       mask={{ prefix: "$ ", allowDecimal: true }}
-                      onChange={setNetSalary}
+                      onChange={setGrossSalary}
                       placeholder="Amount you expect from your employer"
                     />
                   </Form.Field>
-
                   <Form.Field>
                     <InputMast
                       label={{
                         color: "teal",
-                        content: "Exchange Rage"
+                        content: "Exchange Rage",
                       }}
                       mask={{ prefix: "KHR " }}
                       value={exchangeRate || 0}
