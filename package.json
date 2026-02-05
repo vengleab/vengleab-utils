@@ -34,7 +34,7 @@
     "semantic-ui-react": "2.1",
     "shortid": "^2.2.15",
     "text-mask-addons": "^3.8.0",
-    "vercel": "^39.2.5"
+    "vercel": "^50.11.0"
   },
   "keywords": [],
   "devDependencies": {
