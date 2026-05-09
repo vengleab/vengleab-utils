@@ -1,8 +1,8 @@
-import { Storage } from './Local';
+import { Storage } from "./Local";
 
 class StringLengthStorage extends Storage {
   constructor() {
-    super('StringLengthStorage');
+    super("StringLengthStorage");
   }
 }
 

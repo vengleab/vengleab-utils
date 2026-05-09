@@ -1,8 +1,8 @@
-import { Storage } from './Local';
+import { Storage } from "./Local";
 
 class JWT extends Storage {
   constructor() {
-    super('JWT');
+    super("JWT");
   }
 }
 

@@ -31,7 +31,6 @@
     "next-connect": "^0.6.0",
     "react": "^19.2.6",
     "react-dom": "^19.2.6",
-
     "react-semantic-ui-datepickers": "^2.15.0",
     "react-text-mask": "^5.4.3",
     "sass": "^1.43.5",

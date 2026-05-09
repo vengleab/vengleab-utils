@@ -1,8 +1,8 @@
-import nextConnect from 'next-connect';
-import middleware from '../../server/middleware/dbMiddleware';
-import UserModel from '../../server/models/user';
-import Success from '../../server/responses/Success';
-import BadRequest from '../../server/responses/BadRequest';
+import nextConnect from "next-connect";
+import middleware from "../../server/middleware/dbMiddleware";
+import UserModel from "../../server/models/user";
+import Success from "../../server/responses/Success";
+import BadRequest from "../../server/responses/BadRequest";
 
 const handler = nextConnect();
 
@@ -12,7 +12,7 @@ async function users(req, res) {
   try {
     const user = await UserModel.find({});
 
-    if (!user) throw new Error('Not found');
+    if (!user) throw new Error("Not found");
 
     user.password = undefined;
     return new Success(res).send(user);

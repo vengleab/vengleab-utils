@@ -1,12 +1,12 @@
-import nextConnect from 'next-connect';
-import middleware from '../../server/middleware/dbMiddleware';
-import UserModel from '../../server/models/user';
-import Success from '../../server/responses/Success';
-import BadRequest from '../../server/responses/BadRequest';
-import UnauthorizedAccess from '../../server/responses/UnauthorizedAccess';
-import JWTUtils from '../../utils/JWTUtils';
+import nextConnect from "next-connect";
+import middleware from "../../server/middleware/dbMiddleware";
+import UserModel from "../../server/models/user";
+import Success from "../../server/responses/Success";
+import BadRequest from "../../server/responses/BadRequest";
+import UnauthorizedAccess from "../../server/responses/UnauthorizedAccess";
+import JWTUtils from "../../utils/JWTUtils";
 
-const bcrypt = require('bcrypt');
+const bcrypt = require("bcrypt");
 
 const handler = nextConnect();
 
@@ -17,7 +17,7 @@ handler.use(middleware).post(async (req, res) => {
       const user = await UserModel.findOne({ email });
       if (user && bcrypt.compareSync(password, user.password)) {
         return new Success(res).send({
-          token: JWTUtils.sign(user._id),
+          token: JWTUtils.sign(user._id)
         });
       }
       return new UnauthorizedAccess(res).send();

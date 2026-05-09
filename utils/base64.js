@@ -6,6 +6,6 @@ export function decodeToBase64(base64Str) {
   try {
     return atob(base64Str);
   } catch (error) {
-    return 'The string to be decoded is not correctly encoded';
+    return "The string to be decoded is not correctly encoded";
   }
 }

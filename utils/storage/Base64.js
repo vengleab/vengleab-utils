@@ -1,8 +1,8 @@
-import { Storage } from './Local';
+import { Storage } from "./Local";
 
 class Base64Storage extends Storage {
   constructor() {
-    super('Base64Storage');
+    super("Base64Storage");
   }
 }
 

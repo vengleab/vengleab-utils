@@ -1,8 +1,8 @@
-import { Storage } from './Local';
+import { Storage } from "./Local";
 
 class JSONBeautifier extends Storage {
   constructor() {
-    super('JSONBeautifier');
+    super("JSONBeautifier");
   }
 }
 

@@ -1,5 +1,5 @@
-const jwt = require('jsonwebtoken');
-const env = require('../constants/env');
+const jwt = require("jsonwebtoken");
+const env = require("../constants/env");
 
 const jwtSecret = env.JWT_TOKEN;
 

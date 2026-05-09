@@ -1,8 +1,8 @@
-import nextConnect from 'next-connect';
-import middleware from '../../server/middleware/dbMiddleware';
-import ArticleModel from '../../server/models/article';
-import Success from '../../server/responses/Success';
-import BadRequest from '../../server/responses/BadRequest';
+import nextConnect from "next-connect";
+import middleware from "../../server/middleware/dbMiddleware";
+import ArticleModel from "../../server/models/article";
+import Success from "../../server/responses/Success";
+import BadRequest from "../../server/responses/BadRequest";
 
 const handler = nextConnect();
 

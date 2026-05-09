@@ -1,10 +1,10 @@
 export class Storage {
   constructor(key) {
-    this.key = key || '';
+    this.key = key || "";
   }
 
   get(key) {
-    return localStorage.getItem(this.key + key) || '';
+    return localStorage.getItem(this.key + key) || "";
   }
 
   set(key, value) {

@@ -9,7 +9,7 @@ export default class Response {
     this.response.status(this.statusCode).send({
       message: this.message,
       statusCode: this.statusCode,
-      result,
+      result
     });
   }
 
