@@ -2,17 +2,6 @@ import React, { useState } from 'react';
 import dynamic from 'next/dynamic';
 import { Settings, ChevronDown, ChevronRight, Check, X, Clipboard, Type, Box, Indent, Maximize2, Minimize2, Palette, MousePointer2, Sun, Moon } from 'lucide-react';
 
-const ReactSelect = (props) => (
-  <Select
-    {...props}
-    style={{
-      minWidth: '100%',
-    }}
-    onChange={(e, data) => {
-      props.onChange(data);
-    }}
-  />
-);
 const ReactJson = dynamic(() => import('@microlink/react-json-view'), { ssr: false });
 
 const THEMES = [

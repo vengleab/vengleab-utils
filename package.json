@@ -57,5 +57,9 @@
     "prettier": "~1.19.1",
     "prettier-eslint": "~9.0.1",
     "tailwindcss": "^4.3.0"
+  },
+  "overrides": {
+    "react": "$react",
+    "react-dom": "$react-dom"
   }
 }
