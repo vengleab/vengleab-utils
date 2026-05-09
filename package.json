@@ -14,11 +14,14 @@
   "license": "ISC",
   "dependencies": {
     "bcrypt": "^5.0.0",
+    "clsx": "^2.1.1",
     "cors": "^2.8.5",
     "express": "^4.18.2",
     "format-number": "^3.0.0",
+    "framer-motion": "^6.5.1",
     "jsonwebtoken": "^9.0.0",
     "lodash": "^4.17.21",
+    "lucide-react": "^1.14.0",
     "moment": "^2.29.4",
     "mongoose": "^5.13.20",
     "next": "^12.1.2",
@@ -33,11 +36,14 @@
     "semantic-ui-css": "^2.4.1",
     "semantic-ui-react": "2.1",
     "shortid": "^2.2.15",
+    "tailwind-merge": "^3.5.0",
     "text-mask-addons": "^3.8.0",
     "vercel": "^39.2.5"
   },
   "keywords": [],
   "devDependencies": {
+    "@tailwindcss/postcss": "^4.3.0",
+    "autoprefixer": "^10.5.0",
     "babel-eslint": "^10.1.0",
     "eslint": "~6.1.0",
     "eslint-config-airbnb": "~18.0.1",
@@ -45,7 +51,9 @@
     "eslint-plugin-jsx-a11y": "~6.2.3",
     "eslint-plugin-react": "~7.18.3",
     "eslint-plugin-react-hooks": "~1.7.0",
+    "postcss": "^8.5.14",
     "prettier": "~1.19.1",
-    "prettier-eslint": "~9.0.1"
+    "prettier-eslint": "~9.0.1",
+    "tailwindcss": "^4.3.0"
   }
 }
