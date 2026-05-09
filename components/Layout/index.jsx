@@ -5,6 +5,7 @@ import MySideBar from '../MySideBar';
 
 export default function Layout({ children }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [isCollapsed, setIsCollapsed] = useState(false);
 
   return (
     <div className="flex h-screen overflow-hidden bg-slate-100 font-sans text-slate-900 w-full relative">
@@ -23,7 +24,12 @@ export default function Layout({ children }) {
       </AnimatePresence>
 
       {/* Sidebar */}
-      <MySideBar sidebarOpen={sidebarOpen} setSidebarOpen={setSidebarOpen} />
+      <MySideBar 
+        sidebarOpen={sidebarOpen} 
+        setSidebarOpen={setSidebarOpen} 
+        isCollapsed={isCollapsed} 
+        setIsCollapsed={setIsCollapsed} 
+      />
 
       {/* Main Content Area */}
       <main className="flex-1 flex flex-col min-w-0 h-screen overflow-hidden relative">

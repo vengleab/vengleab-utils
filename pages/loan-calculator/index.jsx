@@ -110,23 +110,25 @@ export default function LoadCalculator() {
                     <label className="text-sm font-semibold text-slate-700">Principle ( Loan amount )</label>
                     <InputMast
                       mask={{ prefix: '$ ', allowDecimal: true }}
+                      value={principle}
                       onChange={setPrinciple}
                       placeholder="Amount you take from Finance institute"
-                      className="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-white text-sm outline-none focus:ring-2 focus:ring-teal-500/20"
+                      className="w-full h-11 px-4 rounded-xl border border-slate-200 bg-white text-sm outline-none focus:ring-2 focus:ring-teal-500/20"
                     />
                   </div>
 
                   <div className="flex flex-col space-y-2">
                     <label className="text-sm font-semibold text-slate-700">Rate (%)</label>
-                    <div className="flex rounded-xl shadow-sm border border-slate-200 bg-white overflow-hidden focus-within:ring-2 focus-within:ring-teal-500/20">
+                    <div className="flex items-stretch rounded-xl shadow-sm border border-slate-200 bg-white overflow-hidden focus-within:ring-2 focus-within:ring-teal-500/20 h-11">
                       <InputMast
                         mask={{ prefix: '', suffix: ' %', allowDecimal: true }}
+                        value={rate}
                         onChange={setRate}
                         placeholder="Year / Monthly Rate"
-                        className="flex-1 px-4 py-2.5 text-sm outline-none border-none"
+                        className="flex-1 px-4 text-sm bg-transparent outline-none"
                       />
                       <select 
-                        className="bg-slate-50 pl-3 pr-8 py-0 border-none text-sm text-slate-600 font-medium focus:ring-0 outline-none cursor-pointer h-full border-l border-slate-200"
+                        className="bg-slate-50 pl-3 pr-8 py-0 border-0 border-l border-slate-200 text-sm text-slate-600 font-medium focus:ring-0 outline-none cursor-pointer h-full"
                         value={term}
                         onChange={(e) => setTerm(e.target.value)}
                       >
@@ -139,6 +141,7 @@ export default function LoadCalculator() {
                   <div className="flex flex-col space-y-2">
                     <label className="text-sm font-semibold text-slate-700">Period ( Years / Months )</label>
                     <InputMast
+                      value={period}
                       onChange={setPeriod}
                       placeholder="Total Period"
                       mask={{
@@ -146,7 +149,7 @@ export default function LoadCalculator() {
                         suffix: ` ${term}`,
                         allowDecimal: true,
                       }}
-                      className="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-white text-sm outline-none focus:ring-2 focus:ring-teal-500/20"
+                      className="w-full h-11 px-4 rounded-xl border border-slate-200 bg-white text-sm outline-none focus:ring-2 focus:ring-teal-500/20"
                     />
                   </div>
 
@@ -156,7 +159,7 @@ export default function LoadCalculator() {
                       type="date"
                       value={moment(startPayingDate).format('YYYY-MM-DD')}
                       onChange={(e) => setStartPayingDate(new Date(e.target.value))}
-                      className="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-white text-sm outline-none focus:ring-2 focus:ring-teal-500/20"
+                      className="w-full h-11 px-4 rounded-xl border border-slate-200 bg-white text-sm outline-none focus:ring-2 focus:ring-teal-500/20"
                     />
                   </div>
                 </div>
