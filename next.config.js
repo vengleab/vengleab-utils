@@ -1,5 +1,5 @@
 
-module.exports = {
-  /* config options here */
-  target: "serverless"
-};
+/** @type {import('next').NextConfig} */
+const nextConfig = {};
+
+module.exports = nextConfig;

@@ -2,7 +2,18 @@ import React, { useState } from 'react';
 import dynamic from 'next/dynamic';
 import { Settings, ChevronDown, ChevronRight, Check, X, Clipboard, Type, Box, Indent, Maximize2, Minimize2, Palette, MousePointer2, Sun, Moon } from 'lucide-react';
 
-const ReactJson = dynamic(() => import('react-json-view'), { ssr: false });
+const ReactSelect = (props) => (
+  <Select
+    {...props}
+    style={{
+      minWidth: '100%',
+    }}
+    onChange={(e, data) => {
+      props.onChange(data);
+    }}
+  />
+);
+const ReactJson = dynamic(() => import('@microlink/react-json-view'), { ssr: false });
 
 const THEMES = [
   'apathy', 'apathy:inverted', 'ashes', 'bespin', 'brewer', 'bright:inverted', 'bright', 'chalk', 'codeschool', 'colors', 'eighties', 'embers', 'flat', 'google', 'grayscale', 'grayscale:inverted', 'greenscreen', 'harmonic', 'hopscotch', 'isotope', 'marrakesh', 'mocha', 'monokai', 'ocean', 'paraiso', 'pop', 'railscasts', 'rjv-default', 'shapeshifter', 'shapeshifter:inverted', 'solarized', 'summerfruit', 'summerfruit:inverted', 'threezerotwofour', 'tomorrow', 'tube', 'twilight'

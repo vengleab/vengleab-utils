@@ -51,10 +51,8 @@ export default function LandingPage() {
               A modern, blazing fast collection of daily utilities for developers and financial planning. Clean interfaces, instant processing, zero friction.
             </motion.p>
             <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }} className="flex flex-col sm:flex-row items-center justify-center gap-4">
-              <Link href="/json-beautifier">
-                <a className="w-full sm:w-auto px-8 py-4 bg-slate-900 text-white rounded-2xl font-medium hover:bg-slate-800 transition-all shadow-xl shadow-slate-900/20 flex items-center justify-center gap-2 group">
-                  Start Formatting <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-                </a>
+              <Link href="/json-beautifier" className="w-full sm:w-auto px-8 py-4 bg-slate-900 text-white rounded-2xl font-medium hover:bg-slate-800 transition-all shadow-xl shadow-slate-900/20 flex items-center justify-center gap-2 group">
+                Start Formatting <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
               </Link>
               <button onClick={() => {
                 document.getElementById('tools-grid')?.scrollIntoView({ behavior: 'smooth' });
@@ -77,7 +75,7 @@ export default function LandingPage() {
                  if (!item) return null;
                  return (
                    <Link href={item.page} key={tool.id}>
-                     <motion.a
+                     <motion.div
                        initial={{ opacity: 0, y: 20 }}
                        whileInView={{ opacity: 1, y: 0 }}
                        viewport={{ once: true }}
@@ -97,7 +95,7 @@ export default function LandingPage() {
                         <div className="flex items-center text-sm font-semibold text-slate-400 group-hover:text-slate-900 transition-colors mt-auto">
                            Open Utility <ChevronRight className="w-4 h-4 ml-1 opacity-0 -translate-x-2 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-300" />
                         </div>
-                     </motion.a>
+                     </motion.div>
                    </Link>
                  );
               })}

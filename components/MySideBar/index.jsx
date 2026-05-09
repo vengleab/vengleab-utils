@@ -53,7 +53,7 @@ export default function MySideBar({ sidebarOpen, setSidebarOpen, isCollapsed, se
       </div>
       
       <div className="flex-1 overflow-y-auto py-2 space-y-1 custom-scrollbar overflow-x-hidden">
-        <Link href="/">
+        <Link href="/" legacyBehavior>
           <a
             onClick={() => !isCollapsed && setSidebarOpen && setSidebarOpen(false)}
             title="Dashboard"
@@ -78,7 +78,7 @@ export default function MySideBar({ sidebarOpen, setSidebarOpen, isCollapsed, se
           const isActive = activePath === item.page || activePath === `/${item.page}`;
           
           return (
-            <Link href={item.page} key={key}>
+            <Link href={item.page} key={key} legacyBehavior>
               <a
                 onClick={() => !isCollapsed && setSidebarOpen && setSidebarOpen(false)}
                 title={item.name}
