@@ -40,7 +40,7 @@ export default function JSONBeautifier() {
             
             <div className="flex flex-col">
               <label className="text-sm font-semibold text-slate-800 mb-3 block">Input JSON string</label>
-              <div className="bg-slate-50 rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+              <div className="bg-slate-50 rounded-xl shadow-sm border border-slate-200 overflow-hidden focus-within:ring-2 focus-within:ring-amber-500/20">
                 <textarea
                    value={JSONText}
                    onChange={handleTextChange}

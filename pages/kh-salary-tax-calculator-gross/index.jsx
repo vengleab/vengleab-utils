@@ -88,7 +88,7 @@ export default function CambodiaNetSalary() {
                       onChange={setGrossSalary}
                       value={grossSalary}
                       placeholder="Amount you expect from your employer"
-                      className="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-white text-sm outline-none focus:ring-2 focus:ring-emerald-500/20"
+                      className="w-full h-11 px-4 rounded-xl border border-slate-200 bg-white text-sm outline-none focus:ring-2 focus:ring-emerald-500/20"
                     />
                   </div>
 
@@ -99,7 +99,7 @@ export default function CambodiaNetSalary() {
                       value={exchangeRate || 0}
                       onChange={setExchangeRate}
                       placeholder="Exchange Rate"
-                      className="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-white text-sm outline-none focus:ring-2 focus:ring-emerald-500/20"
+                      className="w-full h-11 px-4 rounded-xl border border-slate-200 bg-white text-sm outline-none focus:ring-2 focus:ring-emerald-500/20"
                     />
                   </div>
                 </div>
