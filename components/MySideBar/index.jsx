@@ -12,7 +12,8 @@ import {
   CalendarDays,
   Home,
   ChevronRight,
-  Lock
+  Lock,
+  Users
 } from "lucide-react";
 import { MENU_ITEMS } from "../../constants/PageURL";
 
@@ -24,7 +25,8 @@ const ICON_MAP = {
   emi: Calculator,
   kh_tax: CalendarDays,
   kh_tax_gross: CalendarDays,
-  password_generator: Lock
+  password_generator: Lock,
+  random_group_generator: Users
 };
 
 export default function MySideBar({

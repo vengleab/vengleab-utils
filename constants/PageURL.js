@@ -8,7 +8,8 @@ export const PAGE = {
   LOAN_CALCULATOR: "loan-calculator",
   KH_SALARY_TAX_CALCULATOR: "kh-salary-tax-calculator",
   KH_SALARY_TAX_CALCULATOR_GROSS: "kh-salary-tax-calculator-gross",
-  PASSWORD_GENERATOR: "password-generator"
+  PASSWORD_GENERATOR: "password-generator",
+  RANDOM_GROUP_GENERATOR: "random-group-generator"
 };
 
 export const MENU_ITEMS = {
@@ -31,5 +32,9 @@ export const MENU_ITEMS = {
   password_generator: {
     name: "Password Generator",
     page: PAGE.PASSWORD_GENERATOR
+  },
+  random_group_generator: {
+    name: "Random & Grouping",
+    page: PAGE.RANDOM_GROUP_GENERATOR
   }
 };

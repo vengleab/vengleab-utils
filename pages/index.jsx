@@ -12,7 +12,8 @@ import {
   Cpu,
   ChevronRight,
   Sparkles,
-  Key
+  Key,
+  Users
 } from "lucide-react";
 import Link from "next/link";
 import Layout from "../components/Layout";
@@ -74,6 +75,15 @@ const TOOLS = [
     color: "text-purple-600",
     bg: "bg-purple-100/50",
     border: "hover:border-purple-500/30 group-hover:shadow-purple-500/10"
+  },
+  {
+    id: "random_group_generator",
+    name: "Random & Grouping",
+    description: "Split lists into random groups or pick winners easily.",
+    icon: Users,
+    color: "text-rose-600",
+    bg: "bg-rose-100/50",
+    border: "hover:border-rose-500/30 group-hover:shadow-rose-500/10"
   }
 ];
 
