@@ -100,7 +100,7 @@ export default function PasswordGenerator() {
         <motion.div
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
-          className="max-w-4xl mx-auto"
+          className="max-w-6xl mx-auto"
         >
           <div className="mb-8">
             <h1 className="text-3xl font-bold text-slate-900 tracking-tight flex items-center gap-3">
@@ -124,25 +124,28 @@ export default function PasswordGenerator() {
                 <div className="space-y-8">
                   {/* Password Display */}
                   <div className="relative group">
-                    <div className="bg-slate-50 rounded-2xl border-2 border-slate-100 p-6 flex items-center justify-between group-hover:border-purple-200 transition-colors overflow-hidden">
-                      <div className="text-2xl sm:text-3xl font-mono font-medium text-slate-800 break-all pr-12 select-all">
-                        {password || <span className="text-slate-300">Select an option...</span>}
+                    <div className="bg-slate-50 rounded-2xl border-2 border-slate-100 p-5 sm:p-6 flex flex-col sm:flex-row items-start sm:items-center gap-4 group-hover:border-purple-200 transition-colors overflow-hidden">
+                      <div className="flex-1 min-w-0 w-full">
+                        <div className="text-xl sm:text-2xl md:text-3xl font-mono font-medium text-slate-800 break-all select-all leading-relaxed">
+                          {password || <span className="text-slate-300">Select an option...</span>}
+                        </div>
                       </div>
-                      <div className="absolute right-4 flex items-center gap-2">
+                      
+                      <div className="flex sm:flex-col gap-2 shrink-0 self-end sm:self-center">
                         <button 
                           onClick={generatePassword}
-                          className="p-2 hover:bg-white rounded-xl text-slate-400 hover:text-purple-600 transition-all hover:shadow-sm"
+                          className="p-3 bg-white hover:bg-purple-50 rounded-xl text-slate-400 hover:text-purple-600 transition-all shadow-sm border border-slate-200 hover:border-purple-200 group/btn"
                           title="Regenerate"
                         >
-                          <RefreshCw className={`w-5 h-5 ${password ? "hover:rotate-180 transition-transform duration-500" : ""}`} />
+                          <RefreshCw className={`w-5 h-5 group-hover/btn:rotate-180 transition-transform duration-700`} />
                         </button>
                         <button 
                           onClick={copyToClipboard}
                           disabled={!password}
-                          className={`p-2 rounded-xl transition-all ${
+                          className={`p-3 rounded-xl transition-all border ${
                             copied 
-                              ? "bg-emerald-50 text-emerald-600 shadow-inner" 
-                              : "hover:bg-white text-slate-400 hover:text-purple-600 hover:shadow-sm"
+                              ? "bg-emerald-50 text-emerald-600 border-emerald-200 shadow-inner" 
+                              : "bg-white text-slate-400 hover:text-purple-600 hover:bg-purple-50 shadow-sm border-slate-200 hover:border-purple-200"
                           }`}
                           title="Copy to clipboard"
                         >
