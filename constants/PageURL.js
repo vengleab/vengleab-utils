@@ -7,7 +7,8 @@ export const PAGE = {
   JWT_TOKEN_VIEWER: "jwt-token-viewer",
   LOAN_CALCULATOR: "loan-calculator",
   KH_SALARY_TAX_CALCULATOR: "kh-salary-tax-calculator",
-  KH_SALARY_TAX_CALCULATOR_GROSS: "kh-salary-tax-calculator-gross"
+  KH_SALARY_TAX_CALCULATOR_GROSS: "kh-salary-tax-calculator-gross",
+  PASSWORD_GENERATOR: "password-generator"
 };
 
 export const MENU_ITEMS = {
@@ -26,5 +27,9 @@ export const MENU_ITEMS = {
   kh_tax_gross: {
     name: "Cambodia Net Salary Calculator",
     page: PAGE.KH_SALARY_TAX_CALCULATOR_GROSS
+  },
+  password_generator: {
+    name: "Password Generator",
+    page: PAGE.PASSWORD_GENERATOR
   }
 };

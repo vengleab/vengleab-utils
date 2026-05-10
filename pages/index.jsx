@@ -65,6 +65,15 @@ const TOOLS = [
     color: "text-emerald-600",
     bg: "bg-emerald-100/50",
     border: "hover:border-emerald-500/30 group-hover:shadow-emerald-500/10"
+  },
+  {
+    id: "password_generator",
+    name: "Password Gen",
+    description: "Generate secure, random passwords with custom requirements.",
+    icon: Key,
+    color: "text-purple-600",
+    bg: "bg-purple-100/50",
+    border: "hover:border-purple-500/30 group-hover:shadow-purple-500/10"
   }
 ];
 

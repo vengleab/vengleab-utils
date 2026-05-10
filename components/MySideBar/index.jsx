@@ -11,7 +11,8 @@ import {
   Key,
   CalendarDays,
   Home,
-  ChevronRight
+  ChevronRight,
+  Lock
 } from "lucide-react";
 import { MENU_ITEMS } from "../../constants/PageURL";
 
@@ -22,7 +23,8 @@ const ICON_MAP = {
   jwt_token_viewer: Key,
   emi: Calculator,
   kh_tax: CalendarDays,
-  kh_tax_gross: CalendarDays
+  kh_tax_gross: CalendarDays,
+  password_generator: Lock
 };
 
 export default function MySideBar({
