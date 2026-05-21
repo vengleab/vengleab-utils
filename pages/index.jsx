@@ -14,7 +14,8 @@ import {
   Sparkles,
   Key,
   Users,
-  Regex
+  Regex,
+  Keyboard
 } from "lucide-react";
 import Link from "next/link";
 import Layout from "../components/Layout";
@@ -94,6 +95,15 @@ const TOOLS = [
     color: "text-sky-600",
     bg: "bg-sky-100/50",
     border: "hover:border-sky-500/30 group-hover:shadow-sky-500/10"
+  },
+  {
+    id: "keyboard_tester",
+    name: "Keyboard Tester",
+    description: "Test keyboard keys, multi-key rollover (NKRO), and synthesized mechanical switches.",
+    icon: Keyboard,
+    color: "text-amber-500",
+    bg: "bg-amber-100/50",
+    border: "hover:border-amber-500/30 group-hover:shadow-amber-500/10"
   }
 ];
 
