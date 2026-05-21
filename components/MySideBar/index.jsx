@@ -15,7 +15,8 @@ import {
   Lock,
   Users,
   Regex,
-  Keyboard
+  Keyboard,
+  Monitor
 } from "lucide-react";
 import { MENU_ITEMS } from "../../constants/PageURL";
 
@@ -30,7 +31,8 @@ const ICON_MAP = {
   password_generator: Lock,
   random_group_generator: Users,
   regex_tester: Regex,
-  keyboard_tester: Keyboard
+  keyboard_tester: Keyboard,
+  display_color_tester: Monitor
 };
 
 export default function MySideBar({

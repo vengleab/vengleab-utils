@@ -11,7 +11,8 @@ export const PAGE = {
   PASSWORD_GENERATOR: "password-generator",
   RANDOM_GROUP_GENERATOR: "random-group-generator",
   REGEX_TESTER: "regex-tester",
-  KEYBOARD_TESTER: "keyboard-tester"
+  KEYBOARD_TESTER: "keyboard-tester",
+  DISPLAY_COLOR_TESTER: "display-color-tester"
 };
 
 export const MENU_ITEMS = {
@@ -46,5 +47,9 @@ export const MENU_ITEMS = {
   keyboard_tester: {
     name: "Keyboard Tester",
     page: PAGE.KEYBOARD_TESTER
+  },
+  display_color_tester: {
+    name: "Display Tester",
+    page: PAGE.DISPLAY_COLOR_TESTER
   }
 };

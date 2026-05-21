@@ -15,7 +15,8 @@ import {
   Key,
   Users,
   Regex,
-  Keyboard
+  Keyboard,
+  Monitor
 } from "lucide-react";
 import Link from "next/link";
 import Layout from "../components/Layout";
@@ -104,6 +105,15 @@ const TOOLS = [
     color: "text-amber-500",
     bg: "bg-amber-100/50",
     border: "hover:border-amber-500/30 group-hover:shadow-amber-500/10"
+  },
+  {
+    id: "display_color_tester",
+    name: "Display Tester",
+    description: "Calibrate screens, detect dead pixels, test contrast limits, and check screen backlight bleeding.",
+    icon: Monitor,
+    color: "text-rose-500",
+    bg: "bg-rose-100/50",
+    border: "hover:border-rose-500/30 group-hover:shadow-rose-500/10"
   }
 ];
 
