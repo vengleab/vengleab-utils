@@ -1,14 +1,42 @@
 import React, { useState } from "react";
+import Head from "next/head";
 import { Menu as MenuIcon } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import MySideBar from "../MySideBar";
 
-export default function Layout({ children }) {
+export default function Layout({
+  children,
+  title,
+  description = "A clean, modern, blazing fast collection of daily utilities for developers and financial planning. Clean interfaces, zero friction.",
+  keywords = "developer tools, formatter, beautifier, keyboard tester, screen color calibrator, base64 encoder, tax calculator, loan emi, regex tester"
+}) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [isCollapsed, setIsCollapsed] = useState(false);
 
+  const displayTitle = title ? `${title} | DevTools` : "DevTools - Dynamic Developer & Finance Utilities";
+
   return (
     <div className="flex h-screen overflow-hidden bg-slate-100 font-sans text-slate-900 w-full relative">
+      <Head>
+        <title>{displayTitle}</title>
+        <meta name="description" content={description} />
+        <meta name="keywords" content={keywords} />
+        <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5" />
+        
+        {/* Open Graph / Facebook */}
+        <meta property="og:type" content="website" />
+        <meta property="og:title" content={displayTitle} />
+        <meta property="og:description" content={description} />
+        <meta property="og:site_name" content="DevTools Toolkit" />
+        
+        {/* Twitter */}
+        <meta name="twitter:card" content="summary" />
+        <meta name="twitter:title" content={displayTitle} />
+        <meta name="twitter:description" content={description} />
+        
+        {/* Theme Color */}
+        <meta name="theme-color" content="#4f46e5" />
+      </Head>
       {/* Mobile Sidebar Overlay */}
       <AnimatePresence>
         {sidebarOpen && (
