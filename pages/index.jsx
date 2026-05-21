@@ -13,7 +13,8 @@ import {
   ChevronRight,
   Sparkles,
   Key,
-  Users
+  Users,
+  Regex
 } from "lucide-react";
 import Link from "next/link";
 import Layout from "../components/Layout";
@@ -84,6 +85,15 @@ const TOOLS = [
     color: "text-rose-600",
     bg: "bg-rose-100/50",
     border: "hover:border-rose-500/30 group-hover:shadow-rose-500/10"
+  },
+  {
+    id: "regex_tester",
+    name: "RegEx Tester",
+    description: "Validate and test regular expressions in real-time with visual match highlighting and capture group details.",
+    icon: Regex,
+    color: "text-sky-600",
+    bg: "bg-sky-100/50",
+    border: "hover:border-sky-500/30 group-hover:shadow-sky-500/10"
   }
 ];
 

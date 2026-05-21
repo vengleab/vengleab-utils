@@ -13,7 +13,8 @@ import {
   Home,
   ChevronRight,
   Lock,
-  Users
+  Users,
+  Regex
 } from "lucide-react";
 import { MENU_ITEMS } from "../../constants/PageURL";
 
@@ -26,7 +27,8 @@ const ICON_MAP = {
   kh_tax: CalendarDays,
   kh_tax_gross: CalendarDays,
   password_generator: Lock,
-  random_group_generator: Users
+  random_group_generator: Users,
+  regex_tester: Regex
 };
 
 export default function MySideBar({

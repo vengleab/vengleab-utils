@@ -9,7 +9,8 @@ export const PAGE = {
   KH_SALARY_TAX_CALCULATOR: "kh-salary-tax-calculator",
   KH_SALARY_TAX_CALCULATOR_GROSS: "kh-salary-tax-calculator-gross",
   PASSWORD_GENERATOR: "password-generator",
-  RANDOM_GROUP_GENERATOR: "random-group-generator"
+  RANDOM_GROUP_GENERATOR: "random-group-generator",
+  REGEX_TESTER: "regex-tester"
 };
 
 export const MENU_ITEMS = {
@@ -36,5 +37,9 @@ export const MENU_ITEMS = {
   random_group_generator: {
     name: "Random & Grouping",
     page: PAGE.RANDOM_GROUP_GENERATOR
+  },
+  regex_tester: {
+    name: "RegEx Tester",
+    page: PAGE.REGEX_TESTER
   }
 };
