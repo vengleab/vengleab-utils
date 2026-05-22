@@ -17,7 +17,7 @@
     "bcrypt": "^5.0.0",
     "clsx": "^2.1.1",
     "cors": "^2.8.5",
-    "express": "^4.18.2",
+    "express": "^4.22.2",
     "format-number": "^3.0.0",
     "@microlink/react-json-view": "^1.31.20",
     "framer-motion": "^12.38.0",
