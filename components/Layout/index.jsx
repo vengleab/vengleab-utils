@@ -4,6 +4,7 @@ import { Menu as MenuIcon } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useRouter } from "next/router";
 import MySideBar from "../MySideBar";
+import { PAGE } from "../../constants/PageURL";
 
 export default function Layout({
   children,
@@ -15,7 +16,7 @@ export default function Layout({
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [isCollapsed, setIsCollapsed] = useState(false);
 
-  const isLandingPage = router.pathname === "/";
+  const isLandingPage = router.pathname === PAGE.INDEX;
   const displayTitle = title ? `${title} | DevTools` : "DevTools - Dynamic Developer & Finance Utilities";
 
   return (

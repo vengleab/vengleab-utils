@@ -21,7 +21,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import Layout from "../components/Layout";
-import { MENU_ITEMS } from "../constants/PageURL";
+import { MENU_ITEMS, PAGE } from "../constants/PageURL";
 
 const TOOLS = [
   {
@@ -176,7 +176,7 @@ export default function LandingPage() {
               className="flex flex-col sm:flex-row items-center justify-center gap-4"
             >
               <Link
-                href="/json-beautifier"
+                href={`/${PAGE.JSON_BEAUTIFIER}`}
                 className="w-full sm:w-auto px-8 py-4 bg-slate-900 text-white rounded-2xl font-medium hover:bg-slate-800 transition-all shadow-xl shadow-slate-900/20 flex items-center justify-center gap-2 group"
               >
                 Let's start{" "}
