@@ -62,6 +62,12 @@ const FILTER_TYPE = {
   HIGHPASS: "highpass"
 };
 
+const AUDIO_CONTEXT_STATE = {
+  SUSPENDED: "suspended",
+  RUNNING: "running",
+  CLOSED: "closed"
+};
+
 // Web Audio API mechanical switch click synthesizer
 let globalAudioCtx = null;
 const playSwitchSound = (type, muted) => {
@@ -75,7 +81,7 @@ const playSwitchSound = (type, muted) => {
       globalAudioCtx = new AudioContextClass();
     }
 
-    if (globalAudioCtx.state === "suspended") {
+    if (globalAudioCtx.state === AUDIO_CONTEXT_STATE.SUSPENDED) {
       globalAudioCtx.resume();
     }
 
