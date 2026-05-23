@@ -12,7 +12,8 @@ export const PAGE = {
   RANDOM_GROUP_GENERATOR: "random-group-generator",
   REGEX_TESTER: "regex-tester",
   KEYBOARD_TESTER: "keyboard-tester",
-  DISPLAY_COLOR_TESTER: "display-color-tester"
+  DISPLAY_COLOR_TESTER: "display-color-tester",
+  QR_CODE_GENERATOR: "qr-code-generator"
 };
 
 export const MENU_ITEMS = {
@@ -51,5 +52,9 @@ export const MENU_ITEMS = {
   display_color_tester: {
     name: "Display Tester",
     page: PAGE.DISPLAY_COLOR_TESTER
+  },
+  qr_code_generator: {
+    name: "QR Code Generator",
+    page: PAGE.QR_CODE_GENERATOR
   }
 };

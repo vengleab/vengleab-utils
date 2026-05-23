@@ -16,7 +16,8 @@ import {
   Users,
   Regex,
   Keyboard,
-  Monitor
+  Monitor,
+  QrCode
 } from "lucide-react";
 import Link from "next/link";
 import Layout from "../components/Layout";
@@ -114,6 +115,15 @@ const TOOLS = [
     color: "text-rose-500",
     bg: "bg-rose-100/50",
     border: "hover:border-rose-500/30 group-hover:shadow-rose-500/10"
+  },
+  {
+    id: "qr_code_generator",
+    name: "QR Code Gen",
+    description: "Generate and customize QR codes with solid/gradient fills, unique eyeball shapes, and custom logo inserts.",
+    icon: QrCode,
+    color: "text-violet-600",
+    bg: "bg-violet-100/50",
+    border: "hover:border-violet-500/30 group-hover:shadow-violet-500/10"
   }
 ];
 
@@ -169,7 +179,7 @@ export default function LandingPage() {
                 href="/json-beautifier"
                 className="w-full sm:w-auto px-8 py-4 bg-slate-900 text-white rounded-2xl font-medium hover:bg-slate-800 transition-all shadow-xl shadow-slate-900/20 flex items-center justify-center gap-2 group"
               >
-                Start Formatting{" "}
+                Let's start{" "}
                 <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
               </Link>
               <button
