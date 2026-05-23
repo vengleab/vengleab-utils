@@ -25,6 +25,12 @@ import {
 import Layout from "../components/Layout";
 import qrcode from "../utils/qrcode";
 
+const SHAPE = {
+  SQUARE: "square",
+  ROUNDED: "rounded",
+  CIRCLE: "circle"
+};
+
 const PRESET_LOGOS = {
   github: {
     name: "GitHub",
@@ -97,9 +103,9 @@ export default function QRCodeGenerator() {
   const [bgColor, setBgColor] = useState("#ffffff");
   const [bgTransparent, setBgTransparent] = useState(false);
 
-  const [moduleShape, setModuleShape] = useState("square"); // square, circle, rounded
-  const [eyeFrameShape, setEyeFrameShape] = useState("square"); // square, rounded, circle
-  const [eyeBallShape, setEyeBallShape] = useState("square"); // square, rounded, circle
+  const [moduleShape, setModuleShape] = useState(SHAPE.SQUARE); // square, circle, rounded
+  const [eyeFrameShape, setEyeFrameShape] = useState(SHAPE.SQUARE); // square, rounded, circle
+  const [eyeBallShape, setEyeBallShape] = useState(SHAPE.SQUARE); // square, rounded, circle
 
   const [errorCorrection, setErrorCorrection] = useState("H"); // L, M, Q, H
 
@@ -108,7 +114,7 @@ export default function QRCodeGenerator() {
   const [customLogoFile, setCustomLogoFile] = useState(null);
   const [logoSize, setLogoSize] = useState(22); // 15% to 30%
   const [logoMask, setLogoMask] = useState(true);
-  const [logoShape, setLogoShape] = useState("circle"); // circle, square, rounded
+  const [logoShape, setLogoShape] = useState(SHAPE.CIRCLE); // circle, square, rounded
   const [logoBgColor, setLogoBgColor] = useState("#ffffff");
   const [logoPadding, setLogoPadding] = useState(1);
 
@@ -271,14 +277,14 @@ export default function QRCodeGenerator() {
 
             ctx.fillStyle = fillStyle;
 
-            if (moduleShape === "square") {
+            if (moduleShape === SHAPE.SQUARE) {
               // Add +0.5 to prevent tiny rendering gaps between neighboring sub-pixels
               ctx.fillRect(x, y, cellSize + 0.5, cellSize + 0.5);
-            } else if (moduleShape === "circle") {
+            } else if (moduleShape === SHAPE.CIRCLE) {
               ctx.beginPath();
               ctx.arc(x + cellSize / 2, y + cellSize / 2, cellSize * 0.4, 0, 2 * Math.PI);
               ctx.fill();
-            } else if (moduleShape === "rounded") {
+            } else if (moduleShape === SHAPE.ROUNDED) {
               drawRoundRect(x + cellSize * 0.1, y + cellSize * 0.1, cellSize * 0.8, cellSize * 0.8, cellSize * 0.25);
               ctx.fill();
             }
@@ -293,13 +299,13 @@ export default function QRCodeGenerator() {
         // Path subtraction for Eye Frame to look clean even on transparent backgrounds
         ctx.fillStyle = fillStyle;
         ctx.beginPath();
-        if (eyeFrameShape === "square") {
+        if (eyeFrameShape === SHAPE.SQUARE) {
           ctx.rect(startX, startY, eyeSize, eyeSize);
           ctx.rect(startX + cellSize, startY + cellSize, eyeSize - 2 * cellSize, eyeSize - 2 * cellSize);
-        } else if (eyeFrameShape === "rounded") {
+        } else if (eyeFrameShape === SHAPE.ROUNDED) {
           drawRoundRect(startX, startY, eyeSize, eyeSize, cellSize * 1.8);
           drawRoundRect(startX + cellSize, startY + cellSize, eyeSize - 2 * cellSize, eyeSize - 2 * cellSize, cellSize * 1.0);
-        } else if (eyeFrameShape === "circle") {
+        } else if (eyeFrameShape === SHAPE.CIRCLE) {
           ctx.arc(startX + eyeSize / 2, startY + eyeSize / 2, eyeSize / 2, 0, 2 * Math.PI);
           ctx.arc(startX + eyeSize / 2, startY + eyeSize / 2, (eyeSize - 2 * cellSize) / 2, 0, 2 * Math.PI);
         }
@@ -311,11 +317,11 @@ export default function QRCodeGenerator() {
         const ballY = startY + 2 * cellSize;
 
         ctx.beginPath();
-        if (eyeBallShape === "square") {
+        if (eyeBallShape === SHAPE.SQUARE) {
           ctx.rect(ballX, ballY, ballSize, ballSize);
-        } else if (eyeBallShape === "rounded") {
+        } else if (eyeBallShape === SHAPE.ROUNDED) {
           drawRoundRect(ballX, ballY, ballSize, ballSize, cellSize * 0.8);
-        } else if (eyeBallShape === "circle") {
+        } else if (eyeBallShape === SHAPE.CIRCLE) {
           ctx.arc(ballX + ballSize / 2, ballY + ballSize / 2, ballSize / 2, 0, 2 * Math.PI);
         }
         ctx.fill();
@@ -335,10 +341,10 @@ export default function QRCodeGenerator() {
         // Draw backing mask
         ctx.fillStyle = logoBgColor;
         ctx.beginPath();
-        if (logoShape === "circle") {
+        if (logoShape === SHAPE.CIRCLE) {
           ctx.arc(canvasSize / 2, canvasSize / 2, logoTargetSize / 2 + logoPadding * 8, 0, 2 * Math.PI);
           ctx.fill();
-        } else if (logoShape === "rounded") {
+        } else if (logoShape === SHAPE.ROUNDED) {
           drawRoundRect(
             logoX - logoPadding * 6,
             logoY - logoPadding * 6,
@@ -347,7 +353,7 @@ export default function QRCodeGenerator() {
             logoTargetSize * 0.25
           );
           ctx.fill();
-        } else if (logoShape === "square") {
+        } else if (logoShape === SHAPE.SQUARE) {
           ctx.fillRect(
             logoX - logoPadding * 6,
             logoY - logoPadding * 6,
@@ -361,10 +367,10 @@ export default function QRCodeGenerator() {
           ctx.beginPath();
           ctx.save();
           // Clip logo into matching shape
-          if (logoShape === "circle") {
+          if (logoShape === SHAPE.CIRCLE) {
             ctx.arc(canvasSize / 2, canvasSize / 2, logoTargetSize / 2, 0, 2 * Math.PI);
             ctx.clip();
-          } else if (logoShape === "rounded") {
+          } else if (logoShape === SHAPE.ROUNDED) {
             drawRoundRect(logoX, logoY, logoTargetSize, logoTargetSize, logoTargetSize * 0.2);
             ctx.clip();
           }
@@ -538,14 +544,14 @@ export default function QRCodeGenerator() {
             const x = c * cellSize;
             const y = r * cellSize;
 
-            if (moduleShape === "square") {
+            if (moduleShape === SHAPE.SQUARE) {
               pathData += `M ${x.toFixed(2)} ${y.toFixed(2)} h ${(cellSize + 0.1).toFixed(2)} v ${(cellSize + 0.1).toFixed(2)} h -${(cellSize + 0.1).toFixed(2)} Z `;
-            } else if (moduleShape === "circle") {
+            } else if (moduleShape === SHAPE.CIRCLE) {
               const cx = x + cellSize / 2;
               const cy = y + cellSize / 2;
               const rad = cellSize * 0.4;
               pathData += `M ${cx.toFixed(2)} ${(cy - rad).toFixed(2)} a ${rad.toFixed(2)} ${rad.toFixed(2)} 0 1 1 0 ${(rad * 2).toFixed(2)} a ${rad.toFixed(2)} ${rad.toFixed(2)} 0 1 1 0 -${(rad * 2).toFixed(2)} Z `;
-            } else if (moduleShape === "rounded") {
+            } else if (moduleShape === SHAPE.ROUNDED) {
               pathData += getRoundedRectPath(x + cellSize * 0.1, y + cellSize * 0.1, cellSize * 0.8, cellSize * 0.8, cellSize * 0.25) + " ";
             }
           }
@@ -561,14 +567,14 @@ export default function QRCodeGenerator() {
         const eyeSize = 7 * cellSize;
         let framePath = "";
 
-        if (eyeFrameShape === "square") {
+        if (eyeFrameShape === SHAPE.SQUARE) {
           framePath += `M ${startX} ${startY} h ${eyeSize} v ${eyeSize} h -${eyeSize} Z M ${startX + cellSize} ${startY + cellSize} v ${eyeSize - 2 * cellSize} h ${eyeSize - 2 * cellSize} v -${eyeSize - 2 * cellSize} Z`;
-        } else if (eyeFrameShape === "rounded") {
+        } else if (eyeFrameShape === SHAPE.ROUNDED) {
           const outerRounded = getRoundedRectPath(startX, startY, eyeSize, eyeSize, cellSize * 1.8);
           const innerRounded = getRoundedRectPath(startX + cellSize, startY + cellSize, eyeSize - 2 * cellSize, eyeSize - 2 * cellSize, cellSize * 1.0);
           // Combine using EvenOdd fill rule by reversing direction
           framePath += `${outerRounded} ${innerRounded}`;
-        } else if (eyeFrameShape === "circle") {
+        } else if (eyeFrameShape === SHAPE.CIRCLE) {
           const cx = startX + eyeSize / 2;
           const cy = startY + eyeSize / 2;
           const r1 = eyeSize / 2;
@@ -582,11 +588,11 @@ export default function QRCodeGenerator() {
         const ballY = startY + 2 * cellSize;
         let ballPath = "";
 
-        if (eyeBallShape === "square") {
+        if (eyeBallShape === SHAPE.SQUARE) {
           ballPath += `M ${ballX} ${ballY} h ${ballSize} v ${ballSize} h -${ballSize} Z`;
-        } else if (eyeBallShape === "rounded") {
+        } else if (eyeBallShape === SHAPE.ROUNDED) {
           ballPath += getRoundedRectPath(ballX, ballY, ballSize, ballSize, cellSize * 0.8);
-        } else if (eyeBallShape === "circle") {
+        } else if (eyeBallShape === SHAPE.CIRCLE) {
           const cx = ballX + ballSize / 2;
           const cy = ballY + ballSize / 2;
           const r = ballSize / 2;
@@ -609,10 +615,10 @@ export default function QRCodeGenerator() {
         // backing mask
         let backingPath = "";
         const paddingOffset = logoPadding * 6;
-        if (logoShape === "circle") {
+        if (logoShape === SHAPE.CIRCLE) {
           const rad = logoTargetSize / 2 + paddingOffset;
           backingPath = `M ${size / 2} ${(size / 2 - rad)} a ${rad} ${rad} 0 1 1 0 ${rad * 2} a ${rad} ${rad} 0 1 1 0 -${rad * 2} Z`;
-        } else if (logoShape === "rounded") {
+        } else if (logoShape === SHAPE.ROUNDED) {
           backingPath = getRoundedRectPath(logoX - paddingOffset, logoY - paddingOffset, logoTargetSize + paddingOffset * 2, logoTargetSize + paddingOffset * 2, logoTargetSize * 0.25);
         } else {
           backingPath = `M ${logoX - paddingOffset} ${logoY - paddingOffset} h ${logoTargetSize + paddingOffset * 2} v ${logoTargetSize + paddingOffset * 2} h -${logoTargetSize + paddingOffset * 2} Z`;
@@ -632,10 +638,10 @@ export default function QRCodeGenerator() {
         } else if (logoType === "custom" && customLogoFile) {
           // Embed Base64 image
           svg += `  <g>\n`;
-          if (logoShape === "circle") {
+          if (logoShape === SHAPE.CIRCLE) {
             svg += `    <clipPath id="logo-clip">\n      <circle cx="${size / 2}" cy="${size / 2}" r="${logoTargetSize / 2}" />\n    </clipPath>\n`;
             svg += `    <image href="${customLogoFile}" x="${logoX.toFixed(2)}" y="${logoY.toFixed(2)}" width="${logoTargetSize.toFixed(2)}" height="${logoTargetSize.toFixed(2)}" clip-path="url(#logo-clip)" />\n`;
-          } else if (logoShape === "rounded") {
+          } else if (logoShape === SHAPE.ROUNDED) {
             svg += `    <clipPath id="logo-clip">\n      <rect x="${logoX.toFixed(2)}" y="${logoY.toFixed(2)}" width="${logoTargetSize.toFixed(2)}" height="${logoTargetSize.toFixed(2)}" rx="${(logoTargetSize * 0.2).toFixed(2)}" ry="${(logoTargetSize * 0.2).toFixed(2)}" />\n    </clipPath>\n`;
             svg += `    <image href="${customLogoFile}" x="${logoX.toFixed(2)}" y="${logoY.toFixed(2)}" width="${logoTargetSize.toFixed(2)}" height="${logoTargetSize.toFixed(2)}" clip-path="url(#logo-clip)" />\n`;
           } else {

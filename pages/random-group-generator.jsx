@@ -17,10 +17,19 @@ import Layout from "../components/Layout";
 import PageContext from "../contexts/page";
 import { PAGE } from "../constants/PageURL";
 
+const DRAG_EFFECT = {
+  MOVE: "move"
+};
+
+const GROUP_MODE = {
+  COUNT: "count",
+  SIZE: "size"
+};
+
 export default function RandomGroupGenerator() {
   const [inputText, setInputText] = useState("");
   const [groupSize, setGroupSize] = useState(2);
-  const [groupMode, setGroupMode] = useState("count"); // 'count' or 'size'
+  const [groupMode, setGroupMode] = useState(GROUP_MODE.COUNT); // 'count' or 'size'
   const [results, setResults] = useState(null);
   const [pickedWinner, setPickedWinner] = useState(null);
   const [copied, setCopied] = useState(false);
@@ -63,7 +72,7 @@ export default function RandomGroupGenerator() {
     if (items.length === 0) return;
 
     let groups = [];
-    if (groupMode === "count") {
+    if (groupMode === GROUP_MODE.COUNT) {
       // Split into X number of groups
       const numGroups = Math.max(1, Math.min(items.length, groupSize));
       for (let i = 0; i < numGroups; i++) {
@@ -90,12 +99,12 @@ export default function RandomGroupGenerator() {
   const onDragStart = (e, groupIndex, itemIndex) => {
     setDraggedItem({ groupIndex, itemIndex });
     // This makes the ghost image look nicer
-    e.dataTransfer.effectAllowed = "move";
+    e.dataTransfer.effectAllowed = DRAG_EFFECT.MOVE;
   };
 
   const onDragOver = (e) => {
     e.preventDefault();
-    e.dataTransfer.dropEffect = "move";
+    e.dataTransfer.dropEffect = DRAG_EFFECT.MOVE;
   };
 
   const onDrop = (e, targetGroupIndex) => {
@@ -186,14 +195,14 @@ export default function RandomGroupGenerator() {
                   
                   <div className="flex bg-slate-100 p-1 rounded-xl gap-1">
                     <button 
-                      onClick={() => setGroupMode("count")}
-                      className={`flex-1 py-2 px-3 rounded-lg text-sm font-bold transition-all ${groupMode === 'count' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+                      onClick={() => setGroupMode(GROUP_MODE.COUNT)}
+                      className={`flex-1 py-2 px-3 rounded-lg text-sm font-bold transition-all ${groupMode === GROUP_MODE.COUNT ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
                     >
                       Number of Groups
                     </button>
                     <button 
-                      onClick={() => setGroupMode("size")}
-                      className={`flex-1 py-2 px-3 rounded-lg text-sm font-bold transition-all ${groupMode === 'size' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+                      onClick={() => setGroupMode(GROUP_MODE.SIZE)}
+                      className={`flex-1 py-2 px-3 rounded-lg text-sm font-bold transition-all ${groupMode === GROUP_MODE.SIZE ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
                     >
                       Group Size
                     </button>

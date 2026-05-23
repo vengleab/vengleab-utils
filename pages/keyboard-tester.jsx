@@ -16,6 +16,52 @@ import Layout from "../components/Layout";
 import PageContext from "../contexts/page";
 import { PAGE } from "../constants/PageURL";
 
+const SWITCH_SOUND = {
+  CLICKY: "clicky",
+  TACTILE: "tactile",
+  LINEAR: "linear",
+  MUTE: "mute"
+};
+
+const LAYOUT = {
+  TKL: "TKL",
+  COMPACT_60: "60"
+};
+
+const OS_LAYOUT = {
+  WIN: "win",
+  MAC: "mac"
+};
+
+const THEME = {
+  CARBON: "carbon"
+};
+
+const KEY_CHAR = {
+  SPACE: " "
+};
+
+const KEY_NAME = {
+  SPACE: "Space"
+};
+
+const KEY_TYPE = {
+  GAP: "gap",
+  SPACER: "spacer"
+};
+
+const OSCILLATOR_TYPE = {
+  SINE: "sine",
+  TRIANGLE: "triangle",
+  SAWTOOTH: "sawtooth",
+  SQUARE: "square"
+};
+
+const FILTER_TYPE = {
+  LOWPASS: "lowpass",
+  HIGHPASS: "highpass"
+};
+
 // Web Audio API mechanical switch click synthesizer
 let globalAudioCtx = null;
 const playSwitchSound = (type, muted) => {
@@ -36,17 +82,17 @@ const playSwitchSound = (type, muted) => {
     const ctx = globalAudioCtx;
     const now = ctx.currentTime;
 
-    if (type === "clicky") {
+    if (type === SWITCH_SOUND.CLICKY) {
       // Blue Switch: High frequency crisp transient click + mechanical spring sound
       const osc1 = ctx.createOscillator();
       const osc2 = ctx.createOscillator();
       const gainNode = ctx.createGain();
 
-      osc1.type = "sine";
+      osc1.type = OSCILLATOR_TYPE.SINE;
       osc1.frequency.setValueAtTime(3200, now);
       osc1.frequency.exponentialRampToValueAtTime(1000, now + 0.004);
 
-      osc2.type = "triangle";
+      osc2.type = OSCILLATOR_TYPE.TRIANGLE;
       osc2.frequency.setValueAtTime(2400, now + 0.003);
       osc2.frequency.exponentialRampToValueAtTime(600, now + 0.012);
 
@@ -55,7 +101,7 @@ const playSwitchSound = (type, muted) => {
       gainNode.gain.exponentialRampToValueAtTime(0.001, now + 0.022);
 
       const filter = ctx.createBiquadFilter();
-      filter.type = "highpass";
+      filter.type = FILTER_TYPE.HIGHPASS;
       filter.frequency.value = 1200;
 
       osc1.connect(filter);
@@ -68,12 +114,12 @@ const playSwitchSound = (type, muted) => {
       osc1.stop(now + 0.025);
       osc2.stop(now + 0.025);
 
-    } else if (type === "linear") {
+    } else if (type === SWITCH_SOUND.LINEAR) {
       // Red Switch: Deep, satisfying, plastic-on-plastic "thock"
       const osc = ctx.createOscillator();
       const gainNode = ctx.createGain();
 
-      osc.type = "triangle";
+      osc.type = OSCILLATOR_TYPE.TRIANGLE;
       osc.frequency.setValueAtTime(130, now);
       osc.frequency.exponentialRampToValueAtTime(50, now + 0.04);
 
@@ -81,7 +127,7 @@ const playSwitchSound = (type, muted) => {
       gainNode.gain.exponentialRampToValueAtTime(0.001, now + 0.04);
 
       const filter = ctx.createBiquadFilter();
-      filter.type = "lowpass";
+      filter.type = FILTER_TYPE.LOWPASS;
       filter.frequency.value = 280;
 
       osc.connect(filter);
@@ -91,12 +137,12 @@ const playSwitchSound = (type, muted) => {
       osc.start(now);
       osc.stop(now + 0.045);
 
-    } else if (type === "tactile") {
+    } else if (type === SWITCH_SOUND.TACTILE) {
       // Brown Switch: A perfect hybrid of tactile bump + rounded plastic collision
       const osc = ctx.createOscillator();
       const gainNode = ctx.createGain();
 
-      osc.type = "sine";
+      osc.type = OSCILLATOR_TYPE.SINE;
       osc.frequency.setValueAtTime(190, now);
       osc.frequency.exponentialRampToValueAtTime(65, now + 0.032);
 
@@ -104,7 +150,7 @@ const playSwitchSound = (type, muted) => {
       gainNode.gain.exponentialRampToValueAtTime(0.001, now + 0.032);
 
       const filter = ctx.createBiquadFilter();
-      filter.type = "lowpass";
+      filter.type = FILTER_TYPE.LOWPASS;
       filter.frequency.value = 500;
 
       osc.connect(filter);
@@ -322,10 +368,10 @@ export default function KeyboardTester() {
   const [keyHistory, setKeyHistory] = useState([]);
   const [maxRollover, setMaxRollover] = useState(0);
   const [blockDefault, setBlockDefault] = useState(true);
-  const [switchSound, setSwitchSound] = useState("clicky");
-  const [layoutType, setLayoutType] = useState("TKL");
-  const [theme, setTheme] = useState("carbon");
-  const [osLayout, setOsLayout] = useState("win"); // "win" | "mac"
+  const [switchSound, setSwitchSound] = useState(SWITCH_SOUND.CLICKY);
+  const [layoutType, setLayoutType] = useState(LAYOUT.TKL);
+  const [theme, setTheme] = useState(THEME.CARBON);
+  const [osLayout, setOsLayout] = useState(OS_LAYOUT.WIN); // "win" | "mac"
 
   // Detect user's operational layout on mounting
   useEffect(() => {
@@ -333,7 +379,7 @@ export default function KeyboardTester() {
       const userAgent = window.navigator.userAgent || window.navigator.platform || "";
       const isMac = /Mac|iPod|iPhone|iPad|Macintosh|MacIntel/i.test(userAgent);
       if (isMac) {
-        setOsLayout("mac");
+        setOsLayout(OS_LAYOUT.MAC);
       }
     }
   }, []);
@@ -345,7 +391,7 @@ export default function KeyboardTester() {
       if (!code) return;
 
       // Click Audio Synthesizer triggering
-      playSwitchSound(switchSound, switchSound === "mute");
+      playSwitchSound(switchSound, switchSound === SWITCH_SOUND.MUTE);
 
       // Register currently pressed key
       setPressedKeys((prev) => {
@@ -364,7 +410,7 @@ export default function KeyboardTester() {
       // Set stats info
       const keyDetail = {
         code,
-        key: targetLabel.label === " " ? "Space" : targetLabel.label,
+        key: targetLabel.label === KEY_CHAR.SPACE ? KEY_NAME.SPACE : targetLabel.label,
         keyCode: e.keyCode || e.which,
         time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false })
       };
@@ -424,7 +470,7 @@ export default function KeyboardTester() {
 
   // Helper function to dynamically map Mac labels onto keycaps
   const getMacSensitiveDetails = (key) => {
-    if (osLayout === "mac") {
+    if (osLayout === OS_LAYOUT.MAC) {
       switch (key.code) {
         case "Backspace":
           return { ...key, label: "Delete", subLabel: "⌫" };
@@ -452,11 +498,11 @@ export default function KeyboardTester() {
 
   // Helper renderer for standard key caps
   const renderKeycap = (key) => {
-    if (key.type === "gap") {
+    if (key.type === KEY_TYPE.GAP) {
       return <div key={key.code} className={`${key.width} shrink-0`} />;
     }
 
-    if (key.type === "spacer") {
+    if (key.type === KEY_TYPE.SPACER) {
       return <div key={key.code} className={`${key.height} w-full shrink-0`} />;
     }
 
@@ -499,7 +545,7 @@ export default function KeyboardTester() {
   // Dynamically compile the layout rows based on OS selection
   const activeLayoutRows = [
     ...LAYOUT_60_CORES,
-    osLayout === "mac" ? ROW_4_MAC : ROW_4_WIN
+    osLayout === OS_LAYOUT.MAC ? ROW_4_MAC : ROW_4_WIN
   ];
 
   return (
@@ -536,9 +582,9 @@ export default function KeyboardTester() {
               {/* OS Layout Toggler */}
               <div className="flex bg-slate-200/80 p-0.5 rounded-xl border border-slate-200/40">
                 <button
-                  onClick={() => setOsLayout("win")}
+                  onClick={() => setOsLayout(OS_LAYOUT.WIN)}
                   className={`px-3 py-1.5 text-xs font-semibold rounded-lg transition-all ${
-                    osLayout === "win"
+                    osLayout === OS_LAYOUT.WIN
                       ? "bg-white text-slate-800 shadow-sm"
                       : "text-slate-500 hover:text-slate-800"
                   }`}
@@ -546,9 +592,9 @@ export default function KeyboardTester() {
                   Windows Layout
                 </button>
                 <button
-                  onClick={() => setOsLayout("mac")}
+                  onClick={() => setOsLayout(OS_LAYOUT.MAC)}
                   className={`px-3 py-1.5 text-xs font-semibold rounded-lg transition-all ${
-                    osLayout === "mac"
+                    osLayout === OS_LAYOUT.MAC
                       ? "bg-white text-slate-800 shadow-sm"
                       : "text-slate-500 hover:text-slate-800"
                   }`}
@@ -560,9 +606,9 @@ export default function KeyboardTester() {
               {/* Layout Size Toggler */}
               <div className="flex bg-slate-200/80 p-0.5 rounded-xl border border-slate-200/40">
                 <button
-                  onClick={() => setLayoutType("TKL")}
+                  onClick={() => setLayoutType(LAYOUT.TKL)}
                   className={`px-3 py-1.5 text-xs font-semibold rounded-lg transition-all ${
-                    layoutType === "TKL"
+                    layoutType === LAYOUT.TKL
                       ? "bg-white text-slate-800 shadow-sm"
                       : "text-slate-500 hover:text-slate-800"
                   }`}
@@ -570,9 +616,9 @@ export default function KeyboardTester() {
                   TKL (80%)
                 </button>
                 <button
-                  onClick={() => setLayoutType("60")}
+                  onClick={() => setLayoutType(LAYOUT.COMPACT_60)}
                   className={`px-3 py-1.5 text-xs font-semibold rounded-lg transition-all ${
-                    layoutType === "60"
+                    layoutType === LAYOUT.COMPACT_60
                       ? "bg-white text-slate-800 shadow-sm"
                       : "text-slate-500 hover:text-slate-800"
                   }`}
@@ -588,7 +634,7 @@ export default function KeyboardTester() {
             <div className="min-w-[920px] flex flex-col space-y-4">
               
               {/* TKL Function Row Header */}
-              {layoutType === "TKL" && (
+              {layoutType === LAYOUT.TKL && (
                 <div className="flex justify-between items-center w-full">
                   {/* Left Function Area */}
                   <div className="flex gap-1">
@@ -615,7 +661,7 @@ export default function KeyboardTester() {
                 </div>
 
                 {/* TKL Right hand navigation block columns */}
-                {layoutType === "TKL" && (
+                {layoutType === LAYOUT.TKL && (
                   <div className="flex flex-col space-y-1.5 w-[145px] shrink-0 border-l border-white/5 pl-4 ml-auto">
                     {/* Rows 1, 2, 3, 4, 5 of Nav Cluster */}
                     {TKL_NAV_CLUSTER.slice(1).map((row, idx) => (
@@ -668,16 +714,16 @@ export default function KeyboardTester() {
                 </label>
                 <div className="grid grid-cols-2 gap-2">
                   {[
-                    { id: "clicky", name: "Clicky Blue", icon: Volume2 },
-                    { id: "tactile", name: "Tactile Brown", icon: Volume2 },
-                    { id: "linear", name: "Linear Red", icon: Volume2 },
-                    { id: "mute", name: "Sound Off", icon: VolumeX }
+                    { id: SWITCH_SOUND.CLICKY, name: "Clicky Blue", icon: Volume2 },
+                    { id: SWITCH_SOUND.TACTILE, name: "Tactile Brown", icon: Volume2 },
+                    { id: SWITCH_SOUND.LINEAR, name: "Linear Red", icon: Volume2 },
+                    { id: SWITCH_SOUND.MUTE, name: "Sound Off", icon: VolumeX }
                   ].map((sw) => (
                     <button
                       key={sw.id}
                       onClick={() => {
                         setSwitchSound(sw.id);
-                        playSwitchSound(sw.id, sw.id === "mute");
+                        playSwitchSound(sw.id, sw.id === SWITCH_SOUND.MUTE);
                       }}
                       className={`p-2.5 text-left rounded-xl border text-xs font-semibold flex items-center justify-between transition-all ${
                         switchSound === sw.id
@@ -746,7 +792,7 @@ export default function KeyboardTester() {
                   <span className="text-2xl font-extrabold text-slate-900 tracking-tight">
                     {Object.keys(testedKeys).length}{" "}
                     <span className="text-xs font-medium text-slate-400">
-                      / {layoutType === "TKL" ? "87" : "61"} total
+                      / {layoutType === LAYOUT.TKL ? "87" : "61"} total
                     </span>
                   </span>
                 </div>

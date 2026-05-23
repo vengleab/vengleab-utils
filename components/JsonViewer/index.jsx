@@ -62,7 +62,13 @@ const THEMES = [
   "twilight"
 ];
 
-const ICON_STYLES = ["circle", "square", "triangle"];
+const ICON_STYLE = {
+  CIRCLE: "circle",
+  SQUARE: "square",
+  TRIANGLE: "triangle"
+};
+
+const ICON_STYLES = [ICON_STYLE.CIRCLE, ICON_STYLE.SQUARE, ICON_STYLE.TRIANGLE];
 const INDENT_WIDTHS = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
 const COLLAPSED_OPTIONS = [
   { value: false, label: "None" },
@@ -81,7 +87,7 @@ const STRING_COLLAPSE_OPTIONS = [
 export default function JSONView({ json }) {
   const [settings, setSettings] = useState({
     theme: "monokai",
-    iconStyle: "circle",
+    iconStyle: ICON_STYLE.CIRCLE,
     onEdit: false,
     onAdd: false,
     onDelete: false,
