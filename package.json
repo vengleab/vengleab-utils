@@ -39,7 +39,7 @@
     "shortid": "^2.2.15",
     "tailwind-merge": "^3.5.0",
     "text-mask-addons": "^3.8.0",
-    "vercel": "^39.2.5"
+    "vercel": "^54.4.1"
   },
   "keywords": [],
   "devDependencies": {
