@@ -13,7 +13,9 @@ export const PAGE = {
   REGEX_TESTER: "regex-tester",
   KEYBOARD_TESTER: "keyboard-tester",
   DISPLAY_COLOR_TESTER: "display-color-tester",
-  QR_CODE_GENERATOR: "qr-code-generator"
+  QR_CODE_GENERATOR: "qr-code-generator",
+  LUCKY_DRAW: "lucky-draw",
+  TABLE_CONVERTER: "table-converter"
 };
 
 export const MENU_ITEMS = {
@@ -56,5 +58,14 @@ export const MENU_ITEMS = {
   qr_code_generator: {
     name: "QR Code Generator",
     page: PAGE.QR_CODE_GENERATOR
+  },
+  lucky_draw: {
+    name: "Lucky Draw Tools",
+    page: PAGE.LUCKY_DRAW
+  },
+  table_converter: {
+    name: "Table Converter",
+    page: PAGE.TABLE_CONVERTER
   }
 };
+

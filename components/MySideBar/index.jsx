@@ -18,7 +18,9 @@ import {
   Keyboard,
   Monitor,
   QrCode,
-  Search
+  Search,
+  Sparkles,
+  Table
 } from "lucide-react";
 import { MENU_ITEMS, PAGE } from "../../constants/PageURL";
 
@@ -35,7 +37,9 @@ const ICON_MAP = {
   regex_tester: Regex,
   keyboard_tester: Keyboard,
   display_color_tester: Monitor,
-  qr_code_generator: QrCode
+  qr_code_generator: QrCode,
+  lucky_draw: Sparkles,
+  table_converter: Table
 };
 
 export default function MySideBar({
