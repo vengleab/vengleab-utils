@@ -20,7 +20,7 @@ import {
 import Layout from "../../components/Layout";
 import PageContext from "../../contexts/page";
 import { PAGE } from "../../constants/PageURL";
-import { useTableConverterViewModel } from "./use-table-converter";
+import { useTableConverterViewModel } from "../../components/table-converter/use-table-converter";
 
 export default function TableConverter() {
   const {
