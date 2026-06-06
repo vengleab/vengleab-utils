@@ -254,12 +254,32 @@ export default function LuckyDrawTools() {
       .map((item) => item.trim())
       .filter((item) => item !== "");
     setParticipants(parsed);
+
+    // Sync scratch card winner if in scratch tab and card is not cleaned
+    if (activeTab === "scratch" && !scratchCleaned) {
+      if (parsed.length > 0) {
+        const rIdx = Math.floor(Math.random() * parsed.length);
+        setScratchWinner(parsed[rIdx]);
+      } else {
+        setScratchWinner("");
+      }
+    }
   };
 
   const applyPreset = (presetKey) => {
     const list = PRESETS[presetKey];
     setInputText(list.join("\n"));
     setParticipants(list);
+
+    if (activeTab === "scratch") {
+      if (list.length > 0) {
+        const rIdx = Math.floor(Math.random() * list.length);
+        setScratchWinner(list[rIdx]);
+      } else {
+        setScratchWinner("");
+      }
+      setTimeout(initScratchCard, 100);
+    }
   };
 
   const addWinnerToHistory = (winner) => {
@@ -269,12 +289,50 @@ export default function LuckyDrawTools() {
     ];
     setWinnersHistory(nextHistory);
     localStorage.setItem("lucky_draw_history", JSON.stringify(nextHistory));
+  };
 
-    if (removeOnWin) {
-      const remaining = participants.filter((p) => p !== winner);
+  const handleConfirmWinner = () => {
+    setShowResultModal(false);
+
+    if (removeOnWin && drawResult) {
+      const remaining = participants.filter((p) => p !== drawResult);
       setParticipants(remaining);
       setInputText(remaining.join("\n"));
+
+      if (activeTab === "scratch") {
+        if (remaining.length > 0) {
+          const rIdx = Math.floor(Math.random() * remaining.length);
+          setScratchWinner(remaining[rIdx]);
+        } else {
+          setScratchWinner("");
+        }
+        setTimeout(initScratchCard, 100);
+      }
+    } else if (activeTab === "scratch") {
+      if (participants.length > 0) {
+        const rIdx = Math.floor(Math.random() * participants.length);
+        setScratchWinner(participants[rIdx]);
+      } else {
+        setScratchWinner("");
+      }
+      setTimeout(initScratchCard, 100);
     }
+
+    if (activeTab === "gift") {
+      setGiftState("idle");
+    }
+
+    setDrawResult(null);
+  };
+
+  const handleResetScratchCard = () => {
+    if (participants.length > 0) {
+      const rIdx = Math.floor(Math.random() * participants.length);
+      setScratchWinner(participants[rIdx]);
+    } else {
+      setScratchWinner("");
+    }
+    initScratchCard();
   };
 
   const triggerConfetti = () => {
@@ -505,8 +563,8 @@ export default function LuckyDrawTools() {
     // Target stop angle in range
     const targetAngle = pointerOffset - (winIdx * anglePerSeg + anglePerSeg / 2);
 
-    // Number of full rotations
-    const spins = 6 + Math.random() * 3;
+    // Number of full rotations (must be an integer to ensure we stop exactly at targetAngle)
+    const spins = 6 + Math.floor(Math.random() * 4);
     const finalAngle = targetAngle + spins * 2 * Math.PI;
 
     const duration = 6500; // 6.5s smooth deceleration
@@ -645,7 +703,7 @@ export default function LuckyDrawTools() {
       }
       setTimeout(initScratchCard, 100);
     }
-  }, [activeTab, participants]);
+  }, [activeTab]);
 
   const handleScratchMove = (e) => {
     if (!isScratching.current || scratchCleaned) return;
@@ -742,11 +800,10 @@ export default function LuckyDrawTools() {
             <div className="flex items-center gap-2 bg-white px-4 py-2 border border-slate-200 rounded-2xl shadow-sm">
               <button
                 onClick={() => setIsSoundMuted(!isSoundMuted)}
-                className={`p-2 rounded-xl transition-all ${
-                  isSoundMuted
-                    ? "text-slate-400 hover:text-slate-500 bg-slate-50"
-                    : "text-amber-500 bg-amber-50 hover:bg-amber-100"
-                }`}
+                className={`p-2 rounded-xl transition-all ${isSoundMuted
+                  ? "text-slate-400 hover:text-slate-500 bg-slate-50"
+                  : "text-amber-500 bg-amber-50 hover:bg-amber-100"
+                  }`}
                 title={isSoundMuted ? "Unmute sound" : "Mute sound"}
               >
                 {isSoundMuted ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
@@ -782,11 +839,10 @@ export default function LuckyDrawTools() {
                       setDrawResult(null);
                     }}
                     disabled={isDrawing}
-                    className={`flex-1 py-3 px-2 rounded-2xl font-black text-xs sm:text-sm tracking-wider uppercase transition-all duration-200 flex flex-col items-center justify-center ${
-                      activeTab === tab.id
-                        ? "bg-slate-800 text-white shadow-lg border border-slate-700 bg-gradient-to-tr from-amber-500/10 to-transparent"
-                        : "text-slate-400 hover:text-slate-200 hover:bg-[#252525]"
-                    }`}
+                    className={`flex-1 py-3 px-2 rounded-2xl font-black text-xs sm:text-sm tracking-wider uppercase transition-all duration-200 flex flex-col items-center justify-center ${activeTab === tab.id
+                      ? "bg-slate-800 text-white shadow-lg border border-slate-700 bg-gradient-to-tr from-amber-500/10 to-transparent"
+                      : "text-slate-400 hover:text-slate-200 hover:bg-[#252525]"
+                      }`}
                   >
                     <span>{tab.label}</span>
                     <span className="text-[9px] font-medium tracking-normal text-slate-500 hidden sm:inline uppercase mt-0.5">
@@ -956,7 +1012,7 @@ export default function LuckyDrawTools() {
                       </div>
 
                       <button
-                        onClick={initScratchCard}
+                        onClick={handleResetScratchCard}
                         className="px-8 py-3 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-2xl transition-all text-sm flex items-center gap-2 border border-slate-200"
                       >
                         <RotateCcw className="w-4 h-4" /> Reset New Card
@@ -1024,11 +1080,10 @@ export default function LuckyDrawTools() {
                       <button
                         key={theme.id}
                         onClick={() => setActiveTheme(theme.id)}
-                        className={`p-2 bg-slate-50 border rounded-xl flex flex-col items-center gap-2 transition-all ${
-                          activeTheme === theme.id
-                            ? "border-amber-500 bg-amber-50/20"
-                            : "border-slate-200 hover:border-slate-300"
-                        }`}
+                        className={`p-2 bg-slate-50 border rounded-xl flex flex-col items-center gap-2 transition-all ${activeTheme === theme.id
+                          ? "border-amber-500 bg-amber-50/20"
+                          : "border-slate-200 hover:border-slate-300"
+                          }`}
                       >
                         <span className="text-[10px] font-bold text-slate-600">{theme.label}</span>
                         <div className="flex gap-0.5">
@@ -1123,10 +1178,7 @@ export default function LuckyDrawTools() {
 
                 <div className="flex gap-3">
                   <button
-                    onClick={() => {
-                      setShowResultModal(false);
-                      setDrawResult(null);
-                    }}
+                    onClick={handleConfirmWinner}
                     className="flex-1 py-3 px-6 bg-slate-900 hover:bg-slate-800 text-white font-black text-xs uppercase tracking-wider rounded-2xl transition-all shadow-lg border-2 border-slate-800"
                   >
                     Confirm Winner
