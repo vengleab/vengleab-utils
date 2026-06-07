@@ -13,6 +13,7 @@ import Layout from "../../components/Layout";
 import PageContext from "../../contexts/page";
 import { PAGE } from "../../constants/PageURL";
 import InputMast from "../../components/InputMask";
+import DatePicker from "../../components/DatePicker";
 
 const TERM = {
   MONTHLY: "month",
@@ -184,19 +185,13 @@ export default function LoadCalculator() {
                     />
                   </div>
 
-                  <div className="flex flex-col space-y-2">
-                    <label className="text-sm font-semibold text-slate-700">
-                      Start Date ( Optional )
-                    </label>
-                    <input
-                      type="date"
-                      value={moment(startPayingDate).format("YYYY-MM-DD")}
-                      onChange={e =>
-                        setStartPayingDate(new Date(e.target.value))
-                      }
-                      className="w-full h-11 px-4 rounded-xl border border-slate-200 bg-white text-sm outline-none focus:ring-2 focus:ring-teal-500/20"
-                    />
-                  </div>
+                  <DatePicker
+                    label="Start Date ( Optional )"
+                    value={startPayingDate}
+                    onChange={val => setStartPayingDate(val ? new Date(val) : new Date())}
+                    focusRingClass="focus:ring-teal-500/20"
+                    className="h-11 focus:border-teal-500"
+                  />
                 </div>
               </div>
             </motion.div>

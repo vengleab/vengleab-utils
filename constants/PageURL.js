@@ -15,7 +15,8 @@ export const PAGE = {
   DISPLAY_COLOR_TESTER: "display-color-tester",
   QR_CODE_GENERATOR: "qr-code-generator",
   LUCKY_DRAW: "lucky-draw",
-  TABLE_CONVERTER: "table-converter"
+  TABLE_CONVERTER: "table-converter",
+  DAY_COUNT: "day-count"
 };
 
 export const MENU_ITEMS = {
@@ -66,6 +67,11 @@ export const MENU_ITEMS = {
   table_converter: {
     name: "Table Converter",
     page: PAGE.TABLE_CONVERTER
+  },
+  day_count: {
+    name: "Day Count Calculator",
+    page: PAGE.DAY_COUNT
   }
 };
+
 

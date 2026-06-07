@@ -133,5 +133,15 @@ export const TOOLS = [
     color: "text-cyan-600",
     bg: "bg-cyan-100/50",
     border: "hover:border-cyan-500/30 group-hover:shadow-cyan-500/10"
+  },
+  {
+    id: "day_count",
+    name: "Day Count",
+    description: "Calculate days between dates, adjust dates, and track custom countdowns/milestones with local storage.",
+    icon: CalendarDays,
+    color: "text-violet-600",
+    bg: "bg-violet-100/50",
+    border: "hover:border-violet-500/30 group-hover:shadow-violet-500/10"
   }
 ];
+

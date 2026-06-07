@@ -39,7 +39,8 @@ const ICON_MAP = {
   display_color_tester: Monitor,
   qr_code_generator: QrCode,
   lucky_draw: Sparkles,
-  table_converter: Table
+  table_converter: Table,
+  day_count: CalendarDays
 };
 
 export default function MySideBar({
