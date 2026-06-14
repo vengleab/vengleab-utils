@@ -16,7 +16,8 @@ export const PAGE = {
   QR_CODE_GENERATOR: "qr-code-generator",
   LUCKY_DRAW: "lucky-draw",
   TABLE_CONVERTER: "table-converter",
-  DAY_COUNT: "day-count"
+  DAY_COUNT: "day-count",
+  GOLD_PRICE: "gold-price"
 };
 
 export const MENU_ITEMS = {
@@ -71,6 +72,10 @@ export const MENU_ITEMS = {
   day_count: {
     name: "Day Count Calculator",
     page: PAGE.DAY_COUNT
+  },
+  gold_price: {
+    name: "Gold Price Tracker",
+    page: PAGE.GOLD_PRICE
   }
 };
 

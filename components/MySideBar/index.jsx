@@ -20,7 +20,8 @@ import {
   QrCode,
   Search,
   Sparkles,
-  Table
+  Table,
+  Coins
 } from "lucide-react";
 import { MENU_ITEMS, PAGE } from "../../constants/PageURL";
 
@@ -40,7 +41,8 @@ const ICON_MAP = {
   qr_code_generator: QrCode,
   lucky_draw: Sparkles,
   table_converter: Table,
-  day_count: CalendarDays
+  day_count: CalendarDays,
+  gold_price: Coins
 };
 
 export default function MySideBar({

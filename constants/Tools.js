@@ -11,7 +11,8 @@ import {
   Monitor,
   QrCode,
   Sparkles,
-  Table
+  Table,
+  Coins
 } from "lucide-react";
 
 export const TOOLS = [
@@ -142,6 +143,15 @@ export const TOOLS = [
     color: "text-violet-600",
     bg: "bg-violet-100/50",
     border: "hover:border-violet-500/30 group-hover:shadow-violet-500/10"
+  },
+  {
+    id: "gold_price",
+    name: "Gold Price Tracker",
+    description: "Track real-time gold spot prices, convert across international & Cambodian units (Damleung, Chi), and view historical trends.",
+    icon: Coins,
+    color: "text-yellow-600",
+    bg: "bg-yellow-100/50",
+    border: "hover:border-yellow-500/30 group-hover:shadow-yellow-500/10"
   }
 ];
 
