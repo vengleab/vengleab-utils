@@ -13,6 +13,9 @@ module.exports = {
     'react/react-in-jsx-scope': 'off',
   },
   settings: {
+    react: {
+      version: 'detect',
+    },
     'import/resolver': {
       node: {
         extensions: ['.js', '.jsx'],
