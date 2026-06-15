@@ -1,82 +1,80 @@
 /* eslint-disable import/prefer-default-export */
 export const PAGE = {
-  STRING_LEN: "/string-len",
-  INDEX: "/",
-  BASE_64_ENCODE_DECODER: "base-64-encode-decoder",
-  JSON_BEAUTIFIER: "json-beautifier",
-  JWT_TOKEN_VIEWER: "jwt-token-viewer",
-  LOAN_CALCULATOR: "loan-calculator",
-  KH_SALARY_TAX_CALCULATOR: "kh-salary-tax-calculator",
-  KH_SALARY_TAX_CALCULATOR_GROSS: "kh-salary-tax-calculator-gross",
-  PASSWORD_GENERATOR: "password-generator",
-  RANDOM_GROUP_GENERATOR: "random-group-generator",
-  REGEX_TESTER: "regex-tester",
-  KEYBOARD_TESTER: "keyboard-tester",
-  DISPLAY_COLOR_TESTER: "display-color-tester",
-  QR_CODE_GENERATOR: "qr-code-generator",
-  LUCKY_DRAW: "lucky-draw",
-  TABLE_CONVERTER: "table-converter",
-  DAY_COUNT: "day-count",
-  GOLD_PRICE: "gold-price"
+  STRING_LEN: '/string-len',
+  INDEX: '/',
+  BASE_64_ENCODE_DECODER: 'base-64-encode-decoder',
+  JSON_BEAUTIFIER: 'json-beautifier',
+  JWT_TOKEN_VIEWER: 'jwt-token-viewer',
+  LOAN_CALCULATOR: 'loan-calculator',
+  KH_SALARY_TAX_CALCULATOR: 'kh-salary-tax-calculator',
+  KH_SALARY_TAX_CALCULATOR_GROSS: 'kh-salary-tax-calculator-gross',
+  PASSWORD_GENERATOR: 'password-generator',
+  RANDOM_GROUP_GENERATOR: 'random-group-generator',
+  REGEX_TESTER: 'regex-tester',
+  KEYBOARD_TESTER: 'keyboard-tester',
+  DISPLAY_COLOR_TESTER: 'display-color-tester',
+  QR_CODE_GENERATOR: 'qr-code-generator',
+  LUCKY_DRAW: 'lucky-draw',
+  TABLE_CONVERTER: 'table-converter',
+  DAY_COUNT: 'day-count',
+  GOLD_PRICE: 'gold-price',
 };
 
 export const MENU_ITEMS = {
-  str_len: { name: "String Length", page: PAGE.STRING_LEN },
+  str_len: { name: 'String Length', page: PAGE.STRING_LEN },
   base_64_encode_decoder: {
-    name: "Base 64 encode and decoder",
-    page: PAGE.BASE_64_ENCODE_DECODER
+    name: 'Base 64 encode and decoder',
+    page: PAGE.BASE_64_ENCODE_DECODER,
   },
-  json_beautifier: { name: "JSON Beautifier", page: PAGE.JSON_BEAUTIFIER },
-  jwt_token_viewer: { name: "JWT Token Viewer", page: PAGE.JWT_TOKEN_VIEWER },
-  emi: { name: "Loan Calculator (EMI)", page: PAGE.LOAN_CALCULATOR },
+  json_beautifier: { name: 'JSON Beautifier', page: PAGE.JSON_BEAUTIFIER },
+  jwt_token_viewer: { name: 'JWT Token Viewer', page: PAGE.JWT_TOKEN_VIEWER },
+  emi: { name: 'Loan Calculator (EMI)', page: PAGE.LOAN_CALCULATOR },
   kh_tax: {
-    name: "Cambodia Gross Salary Calculator",
-    page: PAGE.KH_SALARY_TAX_CALCULATOR
+    name: 'Cambodia Gross Salary Calculator',
+    page: PAGE.KH_SALARY_TAX_CALCULATOR,
   },
   kh_tax_gross: {
-    name: "Cambodia Net Salary Calculator",
-    page: PAGE.KH_SALARY_TAX_CALCULATOR_GROSS
+    name: 'Cambodia Net Salary Calculator',
+    page: PAGE.KH_SALARY_TAX_CALCULATOR_GROSS,
   },
   password_generator: {
-    name: "Password Generator",
-    page: PAGE.PASSWORD_GENERATOR
+    name: 'Password Generator',
+    page: PAGE.PASSWORD_GENERATOR,
   },
   random_group_generator: {
-    name: "Random & Grouping",
-    page: PAGE.RANDOM_GROUP_GENERATOR
+    name: 'Random & Grouping',
+    page: PAGE.RANDOM_GROUP_GENERATOR,
   },
   regex_tester: {
-    name: "RegEx Tester",
-    page: PAGE.REGEX_TESTER
+    name: 'RegEx Tester',
+    page: PAGE.REGEX_TESTER,
   },
   keyboard_tester: {
-    name: "Keyboard Tester",
-    page: PAGE.KEYBOARD_TESTER
+    name: 'Keyboard Tester',
+    page: PAGE.KEYBOARD_TESTER,
   },
   display_color_tester: {
-    name: "Display Tester",
-    page: PAGE.DISPLAY_COLOR_TESTER
+    name: 'Display Tester',
+    page: PAGE.DISPLAY_COLOR_TESTER,
   },
   qr_code_generator: {
-    name: "QR Code Generator",
-    page: PAGE.QR_CODE_GENERATOR
+    name: 'QR Code Generator',
+    page: PAGE.QR_CODE_GENERATOR,
   },
   lucky_draw: {
-    name: "Lucky Draw Tools",
-    page: PAGE.LUCKY_DRAW
+    name: 'Lucky Draw Tools',
+    page: PAGE.LUCKY_DRAW,
   },
   table_converter: {
-    name: "Table Converter",
-    page: PAGE.TABLE_CONVERTER
+    name: 'Table Converter',
+    page: PAGE.TABLE_CONVERTER,
   },
   day_count: {
-    name: "Day Count Calculator",
-    page: PAGE.DAY_COUNT
+    name: 'Day Count Calculator',
+    page: PAGE.DAY_COUNT,
   },
   gold_price: {
-    name: "Gold Price Tracker",
-    page: PAGE.GOLD_PRICE
-  }
+    name: 'Gold Price Tracker',
+    page: PAGE.GOLD_PRICE,
+  },
 };
-
-

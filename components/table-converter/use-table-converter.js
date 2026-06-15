@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo } from 'react';
 import {
   detectFormat,
   parseHTMLTable,
@@ -7,68 +7,68 @@ import {
   generateDelimitedText,
   generateMarkdownTable,
   generateJSONArrayOfObjects,
-  SAMPLE_CSV
-} from "./utils";
+  SAMPLE_CSV,
+} from './utils';
 
 export function useTableConverterViewModel() {
-  const [inputText, setInputText] = useState("");
-  const [data, setData] = useState([[""]]);
-  const [inputFormat, setInputFormat] = useState("auto"); // auto, html, csv, tsv
-  const [csvDelimiter, setCsvDelimiter] = useState(",");
+  const [inputText, setInputText] = useState('');
+  const [data, setData] = useState([['']]);
+  const [inputFormat, setInputFormat] = useState('auto'); // auto, html, csv, tsv
+  const [csvDelimiter, setCsvDelimiter] = useState(',');
   const [hasHeader, setHasHeader] = useState(true);
-  const [htmlStyleType, setHtmlStyleType] = useState("tailwind"); // tailwind, inline, plain
+  const [htmlStyleType, setHtmlStyleType] = useState('tailwind'); // tailwind, inline, plain
 
   // Output states
-  const [activeOutputTab, setActiveOutputTab] = useState("preview"); // preview, html, csv, tsv, md, json
+  const [activeOutputTab, setActiveOutputTab] = useState('preview'); // preview, html, csv, tsv, md, json
   const [copiedSection, setCopiedSection] = useState(null);
 
   // Search state in Live Preview
-  const [previewSearch, setPreviewSearch] = useState("");
+  const [previewSearch, setPreviewSearch] = useState('');
 
   // Track autodetected format
   const autodetectedFormat = useMemo(() => {
-    if (!inputText) return "None";
+    if (!inputText) return 'None';
     const detected = detectFormat(inputText);
-    if (detected === "csv-semi") return "CSV (Semicolon)";
-    if (detected === "csv-pipe") return "CSV (Pipe)";
-    if (detected === "tsv") return "TSV (Tab)";
-    if (detected === "html") return "HTML Table";
-    return "CSV (Comma)";
+    if (detected === 'csv-semi') return 'CSV (Semicolon)';
+    if (detected === 'csv-pipe') return 'CSV (Pipe)';
+    if (detected === 'tsv') return 'TSV (Tab)';
+    if (detected === 'html') return 'HTML Table';
+    return 'CSV (Comma)';
   }, [inputText]);
 
   // Sync Input Text -> data (only when raw text changes from textarea)
   const handleRawTextChange = (value) => {
     setInputText(value);
     if (!value.trim()) {
-      setData([[""]]);
+      setData([['']]);
       return;
     }
 
     let format = inputFormat;
     let delimiter = csvDelimiter;
 
-    if (format === "auto") {
+    if (format === 'auto') {
       const detected = detectFormat(value);
-      if (detected === "csv-semi") {
-        format = "csv";
-        delimiter = ";";
-      } else if (detected === "csv-pipe") {
-        format = "csv";
-        delimiter = "|";
-      } else if (detected === "tsv") {
-        format = "tsv";
-      } else if (detected === "html") {
-        format = "html";
+      if (detected === 'csv-semi') {
+        format = 'csv';
+        delimiter = ';';
+      } else if (detected === 'csv-pipe') {
+        format = 'csv';
+        delimiter = '|';
+      } else if (detected === 'tsv') {
+        format = 'tsv';
+      } else if (detected === 'html') {
+        format = 'html';
       } else {
-        format = "csv";
-        delimiter = ",";
+        format = 'csv';
+        delimiter = ',';
       }
-    } else if (format === "tsv") {
-      delimiter = "\t";
+    } else if (format === 'tsv') {
+      delimiter = '\t';
     }
 
     let parsed = null;
-    if (format === "html") {
+    if (format === 'html') {
       parsed = parseHTMLTable(value);
     } else {
       parsed = parseDelimitedText(value, delimiter);
@@ -82,8 +82,8 @@ export function useTableConverterViewModel() {
   // Populate sample data
   const loadSample = () => {
     handleRawTextChange(SAMPLE_CSV);
-    setInputFormat("auto");
-    setCsvDelimiter(",");
+    setInputFormat('auto');
+    setCsvDelimiter(',');
     setHasHeader(true);
   };
 
@@ -101,28 +101,28 @@ export function useTableConverterViewModel() {
     let format = inputFormat;
     let delimiter = csvDelimiter;
 
-    if (format === "auto") {
+    if (format === 'auto') {
       const detected = detectFormat(inputText);
-      if (detected === "csv-semi") {
-        format = "csv";
-        delimiter = ";";
-      } else if (detected === "csv-pipe") {
-        format = "csv";
-        delimiter = "|";
-      } else if (detected === "tsv") {
-        format = "tsv";
-      } else if (detected === "html") {
-        format = "html";
+      if (detected === 'csv-semi') {
+        format = 'csv';
+        delimiter = ';';
+      } else if (detected === 'csv-pipe') {
+        format = 'csv';
+        delimiter = '|';
+      } else if (detected === 'tsv') {
+        format = 'tsv';
+      } else if (detected === 'html') {
+        format = 'html';
       } else {
-        format = "csv";
-        delimiter = ",";
+        format = 'csv';
+        delimiter = ',';
       }
-    } else if (format === "tsv") {
-      delimiter = "\t";
+    } else if (format === 'tsv') {
+      delimiter = '\t';
     }
 
-    let text = "";
-    if (format === "html") {
+    let text = '';
+    if (format === 'html') {
       text = generateHTMLTable(newData, hasHeader, htmlStyleType);
     } else {
       text = generateDelimitedText(newData, delimiter);
@@ -135,24 +135,24 @@ export function useTableConverterViewModel() {
   // ----------------------------------------------------
 
   const handleCellChange = (rowIndex, colIndex, value) => {
-    const newData = data.map((row, rIdx) =>
-      row.map((cell, cIdx) => (rIdx === rowIndex && cIdx === colIndex ? value : cell))
-    );
+    const newData = data.map((row, rIdx) => row.map((cell, cIdx) => (
+      rIdx === rowIndex && cIdx === colIndex ? value : cell
+    )));
     updateDataAndSyncText(newData);
   };
 
   const addRow = () => {
     const colsCount = data[0]?.length || 1;
-    const newRow = Array(colsCount).fill("");
-    const newData = (data.length === 1 && data[0].length === 1 && data[0][0] === "")
-      ? [[""]]
+    const newRow = Array(colsCount).fill('');
+    const newData = data.length === 1 && data[0].length === 1 && data[0][0] === ''
+      ? [['']]
       : [...data, newRow];
     updateDataAndSyncText(newData);
   };
 
   const deleteRow = (rowIndex) => {
     if (data.length <= 1) {
-      updateDataAndSyncText([[""]]);
+      updateDataAndSyncText([['']]);
       return;
     }
     const newData = data.filter((_, rIdx) => rIdx !== rowIndex);
@@ -160,13 +160,13 @@ export function useTableConverterViewModel() {
   };
 
   const addColumn = () => {
-    const newData = data.map((row) => [...row, ""]);
+    const newData = data.map((row) => [...row, '']);
     updateDataAndSyncText(newData);
   };
 
   const deleteColumn = (colIndex) => {
     if (data[0].length <= 1) {
-      updateDataAndSyncText([[""]]);
+      updateDataAndSyncText([['']]);
       return;
     }
     const newData = data.map((row) => row.filter((_, cIdx) => cIdx !== colIndex));
@@ -174,26 +174,34 @@ export function useTableConverterViewModel() {
   };
 
   const transposeTable = () => {
-    if (!data || data.length === 0 || (data.length === 1 && data[0].length === 1 && data[0][0] === "")) return;
+    if (
+      !data
+      || data.length === 0
+      || (data.length === 1 && data[0].length === 1 && data[0][0] === '')
+    ) return;
     const colsCount = data[0].length;
-    const transposed = Array.from({ length: colsCount }, (_, colIdx) =>
-      data.map((row) => row[colIdx] || "")
-    );
+    const transposed = Array.from({ length: colsCount }, (_, colIdx) => data.map((row) => row[colIdx] || ''));
     updateDataAndSyncText(transposed);
   };
 
   const clearAll = () => {
-    setInputText("");
-    setData([[""]]);
+    setInputText('');
+    setData([['']]);
   };
 
   const handlePaste = (e) => {
-    const html = e.clipboardData.getData("text/html");
-    if (html && (html.includes("<table") || html.includes("<tr") || html.includes("<td") || html.includes("<th"))) {
+    const html = e.clipboardData.getData('text/html');
+    if (
+      html
+      && (html.includes('<table')
+        || html.includes('<tr')
+        || html.includes('<td')
+        || html.includes('<th'))
+    ) {
       e.preventDefault();
       const parser = new DOMParser();
-      const doc = parser.parseFromString(html, "text/html");
-      const table = doc.querySelector("table");
+      const doc = parser.parseFromString(html, 'text/html');
+      const table = doc.querySelector('table');
       if (table) {
         handleRawTextChange(table.outerHTML);
       } else {
@@ -206,15 +214,16 @@ export function useTableConverterViewModel() {
   // OUTPUTS MEMOIZATION
   // ----------------------------------------------------
 
-  const outputs = useMemo(() => {
-    return {
+  const outputs = useMemo(
+    () => ({
       html: generateHTMLTable(data, hasHeader, htmlStyleType),
-      csv: generateDelimitedText(data, ","),
-      tsv: generateDelimitedText(data, "\t"),
+      csv: generateDelimitedText(data, ','),
+      tsv: generateDelimitedText(data, '\t'),
       md: generateMarkdownTable(data, hasHeader),
-      json: generateJSONArrayOfObjects(data, hasHeader)
-    };
-  }, [data, hasHeader, htmlStyleType]);
+      json: generateJSONArrayOfObjects(data, hasHeader),
+    }),
+    [data, hasHeader, htmlStyleType],
+  );
 
   // Filtering body rows for visual preview
   const filteredBodyData = useMemo(() => {
@@ -223,9 +232,9 @@ export function useTableConverterViewModel() {
     if (!previewSearch) return bodyRows;
     const searchLower = previewSearch.toLowerCase();
 
-    return bodyRows.filter(({ row }) =>
-      row.some(cell => String(cell).toLowerCase().includes(searchLower))
-    );
+    return bodyRows.filter(({ row }) => row.some((cell) => (
+      String(cell).toLowerCase().includes(searchLower)
+    )));
   }, [data, previewSearch, hasHeader]);
 
   // Copy helper
@@ -240,22 +249,22 @@ export function useTableConverterViewModel() {
   const downloadFile = (type, content) => {
     if (!content) return;
     const mimeTypes = {
-      html: "text/html",
-      csv: "text/csv",
-      tsv: "text/tab-separated-values",
-      md: "text/markdown",
-      json: "application/json"
+      html: 'text/html',
+      csv: 'text/csv',
+      tsv: 'text/tab-separated-values',
+      md: 'text/markdown',
+      json: 'application/json',
     };
     const extensions = {
-      html: "html",
-      csv: "csv",
-      tsv: "tsv",
-      md: "md",
-      json: "json"
+      html: 'html',
+      csv: 'csv',
+      tsv: 'tsv',
+      md: 'md',
+      json: 'json',
     };
     const blob = new Blob([content], { type: mimeTypes[type] });
     const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
+    const a = document.createElement('a');
     a.href = url;
     a.download = `table-converted.${extensions[type]}`;
     document.body.appendChild(a);
@@ -296,6 +305,8 @@ export function useTableConverterViewModel() {
     clearAll,
     handlePaste,
     copyToClipboard,
-    downloadFile
+    downloadFile,
   };
 }
+
+export default useTableConverterViewModel;

@@ -1,8 +1,8 @@
-import { Storage } from "./Local";
+import { Storage } from './Local';
 
 class RegexTesterStorage extends Storage {
   constructor() {
-    super("RegexTesterStorage");
+    super('RegexTesterStorage');
   }
 }
 
