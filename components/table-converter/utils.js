@@ -57,8 +57,7 @@ export function parseHTMLTable(htmlString) {
         if (!grid[rowIndex]) grid[rowIndex] = [];
         // Only select direct cells, not nested table cells
         const cells = Array.from(tr.children).filter(
-          (el) => el.tagName.toLowerCase() === 'th'
-            || el.tagName.toLowerCase() === 'td',
+          (el) => el.tagName.toLowerCase() === 'th' || el.tagName.toLowerCase() === 'td',
         );
 
         cells.forEach((cell) => {
@@ -86,9 +85,7 @@ export function parseHTMLTable(htmlString) {
     let bodyRows = [];
 
     if (thead) {
-      const theadTrs = Array.from(thead.children).filter(
-        (el) => el.tagName.toLowerCase() === 'tr',
-      );
+      const theadTrs = Array.from(thead.children).filter((el) => el.tagName.toLowerCase() === 'tr');
       const theadGrid = parseTrs(theadTrs);
 
       if (theadGrid.length > 0) {
@@ -104,32 +101,22 @@ export function parseHTMLTable(htmlString) {
             }
           }
           // De-duplicate adjacent/matching values in the column (e.g. "No" from rowspan=2)
-          const uniqueValues = columnValues.filter(
-            (v, i, a) => a.indexOf(v) === i,
-          );
+          const uniqueValues = columnValues.filter((v, i, a) => a.indexOf(v) === i);
           headerRow.push(uniqueValues.join(' / '));
         }
       }
 
       const tbody = table.querySelector('tbody');
       const tbodyTrs = tbody
-        ? Array.from(tbody.children).filter(
-          (el) => el.tagName.toLowerCase() === 'tr',
-        )
-        : Array.from(table.children).filter(
-          (el) => el.tagName.toLowerCase() === 'tr',
-        );
+        ? Array.from(tbody.children).filter((el) => el.tagName.toLowerCase() === 'tr')
+        : Array.from(table.children).filter((el) => el.tagName.toLowerCase() === 'tr');
       bodyRows = parseTrs(tbodyTrs);
     } else {
       // No thead, parse all rows flat
       const tbody = table.querySelector('tbody');
       const allTrs = tbody
-        ? Array.from(tbody.children).filter(
-          (el) => el.tagName.toLowerCase() === 'tr',
-        )
-        : Array.from(table.children).filter(
-          (el) => el.tagName.toLowerCase() === 'tr',
-        );
+        ? Array.from(tbody.children).filter((el) => el.tagName.toLowerCase() === 'tr')
+        : Array.from(table.children).filter((el) => el.tagName.toLowerCase() === 'tr');
       bodyRows = parseTrs(allTrs);
     }
 
