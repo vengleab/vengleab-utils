@@ -18,7 +18,7 @@ This is a Next.js (pages router) app collecting small standalone developer/finan
 
 ### Adding a new tool/page
 
-A new tool requires updates in three places, which together drive routing, sidebar nav, and the landing page grid:
+A new tool requires updates in four places, which together drive routing, sidebar nav, and the landing page grid:
 
 1. **`pages/<tool-name>.jsx`** (or a folder with an `index.jsx`) — the tool's page component, wrapped in `Layout` from `components/Layout`.
 2. **`constants/PageURL.js`** — add a `PAGE.<NAME>` route constant and a corresponding entry in `MENU_ITEMS` (key, display `name`, and `page`). `MENU_ITEMS` drives the sidebar.
@@ -34,6 +34,11 @@ A new tool requires updates in three places, which together drive routing, sideb
 
 - `utils/` — shared helpers (`JWTUtils.js`, `base64.js`, `qrcode.js`, `storage/`).
 - `components/DatePicker`, `components/InputMask`, `components/JsonViewer`, `components/table-converter` — reusable UI building blocks shared across tool pages.
+
+### Client-side data and persistence
+
+- There are no API routes (`pages/api/` does not exist). Tools run entirely in the browser; any external data is fetched client-side (e.g. `gold-price.jsx` hits the CoinGecko `pax-gold` endpoint and caches responses in `localStorage`).
+- For persistence, extend the `Storage` base class from `utils/storage/Local.js` with a unique key prefix (see `utils/storage/DayCount.js`, `JWT.js`, etc.) rather than calling `localStorage` directly — the prefix namespaces each tool's keys. Because it touches `localStorage`, this code only runs client-side; guard against SSR / private-mode failures.
 
 ### Styling
 

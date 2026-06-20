@@ -13,6 +13,7 @@ import {
   Sparkles,
   Table,
   Coins,
+  Server,
 } from 'lucide-react';
 
 export const TOOLS = [
@@ -152,6 +153,15 @@ export const TOOLS = [
     color: 'text-yellow-600',
     bg: 'bg-yellow-100/50',
     border: 'hover:border-yellow-500/30 group-hover:shadow-yellow-500/10',
+  },
+  {
+    id: 'nginx_config',
+    name: 'Nginx Config Generator',
+    description: 'Generate production-ready nginx server blocks for static sites or reverse proxies, with SSL, gzip, security headers, and SPA support.',
+    icon: Server,
+    color: 'text-emerald-600',
+    bg: 'bg-emerald-100/50',
+    border: 'hover:border-emerald-500/30 group-hover:shadow-emerald-500/10',
   },
 ];
 

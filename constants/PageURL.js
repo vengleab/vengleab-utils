@@ -18,6 +18,7 @@ export const PAGE = {
   TABLE_CONVERTER: 'table-converter',
   DAY_COUNT: 'day-count',
   GOLD_PRICE: 'gold-price',
+  NGINX_CONFIG: 'nginx-config-generator',
 };
 
 export const MENU_ITEMS = {
@@ -76,5 +77,9 @@ export const MENU_ITEMS = {
   gold_price: {
     name: 'Gold Price Tracker',
     page: PAGE.GOLD_PRICE,
+  },
+  nginx_config: {
+    name: 'Nginx Config Generator',
+    page: PAGE.NGINX_CONFIG,
   },
 };

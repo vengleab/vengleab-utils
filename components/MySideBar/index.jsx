@@ -21,7 +21,8 @@ import {
   Search,
   Sparkles,
   Table,
-  Coins
+  Coins,
+  Server
 } from "lucide-react";
 import { MENU_ITEMS, PAGE } from "../../constants/PageURL";
 
@@ -42,7 +43,8 @@ const ICON_MAP = {
   lucky_draw: Sparkles,
   table_converter: Table,
   day_count: CalendarDays,
-  gold_price: Coins
+  gold_price: Coins,
+  nginx_config: Server
 };
 
 export default function MySideBar({
