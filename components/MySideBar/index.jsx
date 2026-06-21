@@ -1,8 +1,9 @@
-import React, { useContext, useState } from "react";
+import React, { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/router";
 import {
-  Menu,
+  PanelLeftClose,
+  PanelLeftOpen,
   X,
   Calculator,
   Type,
@@ -11,7 +12,7 @@ import {
   Key,
   CalendarDays,
   Home,
-  ChevronRight,
+  ChevronDown,
   Lock,
   Users,
   Regex,
@@ -24,7 +25,7 @@ import {
   Coins,
   Server
 } from "lucide-react";
-import { MENU_ITEMS, PAGE } from "../../constants/PageURL";
+import { MENU_ITEMS, MENU_GROUPS, PAGE } from "../../constants/PageURL";
 
 const ICON_MAP = {
   str_len: Type,
@@ -56,146 +57,201 @@ export default function MySideBar({
   const router = useRouter();
   const activePath = router.pathname;
   const [searchQuery, setSearchQuery] = useState("");
+  const [collapsedGroups, setCollapsedGroups] = useState({});
 
-  const filteredMenuItems = Object.entries(MENU_ITEMS).filter(([key, item]) =>
-    item.name.toLowerCase().includes(searchQuery.toLowerCase())
+  const query = searchQuery.trim().toLowerCase();
+  const isSearching = query.length > 0;
+  const matchesQuery = (key) =>
+    MENU_ITEMS[key] && MENU_ITEMS[key].name.toLowerCase().includes(query);
+
+  const toggleGroup = (id) =>
+    setCollapsedGroups((prev) => ({ ...prev, [id]: !prev[id] }));
+
+  const renderItem = (key) => {
+    const item = MENU_ITEMS[key];
+    if (!item) return null;
+    const Icon = ICON_MAP[key] || Code;
+    const isActive =
+      activePath === item.page || activePath === `/${item.page}`;
+
+    return (
+      <Link
+        href={item.page}
+        key={key}
+        onClick={() => !isCollapsed && setSidebarOpen && setSidebarOpen(false)}
+        title={item.name}
+        className={`group relative w-full flex items-center gap-3 px-4 py-2 font-mono text-[13px] border-l-2 transition-colors ${
+          isActive
+            ? "bg-signal/25 text-white border-signal"
+            : "text-slate-300 hover:text-white hover:bg-white/[0.06] border-transparent"
+        } ${isCollapsed ? "justify-center" : ""}`}
+      >
+        <Icon
+          className={`w-[18px] h-[18px] shrink-0 ${
+            isActive ? "text-signal-bright" : "text-slate-400 group-hover:text-slate-200"
+          }`}
+        />
+        {!isCollapsed && (
+          <span className="truncate whitespace-nowrap">{item.name}</span>
+        )}
+      </Link>
+    );
+  };
+
+  const homeMatches =
+    !isSearching || "homepage".includes(query) || "home".includes(query);
+  const totalMatches = MENU_GROUPS.reduce(
+    (sum, group) => sum + group.items.filter(matchesQuery).length,
+    0
   );
 
   return (
     <aside
-      className={`fixed inset-y-0 left-0 z-50 bg-[#1e1e1e] text-slate-300 border-r border-[#2d2d2d] flex flex-col transform transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] lg:static lg:translate-x-0 ${
+      className={`fixed inset-y-0 left-0 z-50 bg-ink text-slate-300 border-r border-ink-line flex flex-col transform transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] lg:static lg:translate-x-0 ${
         sidebarOpen ? "translate-x-0" : "-translate-x-full"
-      } ${isCollapsed ? "w-20" : "w-72"}`}
+      } ${isCollapsed ? "w-16" : "w-72"}`}
     >
+      {/* Wordmark / rail header */}
       <div
-        className={`flex items-center gap-3 px-4 h-16 bg-[#1a1a1a] border-b border-[#2d2d2d] shrink-0 transition-all ${
-          isCollapsed ? "justify-center" : "px-6"
+        className={`flex items-center h-14 border-b border-ink-line shrink-0 ${
+          isCollapsed ? "justify-center px-0" : "px-4 gap-2"
         }`}
       >
         {isCollapsed ? (
           <button
             onClick={() => setIsCollapsed(false)}
-            className="p-2 text-slate-400 hover:text-white hover:bg-[#2d2d2d] rounded-lg transition-colors flex items-center justify-center"
-            title="Expand Menu"
+            className="w-9 h-9 grid place-items-center text-signal-bright hover:bg-white/[0.06] transition-colors font-mono text-lg"
+            title="Expand"
+            aria-label="Expand sidebar"
           >
-            <Menu className="w-5 h-5" />
+            ❯
           </button>
         ) : (
           <>
-            <div className="bg-slate-700/50 p-2 rounded-lg text-slate-300 shrink-0">
-              <Calculator className="w-5 h-5" />
-            </div>
-            <span className="font-bold text-white tracking-wide truncate">
-              DevTools
+            <span className="font-mono text-[15px] font-semibold text-white tracking-tight flex items-center gap-1.5 truncate">
+              <span className="text-signal-bright">❯</span>
+              devtools
+              <span className="caret-blink w-[7px] h-[15px] bg-slate-300 inline-block" />
             </span>
 
             <button
-              onClick={() =>
-                isCollapsed
-                  ? setIsCollapsed(false)
-                  : setSidebarOpen
-                  ? setSidebarOpen(false)
-                  : null
-              }
+              onClick={() => setSidebarOpen && setSidebarOpen(false)}
               className="ml-auto p-2 lg:hidden text-slate-400 hover:text-white"
+              aria-label="Close menu"
             >
               <X className="w-5 h-5" />
             </button>
 
             <button
-              onClick={() => setIsCollapsed(!isCollapsed)}
-              className="hidden lg:flex ml-auto p-2 text-slate-400 hover:text-white hover:bg-[#2d2d2d] rounded-lg transition-colors"
+              onClick={() => setIsCollapsed(true)}
+              className="hidden lg:flex ml-auto p-2 text-slate-500 hover:text-white hover:bg-white/[0.06] rounded-md transition-colors"
+              aria-label="Collapse sidebar"
             >
-              <Menu className="w-5 h-5" />
+              <PanelLeftClose className="w-[18px] h-[18px]" />
             </button>
           </>
         )}
       </div>
 
-      {/* Search Input */}
+      {/* Filter */}
       {!isCollapsed && (
-        <div className="px-4 py-3 border-b border-[#2d2d2d] bg-[#1a1a1a]/30 shrink-0">
+        <div className="px-3 py-3 border-b border-ink-line shrink-0">
           <div className="relative">
-            <span className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-slate-500">
+            <span className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-slate-600">
               <Search className="w-4 h-4" />
             </span>
             <input
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search utilities..."
-              className="w-full pl-9 pr-4 py-2 bg-[#252525] text-slate-200 placeholder-slate-500 text-sm rounded-xl border border-[#2d2d2d] focus:outline-none focus:border-slate-500 focus:ring-1 focus:ring-slate-500 transition-all duration-200"
+              placeholder="filter tools"
+              aria-label="Filter tools"
+              className="w-full pl-9 pr-3 py-2 bg-ink-rail text-slate-200 placeholder-slate-600 font-mono text-[13px] rounded-md border border-ink-line focus:outline-none focus:border-signal transition-colors"
             />
           </div>
         </div>
       )}
 
-      <div className="flex-1 overflow-y-auto py-2 space-y-1 custom-scrollbar overflow-x-hidden">
-        {(!searchQuery || "homepage".includes(searchQuery.toLowerCase()) || "home".includes(searchQuery.toLowerCase())) && (
+      <div className="flex-1 overflow-y-auto py-2 custom-scrollbar overflow-x-hidden">
+        {homeMatches && (
           <Link
             href={PAGE.INDEX}
             onClick={() =>
               !isCollapsed && setSidebarOpen && setSidebarOpen(false)
             }
-            title="Homepage"
-            className={`group relative w-full flex items-center px-4 py-3 transition-all text-sm font-medium border-l-[3px] ${
+            title="Home"
+            className={`group relative w-full flex items-center gap-3 px-4 py-2 font-mono text-[13px] border-l-2 transition-colors ${
               activePath === PAGE.INDEX
-                ? "bg-[#2d2d2d] text-slate-200 border-slate-400"
-                : "text-slate-400 hover:text-slate-200 hover:bg-[#252525] border-transparent"
-            } ${isCollapsed ? "justify-center" : "justify-between"}`}
+                ? "bg-signal/25 text-white border-signal"
+                : "text-slate-300 hover:text-white hover:bg-white/[0.06] border-transparent"
+            } ${isCollapsed ? "justify-center" : ""}`}
           >
-            <div className="flex items-center gap-3 min-w-0">
-              <Home className="w-5 h-5 shrink-0" />
-              {!isCollapsed && (
-                <span className="truncate whitespace-nowrap">Homepage</span>
-              )}
-            </div>
-            {!isCollapsed && activePath === PAGE.INDEX && (
-              <div className="w-0 h-0 border-t-[6px] border-t-transparent border-b-[6px] border-b-transparent border-r-[6px] border-r-slate-400 absolute right-0" />
-            )}
+            <Home
+              className={`w-[18px] h-[18px] shrink-0 ${
+                activePath === PAGE.INDEX ? "text-signal-bright" : "text-slate-400 group-hover:text-slate-200"
+              }`}
+            />
+            {!isCollapsed && <span className="truncate">bench</span>}
           </Link>
         )}
 
-        {filteredMenuItems.map(([key, item]) => {
-          const Icon = ICON_MAP[key] || Code;
-          const isActive =
-            activePath === item.page || activePath === `/${item.page}`;
+        {/* Collapsed (icon-only) rail: flat list, no group headers */}
+        {isCollapsed &&
+          MENU_GROUPS.flatMap((group) => group.items).map((key) =>
+            renderItem(key)
+          )}
 
-          return (
-            <Link
-              href={item.page}
-              key={key}
-              onClick={() =>
-                !isCollapsed && setSidebarOpen && setSidebarOpen(false)
-              }
-              title={item.name}
-              className={`group relative w-full flex items-center px-4 py-3 transition-all text-sm font-medium border-l-[3px] ${
-                isActive
-                  ? "bg-[#2d2d2d] text-slate-200 border-slate-400"
-                  : "text-slate-400 hover:text-slate-200 hover:bg-[#252525] border-transparent"
-              } ${isCollapsed ? "justify-center" : "justify-between"}`}
-            >
-              <div className="flex items-center gap-3 min-w-0">
-                <Icon className="w-5 h-5 shrink-0" />
-                {!isCollapsed && (
-                  <span className="truncate whitespace-nowrap">
-                    {item.name}
-                  </span>
+        {/* Searching: flat list of matching items */}
+        {!isCollapsed &&
+          isSearching &&
+          MENU_GROUPS.flatMap((group) =>
+            group.items.filter(matchesQuery)
+          ).map((key) => renderItem(key))}
+
+        {/* Default: collapsible grouped sections, framed like a file tree */}
+        {!isCollapsed &&
+          !isSearching &&
+          MENU_GROUPS.map((group) => {
+            const isOpen = !collapsedGroups[group.id];
+            return (
+              <div key={group.id} className="mt-2 first:mt-0">
+                <button
+                  type="button"
+                  onClick={() => toggleGroup(group.id)}
+                  className="group w-full flex items-center gap-2 px-4 py-2 font-mono text-[10px] uppercase tracking-[0.18em] text-slate-400 hover:text-white transition-colors"
+                >
+                  <ChevronDown
+                    className={`w-3 h-3 shrink-0 transition-transform duration-200 ${
+                      isOpen ? "" : "-rotate-90"
+                    }`}
+                  />
+                  <span className="truncate text-left">{group.name}</span>
+                </button>
+                {isOpen && (
+                  <div>{group.items.map((key) => renderItem(key))}</div>
                 )}
               </div>
-              {!isCollapsed && isActive && (
-                <div className="w-0 h-0 border-t-[6px] border-t-transparent border-b-[6px] border-b-transparent border-r-[6px] border-r-slate-400 absolute right-0" />
-              )}
-            </Link>
-          );
-        })}
+            );
+          })}
 
-        {filteredMenuItems.length === 0 && searchQuery && !("homepage".includes(searchQuery.toLowerCase()) || "home".includes(searchQuery.toLowerCase())) && (
-          <div className="px-4 py-8 text-center text-sm text-slate-500">
-            No utilities found matching "{searchQuery}"
+        {!isCollapsed && isSearching && totalMatches === 0 && !homeMatches && (
+          <div className="px-4 py-8 text-center font-mono text-[13px] text-slate-500">
+            no tools match
+            <span className="text-slate-200"> {searchQuery}</span>
           </div>
         )}
       </div>
+
+      {/* Expand control on collapsed rail bottom (desktop) */}
+      {isCollapsed && (
+        <button
+          onClick={() => setIsCollapsed(false)}
+          className="hidden lg:grid place-items-center h-10 shrink-0 border-t border-ink-line text-slate-600 hover:text-slate-200 hover:bg-white/[0.04] transition-colors"
+          aria-label="Expand sidebar"
+        >
+          <PanelLeftOpen className="w-[18px] h-[18px]" />
+        </button>
+      )}
     </aside>
   );
 }

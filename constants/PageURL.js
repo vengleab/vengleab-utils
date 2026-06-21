@@ -83,3 +83,37 @@ export const MENU_ITEMS = {
     page: PAGE.NGINX_CONFIG,
   },
 };
+
+// Sidebar grouping — ordered sections, each listing MENU_ITEMS keys.
+export const MENU_GROUPS = [
+  {
+    id: 'converters',
+    name: 'Converters & Encoders',
+    items: ['base_64_encode_decoder', 'json_beautifier', 'jwt_token_viewer', 'table_converter'],
+  },
+  {
+    id: 'generators',
+    name: 'Generators',
+    items: ['password_generator', 'qr_code_generator', 'nginx_config'],
+  },
+  {
+    id: 'text',
+    name: 'Text & RegEx',
+    items: ['str_len', 'regex_tester'],
+  },
+  {
+    id: 'finance',
+    name: 'Finance & Time',
+    items: ['emi', 'kh_tax', 'kh_tax_gross', 'gold_price', 'day_count'],
+  },
+  {
+    id: 'random',
+    name: 'Randomizers',
+    items: ['random_group_generator', 'lucky_draw'],
+  },
+  {
+    id: 'testers',
+    name: 'Hardware Testers',
+    items: ['keyboard_tester', 'display_color_tester'],
+  },
+];

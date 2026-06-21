@@ -1,195 +1,132 @@
 import React from "react";
 import { motion } from "framer-motion";
-import {
-  ArrowRight,
-  Zap,
-  Shield,
-  Cpu,
-  ChevronRight,
-  Sparkles
-} from "lucide-react";
+import { ArrowDown } from "lucide-react";
 import Link from "next/link";
 import Layout from "../components/Layout";
-import { MENU_ITEMS, PAGE } from "../constants/PageURL";
+import { MENU_ITEMS, MENU_GROUPS, PAGE } from "../constants/PageURL";
 import { TOOLS } from "../constants/Tools";
 
+const TOOLS_BY_ID = Object.fromEntries(TOOLS.map((tool) => [tool.id, tool]));
 
 export default function LandingPage() {
+  const groups = MENU_GROUPS.map((group) => ({
+    ...group,
+    tools: group.items.map((id) => TOOLS_BY_ID[id]).filter(Boolean)
+  })).filter((group) => group.tools.length > 0);
+
+  const toolCount = groups.reduce((sum, group) => sum + group.tools.length, 0);
+
+  const scrollToTools = () =>
+    document.getElementById("bench")?.scrollIntoView({ behavior: "smooth" });
+
   return (
     <Layout>
-      <div className="pb-12 xl:pb-24">
-        {/* Hero Section */}
-        <div className="relative py-16 sm:py-24 xl:py-32 overflow-hidden rounded-3xl mb-12">
-          {/* Background Decorative Element */}
-          <div className="absolute inset-0 z-0">
-            <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-gradient-to-br from-indigo-500/20 to-purple-500/20 blur-[100px] rounded-full translate-x-1/2 -translate-y-1/2" />
-            <div className="absolute bottom-0 left-0 w-[400px] h-[400px] bg-gradient-to-tr from-cyan-500/20 to-emerald-500/20 blur-[100px] rounded-full -translate-x-1/2 translate-y-1/2" />
+      <div className="pb-8">
+        {/* Hero — the thesis */}
+        <motion.header
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
+          className="pt-4 pb-14 sm:pt-10 sm:pb-20 max-w-3xl"
+        >
+          <div className="font-mono text-[12px] tracking-wide text-signal mb-7 flex items-center gap-2.5">
+            <span className="inline-block w-2 h-2 bg-signal" />
+            {toolCount} tools · browser-only · no sign-in
           </div>
 
-          <div className="relative z-10 text-center px-4 max-w-4xl mx-auto">
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/60 backdrop-blur-md border border-slate-300/50 text-slate-700 text-xs font-semibold tracking-wide uppercase mb-8 shadow-sm"
-            >
-              <Sparkles className="w-4 h-4 text-indigo-500" />
-              All-in-one Toolkit
-            </motion.div>
-            <motion.h1
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.1 }}
-              className="text-5xl sm:text-7xl font-bold tracking-tighter text-slate-900 mb-6 leading-tight"
-            >
-              Developer tools, <br className="hidden sm:block" />
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-cyan-500">
-                simplified.
-              </span>
-            </motion.h1>
-            <motion.p
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.2 }}
-              className="max-w-2xl mx-auto text-lg sm:text-xl text-slate-600 mb-10 leading-relaxed"
-            >
-              A modern, blazing fast collection of daily utilities for
-              developers and financial planning. Clean interfaces, instant
-              processing, zero friction.
-            </motion.p>
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.3 }}
-              className="flex flex-col sm:flex-row items-center justify-center gap-4"
-            >
-              <Link
-                href={`/${PAGE.JSON_BEAUTIFIER}`}
-                className="w-full sm:w-auto px-8 py-4 bg-slate-900 text-white rounded-2xl font-medium hover:bg-slate-800 transition-all shadow-xl shadow-slate-900/20 flex items-center justify-center gap-2 group"
-              >
-                Let's start{" "}
-                <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-              </Link>
-              <button
-                onClick={() => {
-                  document
-                    .getElementById("tools-grid")
-                    ?.scrollIntoView({ behavior: "smooth" });
-                }}
-                className="w-full sm:w-auto px-8 py-4 bg-white/80 backdrop-blur text-slate-700 border border-slate-300/50 rounded-2xl font-medium hover:bg-white hover:text-slate-900 transition-all flex items-center justify-center gap-2 shadow-sm"
-              >
-                Explore Tools
-              </button>
-            </motion.div>
-          </div>
-        </div>
+          <h1 className="font-display text-5xl sm:text-7xl font-semibold tracking-tight text-ink leading-[1.02]">
+            Small tools,
+            <br />
+            kept sharp.
+          </h1>
 
-        {/* Tools Grid Section */}
-        <div id="tools-grid" className="scroll-mt-8">
-          <div className="flex items-center justify-between mb-8">
-            <h2 className="text-2xl font-bold tracking-tight text-slate-900">
-              Available Utilities
-            </h2>
+          <p className="mt-6 text-lg text-ink-soft max-w-xl leading-relaxed">
+            Formatters, encoders, generators and calculators for the small jobs
+            between the work — each one running entirely in your browser. No
+            uploads, no accounts, no waiting on a server.
+          </p>
+
+          <div className="mt-9 flex flex-wrap gap-3 font-mono text-[13px]">
+            <Link
+              href={`/${PAGE.JSON_BEAUTIFIER}`}
+              className="inline-flex items-center gap-2 px-5 py-3 bg-signal text-white rounded-md hover:bg-signal-bright transition-colors"
+            >
+              <span className="opacity-80">❯</span> start with JSON
+            </Link>
+            <button
+              type="button"
+              onClick={scrollToTools}
+              className="inline-flex items-center gap-2 px-5 py-3 border border-bench-line text-ink rounded-md hover:border-ink transition-colors"
+            >
+              browse all tools
+              <ArrowDown className="w-3.5 h-3.5" />
+            </button>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {TOOLS.map((tool, idx) => {
-              const Icon = tool.icon;
-              const item = MENU_ITEMS[tool.id];
-              if (!item) return null;
-              return (
-                <Link href={item.page} key={tool.id}>
-                  <motion.div
-                    initial={{ opacity: 0, y: 20 }}
-                    whileInView={{ opacity: 1, y: 0 }}
-                    viewport={{ once: true }}
-                    transition={{ delay: 0.05 * idx }}
-                    className={`group text-left p-6 bg-white rounded-3xl shadow-sm border border-slate-200 transition-all relative overflow-hidden flex flex-col ${tool.border} hover:-translate-y-1 hover:shadow-xl cursor-pointer`}
-                  >
-                    <div
-                      className={`w-14 h-14 rounded-2xl flex items-center justify-center ${tool.bg} ${tool.color} mb-6 group-hover:scale-110 group-hover:rotate-3 transition-transform duration-300`}
+        </motion.header>
+
+        {/* The bench — grid grouped to mirror the rail taxonomy */}
+        <div id="bench" className="scroll-mt-6">
+          {groups.map((group) => (
+            <section key={group.id} className="mb-14 last:mb-0">
+              <div className="flex items-baseline gap-3 mb-5">
+                <h2 className="font-mono text-[12px] uppercase tracking-[0.18em] text-ink shrink-0">
+                  <span className="text-ink-soft">{"// "}</span>
+                  {group.name}
+                </h2>
+                <span className="font-mono text-[11px] text-ink-soft">
+                  {group.tools.length}
+                </span>
+                <div className="flex-1 h-px bg-bench-line" />
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {group.tools.map((tool) => {
+                  const Icon = tool.icon;
+                  const item = MENU_ITEMS[tool.id];
+                  if (!item) return null;
+                  return (
+                    <Link
+                      href={item.page}
+                      key={tool.id}
+                      className="group block bg-surface-raised border border-bench-line rounded-md p-5 hover:border-signal hover:-translate-y-0.5 transition-all duration-200"
                     >
-                      <Icon className="w-7 h-7" />
-                    </div>
-                    <h3 className="text-lg font-bold tracking-tight text-slate-900 mb-2 group-hover:text-slate-900 transition-colors">
-                      {tool.name}
-                    </h3>
-                    <p className="text-sm text-slate-500 leading-relaxed mb-4 flex-1">
-                      {tool.description}
-                    </p>
-
-                    <div className="flex items-center text-sm font-semibold text-slate-400 group-hover:text-slate-900 transition-colors mt-auto">
-                      Open Utility{" "}
-                      <ChevronRight className="w-4 h-4 ml-1 opacity-0 -translate-x-2 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-300" />
-                    </div>
-                  </motion.div>
-                </Link>
-              );
-            })}
-          </div>
+                      <div className="flex items-start justify-between">
+                        <div
+                          className={`w-11 h-11 rounded-md grid place-items-center ${tool.bg} ${tool.color}`}
+                        >
+                          <Icon className="w-[22px] h-[22px]" />
+                        </div>
+                        <span className="font-mono text-[11px] text-ink-soft opacity-0 -translate-x-1 group-hover:opacity-100 group-hover:translate-x-0 transition-all">
+                          open ❯
+                        </span>
+                      </div>
+                      <h3 className="mt-4 font-display text-[17px] font-semibold tracking-tight text-ink">
+                        {tool.name}
+                      </h3>
+                      <p className="mt-1.5 text-[13px] text-ink-soft leading-relaxed">
+                        {tool.description}
+                      </p>
+                    </Link>
+                  );
+                })}
+              </div>
+            </section>
+          ))}
         </div>
 
-        {/* Features / Architectural Info */}
-        <div className="mt-24 sm:mt-32 pt-16 relative">
-          <div className="absolute top-0 left-1/2 -translate-x-1/2 w-64 h-[1px] bg-gradient-to-r from-transparent via-slate-300 to-transparent" />
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-12 sm:gap-8">
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              className="flex flex-col items-center text-center"
-            >
-              <div className="w-14 h-14 bg-white shadow-sm border border-slate-200 rounded-2xl flex items-center justify-center mb-6 text-slate-700">
-                <Zap className="w-6 h-6 text-amber-500" />
-              </div>
-              <h4 className="text-lg font-semibold text-slate-900 mb-3 tracking-tight">
-                Blazing Fast
-              </h4>
-              <p className="text-sm text-slate-500 leading-relaxed max-w-xs">
-                No server roundtrips. Everything processes instantly right
-                inside your browser session.
-              </p>
-            </motion.div>
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ delay: 0.1 }}
-              className="flex flex-col items-center text-center"
-            >
-              <div className="w-14 h-14 bg-white shadow-sm border border-slate-200 rounded-2xl flex items-center justify-center mb-6 text-slate-700">
-                <Shield className="w-6 h-6 text-indigo-500" />
-              </div>
-              <h4 className="text-lg font-semibold text-slate-900 mb-3 tracking-tight">
-                Privacy First
-              </h4>
-              <p className="text-sm text-slate-500 leading-relaxed max-w-xs">
-                Your data never leaves the device. Safely paste confidential
-                JSON or access local utilities securely.
-              </p>
-            </motion.div>
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ delay: 0.2 }}
-              className="flex flex-col items-center text-center"
-            >
-              <div className="w-14 h-14 bg-white shadow-sm border border-slate-200 rounded-2xl flex items-center justify-center mb-6 text-slate-700">
-                <Cpu className="w-6 h-6 text-emerald-500" />
-              </div>
-              <h4 className="text-lg font-semibold text-slate-900 mb-3 tracking-tight">
-                Modern Tech Stack
-              </h4>
-              <p className="text-sm text-slate-500 leading-relaxed max-w-xs">
-                Built upon Next.js, Tailwind CSS, and Framer Motion for a fluid,
-                application-like experience.
-              </p>
-            </motion.div>
-          </div>
-        </div>
-
-        <div className="mt-24 pt-8 text-center border-t border-slate-200/50">
-          <p className="text-xs text-slate-400 font-medium">
-            Crafted with attention to detail.
+        {/* Principles — recast as a disciplined mono strip */}
+        <div className="mt-16 border-t border-bench-line pt-6 grid gap-3 sm:grid-cols-3 font-mono text-[12px] text-ink-soft">
+          <p>
+            <span className="text-ink">local-first</span> — your data never
+            leaves the tab
+          </p>
+          <p>
+            <span className="text-ink">instant</span> — no network roundtrips,
+            no spinners
+          </p>
+          <p>
+            <span className="text-ink">honest</span> — open source on next.js +
+            tailwind
           </p>
         </div>
       </div>
