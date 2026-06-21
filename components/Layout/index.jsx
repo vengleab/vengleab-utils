@@ -1,10 +1,12 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Head from "next/head";
 import { Menu as MenuIcon } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useRouter } from "next/router";
 import MySideBar from "../MySideBar";
 import { PAGE } from "../../constants/PageURL";
+
+const ROOT_DOMAIN = 'svl-labs.uk';
 
 export default function Layout({
   children,
@@ -15,8 +17,16 @@ export default function Layout({
   const router = useRouter();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [isCollapsed, setIsCollapsed] = useState(false);
+  const [isSubdomain, setIsSubdomain] = useState(false);
 
-  const isLandingPage = router.pathname === PAGE.INDEX;
+  useEffect(() => {
+    const host = window.location.hostname;
+    if (host.endsWith(`.${ROOT_DOMAIN}`) && host !== `www.${ROOT_DOMAIN}` && host !== `tools.${ROOT_DOMAIN}`) {
+      setIsSubdomain(true);
+    }
+  }, []);
+
+  const isLandingPage = router.pathname === PAGE.INDEX || isSubdomain;
   const displayTitle = title
     ? `${title} | devtools`
     : "devtools — a workbench of browser-only utilities";
