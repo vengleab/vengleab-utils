@@ -1,558 +1,746 @@
-import React, { useState, useEffect, useRef } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import React, { useState, useEffect, useRef } from 'react';
+import { motion } from 'framer-motion';
 import {
   Keyboard,
   RotateCcw,
   Volume2,
   VolumeX,
-  List,
-  Shield,
+  Sliders,
+  History,
   HelpCircle,
-  Activity,
-  Zap,
-  Laptop
-} from "lucide-react";
-import Layout from "../components/Layout";
-import PageContext from "../contexts/page";
-import { PAGE } from "../constants/PageURL";
+  Settings,
+  Flame,
+  CheckCircle,
+  Terminal,
+  Layers,
+  Sparkles,
+  Grid,
+} from 'lucide-react';
+import shortid from 'shortid';
+import Layout from '../components/Layout';
+import PageContext from '../contexts/page';
+import { PAGE } from '../constants/PageURL';
 
-const SWITCH_SOUND = {
-  CLICKY: "clicky",
-  TACTILE: "tactile",
-  LINEAR: "linear",
-  MUTE: "mute"
-};
+// Layout theme configurations
+const THEMES = [
+  {
+    id: 'mint',
+    name: 'Emerald Mint',
+    activeClass: 'bg-amber-400 text-slate-900 border-amber-500 shadow-lg shadow-amber-400/20 scale-[0.98]',
+    testedClass: 'bg-emerald-500 text-white border-emerald-600 shadow-md shadow-emerald-500/10',
+    keyBorderColor: 'border-slate-200 hover:border-slate-400',
+    bannerClass: 'text-emerald-600 bg-emerald-50 border-emerald-100',
+    indicatorColor1: 'bg-amber-400',
+    indicatorColor2: 'bg-emerald-500',
+  },
+  {
+    id: 'cyberpunk',
+    name: 'Cyberpunk Neon',
+    activeClass: 'bg-fuchsia-500 text-white border-fuchsia-600 shadow-lg shadow-fuchsia-500/30 scale-[0.98]',
+    testedClass: 'bg-cyan-500 text-white border-cyan-600 shadow-md shadow-cyan-500/10',
+    keyBorderColor: 'border-slate-200 hover:border-slate-400',
+    bannerClass: 'text-fuchsia-600 bg-fuchsia-50 border-fuchsia-100',
+    indicatorColor1: 'bg-fuchsia-500',
+    indicatorColor2: 'bg-cyan-500',
+  },
+  {
+    id: 'retro',
+    name: 'Retro Gray',
+    activeClass: 'bg-orange-400 text-white border-orange-500 shadow-lg shadow-orange-400/20 scale-[0.98]',
+    testedClass: 'bg-slate-700 text-white border-slate-800 shadow-md shadow-slate-700/10',
+    keyBorderColor: 'border-slate-300 hover:border-slate-500',
+    bannerClass: 'text-orange-600 bg-orange-50 border-orange-100',
+    indicatorColor1: 'bg-orange-400',
+    indicatorColor2: 'bg-slate-700',
+  },
+  {
+    id: 'royal',
+    name: 'Royal Gold',
+    activeClass: 'bg-yellow-400 text-slate-900 border-yellow-500 shadow-lg shadow-yellow-400/20 scale-[0.98]',
+    testedClass: 'bg-indigo-600 text-white border-indigo-700 shadow-md shadow-indigo-600/10',
+    keyBorderColor: 'border-slate-200 hover:border-slate-400',
+    bannerClass: 'text-yellow-600 bg-yellow-50 border-yellow-100',
+    indicatorColor1: 'bg-yellow-400',
+    indicatorColor2: 'bg-indigo-600',
+  },
+];
 
-const LAYOUT = {
-  TKL: "TKL",
-  COMPACT_60: "60"
-};
-
-const OS_LAYOUT = {
-  WIN: "win",
-  MAC: "mac"
-};
-
-const THEME = {
-  CARBON: "carbon"
-};
-
-const KEY_CHAR = {
-  SPACE: " "
-};
-
-const KEY_NAME = {
-  SPACE: "Space"
-};
-
-const KEY_TYPE = {
-  GAP: "gap",
-  SPACER: "spacer"
-};
-
-const OSCILLATOR_TYPE = {
-  SINE: "sine",
-  TRIANGLE: "triangle",
-  SAWTOOTH: "sawtooth",
-  SQUARE: "square"
-};
-
-const FILTER_TYPE = {
-  LOWPASS: "lowpass",
-  HIGHPASS: "highpass"
-};
-
-const AUDIO_CONTEXT_STATE = {
-  SUSPENDED: "suspended",
-  RUNNING: "running",
-  CLOSED: "closed"
-};
-
-// Web Audio API mechanical switch click synthesizer
-let globalAudioCtx = null;
-const playSwitchSound = (type, muted) => {
-  if (muted) return;
+// Sound synthesis via Web Audio API
+const playKeySound = (profile, isMuted, volume = 0.5) => {
+  if (isMuted || typeof window === 'undefined') return;
   try {
-    if (typeof window === "undefined") return;
-    const AudioContextClass = window.AudioContext || window.webkitAudioContext;
-    if (!AudioContextClass) return;
-
-    if (!globalAudioCtx) {
-      globalAudioCtx = new AudioContextClass();
-    }
-
-    if (globalAudioCtx.state === AUDIO_CONTEXT_STATE.SUSPENDED) {
-      globalAudioCtx.resume();
-    }
-
-    const ctx = globalAudioCtx;
+    const AudioContext = window.AudioContext || window.webkitAudioContext;
+    if (!AudioContext) return;
+    const ctx = new AudioContext();
     const now = ctx.currentTime;
 
-    if (type === SWITCH_SOUND.CLICKY) {
-      // Blue Switch: High frequency crisp transient click + mechanical spring sound
-      const osc1 = ctx.createOscillator();
-      const osc2 = ctx.createOscillator();
-      const gainNode = ctx.createGain();
+    const masterGain = ctx.createGain();
+    masterGain.gain.setValueAtTime(volume * 0.35, now);
+    masterGain.connect(ctx.destination);
 
-      osc1.type = OSCILLATOR_TYPE.SINE;
-      osc1.frequency.setValueAtTime(3200, now);
-      osc1.frequency.exponentialRampToValueAtTime(1000, now + 0.004);
+    if (profile === 'clicky') {
+      // High-frequency mechanical contact click
+      const clickOsc = ctx.createOscillator();
+      const clickGain = ctx.createGain();
+      clickOsc.type = 'sine';
+      clickOsc.frequency.setValueAtTime(1700, now);
+      clickOsc.frequency.exponentialRampToValueAtTime(1100, now + 0.006);
 
-      osc2.type = OSCILLATOR_TYPE.TRIANGLE;
-      osc2.frequency.setValueAtTime(2400, now + 0.003);
-      osc2.frequency.exponentialRampToValueAtTime(600, now + 0.012);
+      clickGain.gain.setValueAtTime(0.7, now);
+      clickGain.gain.exponentialRampToValueAtTime(0.01, now + 0.008);
 
-      gainNode.gain.setValueAtTime(0.05, now);
-      gainNode.gain.setValueAtTime(0.08, now + 0.003);
-      gainNode.gain.exponentialRampToValueAtTime(0.001, now + 0.022);
+      clickOsc.connect(clickGain);
+      clickGain.connect(masterGain);
+      clickOsc.start(now);
+      clickOsc.stop(now + 0.01);
 
-      const filter = ctx.createBiquadFilter();
-      filter.type = FILTER_TYPE.HIGHPASS;
-      filter.frequency.value = 1200;
+      // Deeper standard bottom out switch body thump
+      const thudOsc = ctx.createOscillator();
+      const thudGain = ctx.createGain();
+      thudOsc.type = 'triangle';
+      thudOsc.frequency.setValueAtTime(120, now + 0.001);
+      thudOsc.frequency.exponentialRampToValueAtTime(70, now + 0.035);
 
-      osc1.connect(filter);
-      osc2.connect(filter);
-      filter.connect(gainNode);
-      gainNode.connect(ctx.destination);
+      thudGain.gain.setValueAtTime(0.5, now + 0.001);
+      thudGain.gain.exponentialRampToValueAtTime(0.01, now + 0.04);
 
-      osc1.start(now);
-      osc2.start(now);
-      osc1.stop(now + 0.025);
-      osc2.stop(now + 0.025);
+      thudOsc.connect(thudGain);
+      thudGain.connect(masterGain);
+      thudOsc.start(now + 0.001);
+      thudOsc.stop(now + 0.042);
+    } else if (profile === 'tactile') {
+      // Deeper tactile bump sound
+      const bumpOsc = ctx.createOscillator();
+      const bumpGain = ctx.createGain();
+      bumpOsc.type = 'triangle';
+      bumpOsc.frequency.setValueAtTime(200, now);
+      bumpOsc.frequency.exponentialRampToValueAtTime(110, now + 0.03);
 
-    } else if (type === SWITCH_SOUND.LINEAR) {
-      // Red Switch: Deep, satisfying, plastic-on-plastic "thock"
-      const osc = ctx.createOscillator();
-      const gainNode = ctx.createGain();
+      bumpGain.gain.setValueAtTime(0.65, now);
+      bumpGain.gain.exponentialRampToValueAtTime(0.01, now + 0.035);
 
-      osc.type = OSCILLATOR_TYPE.TRIANGLE;
-      osc.frequency.setValueAtTime(130, now);
-      osc.frequency.exponentialRampToValueAtTime(50, now + 0.04);
+      bumpOsc.connect(bumpGain);
+      bumpGain.connect(masterGain);
+      bumpOsc.start(now);
+      bumpOsc.stop(now + 0.04);
 
-      gainNode.gain.setValueAtTime(0.3, now);
-      gainNode.gain.exponentialRampToValueAtTime(0.001, now + 0.04);
+      // Low end resonance
+      const lowOsc = ctx.createOscillator();
+      const lowGain = ctx.createGain();
+      lowOsc.type = 'sine';
+      lowOsc.frequency.setValueAtTime(95, now);
+      lowOsc.frequency.exponentialRampToValueAtTime(55, now + 0.045);
 
-      const filter = ctx.createBiquadFilter();
-      filter.type = FILTER_TYPE.LOWPASS;
-      filter.frequency.value = 280;
+      lowGain.gain.setValueAtTime(0.35, now);
+      lowGain.gain.exponentialRampToValueAtTime(0.01, now + 0.05);
 
-      osc.connect(filter);
-      filter.connect(gainNode);
-      gainNode.connect(ctx.destination);
+      lowOsc.connect(lowGain);
+      lowGain.connect(masterGain);
+      lowOsc.start(now);
+      lowOsc.stop(now + 0.052);
+    } else { // "linear"
+      // Quiet, smooth sliding travel click
+      const strokeOsc = ctx.createOscillator();
+      const strokeGain = ctx.createGain();
+      strokeOsc.type = 'triangle';
+      strokeOsc.frequency.setValueAtTime(140, now);
+      strokeOsc.frequency.exponentialRampToValueAtTime(75, now + 0.045);
 
-      osc.start(now);
-      osc.stop(now + 0.045);
+      strokeGain.gain.setValueAtTime(0.55, now);
+      strokeGain.gain.exponentialRampToValueAtTime(0.01, now + 0.05);
 
-    } else if (type === SWITCH_SOUND.TACTILE) {
-      // Brown Switch: A perfect hybrid of tactile bump + rounded plastic collision
-      const osc = ctx.createOscillator();
-      const gainNode = ctx.createGain();
-
-      osc.type = OSCILLATOR_TYPE.SINE;
-      osc.frequency.setValueAtTime(190, now);
-      osc.frequency.exponentialRampToValueAtTime(65, now + 0.032);
-
-      gainNode.gain.setValueAtTime(0.2, now);
-      gainNode.gain.exponentialRampToValueAtTime(0.001, now + 0.032);
-
-      const filter = ctx.createBiquadFilter();
-      filter.type = FILTER_TYPE.LOWPASS;
-      filter.frequency.value = 500;
-
-      osc.connect(filter);
-      filter.connect(gainNode);
-      gainNode.connect(ctx.destination);
-
-      osc.start(now);
-      osc.stop(now + 0.038);
+      strokeOsc.connect(strokeGain);
+      strokeGain.connect(masterGain);
+      strokeOsc.start(now);
+      strokeOsc.stop(now + 0.052);
     }
   } catch (err) {
-    console.error("Synthesizer audio error:", err);
+    /* eslint-disable-next-line no-console */
+    console.error('Sound synth error:', err);
   }
 };
 
-// Standard 60% Layout Rows (Excluding the bottom Row 4 which is OS-specific)
-const LAYOUT_60_CORES = [
+// --- MACBOOK PRO KEYBOARD LAYOUT ---
+const MAC_LAYOUT = [
+  // Row 0 (Function Keys)
+  [
+    { code: 'Escape', label: 'esc', width: 1.25 },
+    { code: 'F1', label: 'F1', width: 1 },
+    { code: 'F2', label: 'F2', width: 1 },
+    { code: 'F3', label: 'F3', width: 1 },
+    { code: 'F4', label: 'F4', width: 1 },
+    { code: 'F5', label: 'F5', width: 1 },
+    { code: 'F6', label: 'F6', width: 1 },
+    { code: 'F7', label: 'F7', width: 1 },
+    { code: 'F8', label: 'F8', width: 1 },
+    { code: 'F9', label: 'F9', width: 1 },
+    { code: 'F10', label: 'F10', width: 1 },
+    { code: 'F11', label: 'F11', width: 1 },
+    { code: 'F12', label: 'F12', width: 1 },
+    { code: 'F13', label: 'Touch ID', width: 1.25 },
+  ],
+  // Row 1 (Number row)
+  [
+    { code: 'Backquote', label: '~\n`', width: 1 },
+    { code: 'Digit1', label: '!\n1', width: 1 },
+    { code: 'Digit2', label: '@\n2', width: 1 },
+    { code: 'Digit3', label: '#\n3', width: 1 },
+    { code: 'Digit4', label: '$\n4', width: 1 },
+    { code: 'Digit5', label: '%\n5', width: 1 },
+    { code: 'Digit6', label: '^\n6', width: 1 },
+    { code: 'Digit7', label: '&\n7', width: 1 },
+    { code: 'Digit8', label: '*\n8', width: 1 },
+    { code: 'Digit9', label: '(\n9', width: 1 },
+    { code: 'Digit0', label: ')\n0', width: 1 },
+    { code: 'Minus', label: '_\n-', width: 1 },
+    { code: 'Equal', label: '+\n=', width: 1 },
+    { code: 'Backspace', label: 'delete', width: 1.5 },
+  ],
+  // Row 2 (Tab and top letters)
+  [
+    { code: 'Tab', label: 'tab', width: 1.5 },
+    { code: 'KeyQ', label: 'Q', width: 1 },
+    { code: 'KeyW', label: 'W', width: 1 },
+    { code: 'KeyE', label: 'E', width: 1 },
+    { code: 'KeyR', label: 'R', width: 1 },
+    { code: 'KeyT', label: 'T', width: 1 },
+    { code: 'KeyY', label: 'Y', width: 1 },
+    { code: 'KeyU', label: 'U', width: 1 },
+    { code: 'KeyI', label: 'I', width: 1 },
+    { code: 'KeyO', label: 'O', width: 1 },
+    { code: 'KeyP', label: 'P', width: 1 },
+    { code: 'BracketLeft', label: '{\n[', width: 1 },
+    { code: 'BracketRight', label: '}\n]', width: 1 },
+    { code: 'Backslash', label: '|\n\\', width: 1 },
+  ],
+  // Row 3 (Caps lock and middle letters)
+  [
+    { code: 'CapsLock', label: 'caps lock', width: 1.85 },
+    { code: 'KeyA', label: 'A', width: 1 },
+    { code: 'KeyS', label: 'S', width: 1 },
+    { code: 'KeyD', label: 'D', width: 1 },
+    { code: 'KeyF', label: 'F', width: 1 },
+    { code: 'KeyG', label: 'G', width: 1 },
+    { code: 'KeyH', label: 'H', width: 1 },
+    { code: 'KeyJ', label: 'J', width: 1 },
+    { code: 'KeyK', label: 'K', width: 1 },
+    { code: 'KeyL', label: 'L', width: 1 },
+    { code: 'Semicolon', label: ':\n;', width: 1 },
+    { code: 'Quote', label: "\"\n'", width: 1 },
+    { code: 'Enter', label: 'return', width: 1.65 },
+  ],
+  // Row 4 (Shift and bottom letters)
+  [
+    { code: 'ShiftLeft', label: 'shift', width: 2.35 },
+    { code: 'KeyZ', label: 'Z', width: 1 },
+    { code: 'KeyX', label: 'X', width: 1 },
+    { code: 'KeyC', label: 'C', width: 1 },
+    { code: 'KeyV', label: 'V', width: 1 },
+    { code: 'KeyB', label: 'B', width: 1 },
+    { code: 'KeyN', label: 'N', width: 1 },
+    { code: 'KeyM', label: 'M', width: 1 },
+    { code: 'Comma', label: '<\n,', width: 1 },
+    { code: 'Period', label: '>\n.', width: 1 },
+    { code: 'Slash', label: '?\n/', width: 1 },
+    { code: 'ShiftRight', label: 'shift', width: 2.15 },
+  ],
+  // Row 5 (Bottom modifiers & space & arrow keys)
+  [
+    { code: 'Fn', label: 'fn', width: 1 },
+    { code: 'ControlLeft', label: 'control', width: 1 },
+    { code: 'AltLeft', label: 'option\n⌥', width: 1 },
+    { code: 'MetaLeft', label: 'command\n⌘', width: 1.25 },
+    { code: 'Space', label: '', width: 5.0 },
+    { code: 'MetaRight', label: 'command\n⌘', width: 1.25 },
+    { code: 'AltRight', label: 'option\n⌥', width: 1 },
+    { code: 'ArrowLeft', label: '◀', width: 1 },
+    {
+      code: 'ArrowUpDown',
+      type: 'split',
+      width: 1,
+      subkeys: [
+        { code: 'ArrowUp', label: '▲' },
+        { code: 'ArrowDown', label: '▼' },
+      ],
+    },
+    { code: 'ArrowRight', label: '▶', width: 1 },
+  ],
+];
+
+// --- WINDOWS COMPACT / ALPHANUMERIC BLOCKS ---
+const WIN_ALPHA_LAYOUT = [
+  // Row 0 (Function Keys)
+  [
+    { code: 'Escape', label: 'Esc', width: 1.25 },
+    { type: 'spacer', width: 0.25 },
+    { code: 'F1', label: 'F1', width: 1 },
+    { code: 'F2', label: 'F2', width: 1 },
+    { code: 'F3', label: 'F3', width: 1 },
+    { code: 'F4', label: 'F4', width: 1 },
+    { type: 'spacer', width: 0.25 },
+    { code: 'F5', label: 'F5', width: 1 },
+    { code: 'F6', label: 'F6', width: 1 },
+    { code: 'F7', label: 'F7', width: 1 },
+    { code: 'F8', label: 'F8', width: 1 },
+    { type: 'spacer', width: 0.25 },
+    { code: 'F9', label: 'F9', width: 1 },
+    { code: 'F10', label: 'F10', width: 1 },
+    { code: 'F11', label: 'F11', width: 1 },
+    { code: 'F12', label: 'F12', width: 1 },
+  ],
+  // Row 1 (Number Row)
+  [
+    { code: 'Backquote', label: '~\n`', width: 1 },
+    { code: 'Digit1', label: '!\n1', width: 1 },
+    { code: 'Digit2', label: '@\n2', width: 1 },
+    { code: 'Digit3', label: '#\n3', width: 1 },
+    { code: 'Digit4', label: '$\n4', width: 1 },
+    { code: 'Digit5', label: '%\n5', width: 1 },
+    { code: 'Digit6', label: '^\n6', width: 1 },
+    { code: 'Digit7', label: '&\n7', width: 1 },
+    { code: 'Digit8', label: '*\n8', width: 1 },
+    { code: 'Digit9', label: '(\n9', width: 1 },
+    { code: 'Digit0', label: ')\n0', width: 1 },
+    { code: 'Minus', label: '_\n-', width: 1 },
+    { code: 'Equal', label: '+\n=', width: 1 },
+    { code: 'Backspace', label: 'Backspace', width: 2 },
+  ],
+  // Row 2 (Tab Row)
+  [
+    { code: 'Tab', label: 'Tab', width: 1.5 },
+    { code: 'KeyQ', label: 'Q', width: 1 },
+    { code: 'KeyW', label: 'W', width: 1 },
+    { code: 'KeyE', label: 'E', width: 1 },
+    { code: 'KeyR', label: 'R', width: 1 },
+    { code: 'KeyT', label: 'T', width: 1 },
+    { code: 'KeyY', label: 'Y', width: 1 },
+    { code: 'KeyU', label: 'U', width: 1 },
+    { code: 'KeyI', label: 'I', width: 1 },
+    { code: 'KeyO', label: 'O', width: 1 },
+    { code: 'KeyP', label: 'P', width: 1 },
+    { code: 'BracketLeft', label: '{\n[', width: 1 },
+    { code: 'BracketRight', label: '}\n]', width: 1 },
+    { code: 'Backslash', label: '|\n\\', width: 1.5 },
+  ],
+  // Row 3 (Caps Row)
+  [
+    { code: 'CapsLock', label: 'Caps Lock', width: 1.75 },
+    { code: 'KeyA', label: 'A', width: 1 },
+    { code: 'KeyS', label: 'S', width: 1 },
+    { code: 'KeyD', label: 'D', width: 1 },
+    { code: 'KeyF', label: 'F', width: 1 },
+    { code: 'KeyG', label: 'G', width: 1 },
+    { code: 'KeyH', label: 'H', width: 1 },
+    { code: 'KeyJ', label: 'J', width: 1 },
+    { code: 'KeyK', label: 'K', width: 1 },
+    { code: 'KeyL', label: 'L', width: 1 },
+    { code: 'Semicolon', label: ':\n;', width: 1 },
+    { code: 'Quote', label: "\"\n'", width: 1 },
+    { code: 'Enter', label: 'Enter', width: 2.25 },
+  ],
+  // Row 4 (Shift Row)
+  [
+    { code: 'ShiftLeft', label: 'Shift', width: 2.25 },
+    { code: 'KeyZ', label: 'Z', width: 1 },
+    { code: 'KeyX', label: 'X', width: 1 },
+    { code: 'KeyC', label: 'C', width: 1 },
+    { code: 'KeyV', label: 'V', width: 1 },
+    { code: 'KeyB', label: 'B', width: 1 },
+    { code: 'KeyN', label: 'N', width: 1 },
+    { code: 'KeyM', label: 'M', width: 1 },
+    { code: 'Comma', label: '<\n,', width: 1 },
+    { code: 'Period', label: '>\n.', width: 1 },
+    { code: 'Slash', label: '?\n/', width: 1 },
+    { code: 'ShiftRight', label: 'Shift', width: 2.75 },
+  ],
+  // Row 5 (Bottom Row)
+  [
+    { code: 'ControlLeft', label: 'Ctrl', width: 1.25 },
+    { code: 'MetaLeft', label: 'Win', width: 1.25 },
+    { code: 'AltLeft', label: 'Alt', width: 1.25 },
+    { code: 'Space', label: '', width: 6.25 },
+    { code: 'AltRight', label: 'Alt', width: 1.25 },
+    { code: 'MetaRight', label: 'Win', width: 1.25 },
+    { code: 'ContextMenu', label: 'Menu', width: 1.25 },
+    { code: 'ControlRight', label: 'Ctrl', width: 1.25 },
+  ],
+];
+
+// --- WINDOWS NAVIGATION CLUSTER ---
+const WIN_NAV_LAYOUT = [
   // Row 0
   [
-    { code: "Escape", label: "Esc", width: "w-[42px] sm:w-[48px]" },
-    { code: "Digit1", label: "1", subLabel: "!" },
-    { code: "Digit2", label: "2", subLabel: "@" },
-    { code: "Digit3", label: "3", subLabel: "#" },
-    { code: "Digit4", label: "4", subLabel: "$" },
-    { code: "Digit5", label: "5", subLabel: "%" },
-    { code: "Digit6", label: "6", subLabel: "^" },
-    { code: "Digit7", label: "7", subLabel: "&" },
-    { code: "Digit8", label: "8", subLabel: "*" },
-    { code: "Digit9", label: "9", subLabel: "(" },
-    { code: "Digit0", label: "0", subLabel: ")" },
-    { code: "Minus", label: "-", subLabel: "_" },
-    { code: "Equal", label: "=", subLabel: "+" },
-    { code: "Backspace", label: "Backspace", width: "grow flex-1 min-w-[70px] sm:min-w-[80px]" }
+    { code: 'PrintScreen', label: 'PrtSc', width: 1 },
+    { code: 'ScrollLock', label: 'ScrLk', width: 1 },
+    { code: 'Pause', label: 'Pause', width: 1 },
   ],
   // Row 1
   [
-    { code: "Tab", label: "Tab", width: "w-[58px] sm:w-[68px] shrink-0" },
-    { code: "KeyQ", label: "Q" },
-    { code: "KeyW", label: "W" },
-    { code: "KeyE", label: "E" },
-    { code: "KeyR", label: "R" },
-    { code: "KeyT", label: "T" },
-    { code: "KeyY", label: "Y" },
-    { code: "KeyU", label: "U" },
-    { code: "KeyI", label: "I" },
-    { code: "KeyO", label: "O" },
-    { code: "KeyP", label: "P" },
-    { code: "BracketLeft", label: "[", subLabel: "{" },
-    { code: "BracketRight", label: "]", subLabel: "}" },
-    { code: "Backslash", label: "\\", subLabel: "|", width: "grow flex-1 min-w-[50px] sm:min-w-[60px]" }
+    { code: 'Insert', label: 'Ins', width: 1 },
+    { code: 'Home', label: 'Home', width: 1 },
+    { code: 'PageUp', label: 'PgUp', width: 1 },
   ],
   // Row 2
   [
-    { code: "CapsLock", label: "Caps Lock", width: "w-[68px] sm:w-[82px] shrink-0" },
-    { code: "KeyA", label: "A" },
-    { code: "KeyS", label: "S" },
-    { code: "KeyD", label: "D" },
-    { code: "KeyF", label: "F" },
-    { code: "KeyG", label: "G" },
-    { code: "KeyH", label: "H" },
-    { code: "KeyJ", label: "J" },
-    { code: "KeyK", label: "K" },
-    { code: "KeyL", label: "L" },
-    { code: "Semicolon", label: ";", subLabel: ":" },
-    { code: "Quote", label: "'", subLabel: "\"" },
-    { code: "Enter", label: "Enter", width: "grow flex-1 min-w-[75px] sm:min-w-[94px]" }
+    { code: 'Delete', label: 'Del', width: 1 },
+    { code: 'End', label: 'End', width: 1 },
+    { code: 'PageDown', label: 'PgDn', width: 1 },
   ],
-  // Row 3
+  // Row 3 (Empty layout spacer)
   [
-    { code: "ShiftLeft", label: "Shift", width: "w-[88px] sm:w-[106px] shrink-0" },
-    { code: "KeyZ", label: "Z" },
-    { code: "KeyX", label: "X" },
-    { code: "KeyC", label: "C" },
-    { code: "KeyV", label: "V" },
-    { code: "KeyB", label: "B" },
-    { code: "KeyN", label: "N" },
-    { code: "KeyM", label: "M" },
-    { code: "Comma", label: ",", subLabel: "<" },
-    { code: "Period", label: ".", subLabel: ">" },
-    { code: "Slash", label: "/", subLabel: "?" },
-    { code: "ShiftRight", label: "Shift", width: "grow flex-1 min-w-[85px] sm:min-w-[110px]" }
-  ]
-];
-
-// OS-specific lower rows layout (Ctrl, Alt, Win/Command physical placements)
-const ROW_4_WIN = [
-  { code: "ControlLeft", label: "Ctrl", width: "w-[50px] sm:w-[58px] shrink-0" },
-  { code: "MetaLeft", label: "Win", width: "w-[42px] sm:w-[48px] shrink-0" },
-  { code: "AltLeft", label: "Alt", width: "w-[42px] sm:w-[48px] shrink-0" },
-  { code: "Space", label: "Space", width: "grow flex-1 max-w-[350px] min-w-[180px] sm:min-w-[220px]" },
-  { code: "AltRight", label: "Alt", width: "w-[42px] sm:w-[48px] shrink-0" },
-  { code: "MetaRight", label: "Win", width: "w-[42px] sm:w-[48px] shrink-0" },
-  { code: "ContextMenu", label: "Menu", width: "w-[42px] sm:w-[48px] shrink-0" },
-  { code: "ControlRight", label: "Ctrl", width: "w-[50px] sm:w-[58px] shrink-0" }
-];
-
-const ROW_4_MAC = [
-  { code: "ControlLeft", label: "Control", subLabel: "⌃", width: "w-[54px] sm:w-[62px] shrink-0" },
-  { code: "AltLeft", label: "Option", subLabel: "⌥", width: "w-[46px] sm:w-[52px] shrink-0" },
-  { code: "MetaLeft", label: "Command", subLabel: "⌘", width: "w-[56px] sm:w-[64px] shrink-0" },
-  { code: "Space", label: "Space", width: "grow flex-1 max-w-[340px] min-w-[180px] sm:min-w-[220px]" },
-  { code: "MetaRight", label: "Command", subLabel: "⌘", width: "w-[56px] sm:w-[64px] shrink-0" },
-  { code: "AltRight", label: "Option", subLabel: "⌥", width: "w-[46px] sm:w-[52px] shrink-0" },
-  { code: "ControlRight", label: "Control", subLabel: "⌃", width: "w-[54px] sm:w-[62px] shrink-0" }
-];
-
-// TKL Function Row Header
-const TKL_FUNCTION_ROW = [
-  { code: "Escape", label: "Esc", width: "w-[42px] sm:w-[48px]" },
-  { code: "gap-1", type: "gap", width: "w-6 sm:w-8" },
-  { code: "F1", label: "F1" },
-  { code: "F2", label: "F2" },
-  { code: "F3", label: "F3" },
-  { code: "F4", label: "F4" },
-  { code: "gap-2", type: "gap", width: "w-4 sm:w-6" },
-  { code: "F5", label: "F5" },
-  { code: "F6", label: "F6" },
-  { code: "F7", label: "F7" },
-  { code: "F8", label: "F8" },
-  { code: "gap-3", type: "gap", width: "w-4 sm:w-6" },
-  { code: "F9", label: "F9" },
-  { code: "F10", label: "F10" },
-  { code: "F11", label: "F11" },
-  { code: "F12", label: "F12" }
-];
-
-const TKL_NAV_CLUSTER = [
-  // Row 0
-  [
-    { code: "PrintScreen", label: "PrtSc" },
-    { code: "ScrollLock", label: "ScrLk" },
-    { code: "Pause", label: "Pause" }
-  ],
-  // Row 1
-  [
-    { code: "Insert", label: "Ins" },
-    { code: "Home", label: "Home" },
-    { code: "PageUp", label: "PgUp" }
-  ],
-  // Row 2
-  [
-    { code: "Delete", label: "Del" },
-    { code: "End", label: "End" },
-    { code: "PageDown", label: "PgDn" }
-  ],
-  // Row 3 (Empty Spacer Row)
-  [
-    { code: "spacer-1", type: "spacer", height: "h-9 sm:h-[42px]" }
+    { type: 'spacer', width: 1 },
+    { type: 'spacer', width: 1 },
+    { type: 'spacer', width: 1 },
   ],
   // Row 4
   [
-    { code: "spacer-arrow-up", type: "gap", width: "w-[42px] sm:w-[48px]" },
-    { code: "ArrowUp", label: "▲" },
-    { code: "spacer-arrow-up-right", type: "gap", width: "w-[42px] sm:w-[48px]" }
+    { type: 'spacer', width: 1 },
+    { code: 'ArrowUp', label: '▲', width: 1 },
+    { type: 'spacer', width: 1 },
   ],
   // Row 5
   [
-    { code: "ArrowLeft", label: "◀" },
-    { code: "ArrowDown", label: "▼" },
-    { code: "ArrowRight", label: "▶" }
-  ]
+    { code: 'ArrowLeft', label: '◀', width: 1 },
+    { code: 'ArrowDown', label: '▼', width: 1 },
+    { code: 'ArrowRight', label: '▶', width: 1 },
+  ],
 ];
 
-// Aesthetic key cap designer styling presets
-const THEMES = {
-  carbon: {
-    name: "Carbon Grey",
-    bg: "bg-slate-900 border-slate-800",
-    keyDefault: "bg-[#27272a] text-zinc-100 hover:bg-[#3f3f46] border-zinc-700/80 shadow-md",
-    keyActive: "bg-indigo-500 text-white border-indigo-400 shadow-[0_0_15px_rgba(99,102,241,0.65)] scale-[0.97]",
-    keyTested: "bg-indigo-950/65 text-indigo-200 border-indigo-500/40 hover:bg-indigo-900/60 shadow-[0_0_8px_rgba(99,102,241,0.15)]",
-    cardBg: "bg-white border-slate-200",
-    border: "border-slate-800",
-    textMuted: "text-slate-400",
-    textHeading: "text-white"
+// --- WINDOWS NUMPAD CLUSTER (Absolute CSS Grid arrangement) ---
+const WIN_NUMPAD_KEYS = [
+  {
+    code: 'NumLock', label: 'Num', col: 'col-start-1 col-span-1', row: 'row-start-1 row-span-1',
   },
-  retro: {
-    name: "Classic Retro (80s)",
-    bg: "bg-[#dbdbdb] border-[#c0c0c0]",
-    keyDefault: "bg-[#ececec] text-[#333333] border-[#ffffff] border-t-2 border-l-2 border-b-[#888888] border-r-[#888888] hover:bg-[#f4f4f4] shadow-sm",
-    keyActive: "bg-[#d15822] text-white border-[#888888] border-t-2 border-l-2 shadow-inner scale-[0.97]",
-    keyTested: "bg-[#dcedc8] text-[#33691e] border-[#81c784] hover:bg-[#c5e1a5]",
-    cardBg: "bg-white border-[#c8c8c8]",
-    border: "border-slate-300",
-    textMuted: "text-slate-500",
-    textHeading: "text-slate-800"
+  {
+    code: 'NumpadDivide', label: '/', col: 'col-start-2 col-span-1', row: 'row-start-1 row-span-1',
   },
-  cyberpunk: {
-    name: "Cyberpunk Neon",
-    bg: "bg-[#0b0514] border-[#ff0055]/30",
-    keyDefault: "bg-[#180a2b] text-[#ff00ff] border-[#ff00ff]/30 hover:bg-[#251042] hover:border-[#ff00ff]/60 shadow-[0_0_5px_rgba(255,0,255,0.1)]",
-    keyActive: "bg-[#00f0ff] text-slate-900 border-[#00f0ff] shadow-[0_0_18px_#00f0ff] scale-[0.97] font-extrabold",
-    keyTested: "bg-[#6b0f3e] text-[#ffd6e7] border-[#ff0055]/70 hover:bg-[#7d144b] shadow-[0_0_8px_rgba(255,0,85,0.2)]",
-    cardBg: "bg-white border-[#ff0055]/20",
-    border: "border-[#ff0055]/20",
-    textMuted: "text-[#a28abf]",
-    textHeading: "text-transparent bg-clip-text bg-gradient-to-r from-[#ff00ff] to-[#00f0ff]"
+  {
+    code: 'NumpadMultiply', label: '*', col: 'col-start-3 col-span-1', row: 'row-start-1 row-span-1',
   },
-  olivia: {
-    name: "Olivia Rose",
-    bg: "bg-[#111111] border-[#e0b0b0]/20",
-    keyDefault: "bg-[#ece0d8]/95 text-[#2c2c2c] border-[#d7ccc8] hover:bg-[#f5ebe6] shadow-sm",
-    keyActive: "bg-[#e0b0b0] text-[#1a1a1a] border-[#e0b0b0] shadow-[0_0_12px_rgba(224,176,176,0.6)] scale-[0.97]",
-    keyTested: "bg-[#2d2828] text-[#e0b0b0] border-[#e0b0b0]/40 hover:bg-[#3a3333]",
-    cardBg: "bg-white border-[#2d2828]",
-    border: "border-[#2d2828]",
-    textMuted: "text-[#a39494]",
-    textHeading: "text-[#ece0d8]"
-  }
-};
+  {
+    code: 'NumpadSubtract', label: '-', col: 'col-start-4 col-span-1', row: 'row-start-1 row-span-1',
+  },
+
+  {
+    code: 'Numpad7', label: '7', col: 'col-start-1 col-span-1', row: 'row-start-2 row-span-1',
+  },
+  {
+    code: 'Numpad8', label: '8', col: 'col-start-2 col-span-1', row: 'row-start-2 row-span-1',
+  },
+  {
+    code: 'Numpad9', label: '9', col: 'col-start-3 col-span-1', row: 'row-start-2 row-span-1',
+  },
+  {
+    code: 'NumpadAdd', label: '+', col: 'col-start-4 col-span-1', row: 'row-start-2 row-span-2',
+  },
+
+  {
+    code: 'Numpad4', label: '4', col: 'col-start-1 col-span-1', row: 'row-start-3 row-span-1',
+  },
+  {
+    code: 'Numpad5', label: '5', col: 'col-start-2 col-span-1', row: 'row-start-3 row-span-1',
+  },
+  {
+    code: 'Numpad6', label: '6', col: 'col-start-3 col-span-1', row: 'row-start-3 row-span-1',
+  },
+
+  {
+    code: 'Numpad1', label: '1', col: 'col-start-1 col-span-1', row: 'row-start-4 row-span-1',
+  },
+  {
+    code: 'Numpad2', label: '2', col: 'col-start-2 col-span-1', row: 'row-start-4 row-span-1',
+  },
+  {
+    code: 'Numpad3', label: '3', col: 'col-start-3 col-span-1', row: 'row-start-4 row-span-1',
+  },
+  {
+    code: 'NumpadEnter', label: 'Ent', col: 'col-start-4 col-span-1', row: 'row-start-4 row-span-2',
+  },
+
+  {
+    code: 'Numpad0', label: '0', col: 'col-start-1 col-span-2', row: 'row-start-5 row-span-1',
+  },
+  {
+    code: 'NumpadDecimal', label: '.', col: 'col-start-3 col-span-1', row: 'row-start-5 row-span-1',
+  },
+];
+
+// Presets for ghosting combinations
+const COMBO_PRESETS = [
+  {
+    name: 'WASD Movement',
+    keys: ['KeyW', 'KeyA', 'KeyS', 'KeyD'],
+    description: 'Standard action/RPG character navigation',
+  },
+  {
+    name: 'Cut / Copy / Paste',
+    keys: ['ControlLeft', 'MetaLeft', 'KeyX', 'KeyC', 'KeyV'],
+    description: 'Multi-rollover office modifier testing',
+  },
+  {
+    name: 'Task Manager Combo',
+    keys: ['ControlLeft', 'ShiftLeft', 'Escape'],
+    description: 'Windows quick diagnostics toggle shortcut',
+  },
+  {
+    name: 'Gaming Space Jump',
+    keys: ['ShiftLeft', 'KeyW', 'Space'],
+    description: 'Frequent trigger key combo that blocks on bad keyboards',
+  },
+  {
+    name: 'Arrow Navigation',
+    keys: ['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'],
+    description: 'Directional cross tests',
+  },
+];
 
 export default function KeyboardTester() {
+  const [layoutType, setLayoutType] = useState('mac');
+  const [activeTheme, setActiveTheme] = useState(THEMES[0]);
+
+  // Audio state
+  const [soundEnabled, setSoundEnabled] = useState(false);
+  const [soundProfile, setSoundProfile] = useState('clicky');
+  const [volume, setVolume] = useState(0.5);
+
+  // Key registration states
   const [pressedKeys, setPressedKeys] = useState({});
   const [testedKeys, setTestedKeys] = useState({});
   const [lastPressed, setLastPressed] = useState(null);
-  const [keyHistory, setKeyHistory] = useState([]);
   const [maxRollover, setMaxRollover] = useState(0);
-  const [blockDefault, setBlockDefault] = useState(true);
-  const [switchSound, setSwitchSound] = useState(SWITCH_SOUND.CLICKY);
-  const [layoutType, setLayoutType] = useState(LAYOUT.TKL);
-  const [theme, setTheme] = useState(THEME.CARBON);
-  const [osLayout, setOsLayout] = useState(OS_LAYOUT.WIN); // "win" | "mac"
+  const [historyLog, setHistoryLog] = useState([]);
 
-  // Detect user's operational layout on mounting
-  useEffect(() => {
-    if (typeof window !== "undefined" && window.navigator) {
-      const userAgent = window.navigator.userAgent || window.navigator.platform || "";
-      const isMac = /Mac|iPod|iPhone|iPad|Macintosh|MacIntel/i.test(userAgent);
-      if (isMac) {
-        setOsLayout(OS_LAYOUT.MAC);
-      }
+  // Reference for scrolling history log to bottom automatically (no window scroll)
+  const logContainerRef = useRef(null);
+
+  // Derive active theme object
+  const theme = activeTheme;
+
+  let layoutLabel = 'Windows Full-Size';
+  if (layoutType === 'mac') {
+    layoutLabel = 'MacBook Pro';
+  } else if (layoutType === 'win-tkl') {
+    layoutLabel = 'Windows TKL';
+  }
+
+  // Track key counts for current layout
+  const getKeysCount = () => {
+    if (layoutType === 'mac') {
+      let count = 0;
+      MAC_LAYOUT.forEach((row) => {
+        row.forEach((k) => {
+          if (k.type === 'split') count += k.subkeys.length;
+          else count += 1;
+        });
+      });
+      return count;
     }
-  }, []);
+    if (layoutType === 'win-tkl') {
+      let count = 0;
+      WIN_ALPHA_LAYOUT.forEach((row) => {
+        row.forEach((k) => { if (k.code) count += 1; });
+      });
+      WIN_NAV_LAYOUT.forEach((row) => {
+        row.forEach((k) => { if (k.code) count += 1; });
+      });
+      return count;
+    }
+    let count = 0;
+    WIN_ALPHA_LAYOUT.forEach((row) => {
+      row.forEach((k) => { if (k.code) count += 1; });
+    });
+    WIN_NAV_LAYOUT.forEach((row) => {
+      row.forEach((k) => { if (k.code) count += 1; });
+    });
+    count += WIN_NUMPAD_KEYS.length;
+    return count;
+  };
 
-  // Set up general event listeners
+  const totalKeysInLayout = getKeysCount();
+  const testedKeysCount = Object.keys(testedKeys).filter((code) => {
+    if (layoutType === 'mac') {
+      return MAC_LAYOUT.some((row) => row.some((k) => {
+        if (k.code === code) return true;
+        if (k.type === 'split') {
+          return k.subkeys.some((sk) => sk.code === code);
+        }
+        return false;
+      }));
+    }
+    if (layoutType === 'win-tkl') {
+      return (
+        WIN_ALPHA_LAYOUT.some((row) => row.some((k) => k.code === code))
+        || WIN_NAV_LAYOUT.some((row) => row.some((k) => k.code === code))
+      );
+    }
+    return (
+      WIN_ALPHA_LAYOUT.some((row) => row.some((k) => k.code === code))
+      || WIN_NAV_LAYOUT.some((row) => row.some((k) => k.code === code))
+      || WIN_NUMPAD_KEYS.some((k) => k.code === code)
+    );
+  }).length;
+
+  const testedPercentage = totalKeysInLayout > 0
+    ? Math.round((testedKeysCount / totalKeysInLayout) * 100)
+    : 0;
+
+  // Window key listener setup
   useEffect(() => {
     const handleKeyDown = (e) => {
-      const code = e.code;
-      if (!code) return;
+      const { code } = e;
+      const keyName = e.key;
 
-      // Click Audio Synthesizer triggering
-      playSwitchSound(switchSound, switchSound === SWITCH_SOUND.MUTE);
+      const preserveKeys = ['F5', 'F12'];
+      const isReloadModifier = (e.ctrlKey || e.metaKey) && (code === 'KeyR' || code === 'KeyI');
 
-      // Register currently pressed key
-      setPressedKeys((prev) => {
-        const next = { ...prev, [code]: true };
-        const activeCount = Object.keys(next).length;
-        setMaxRollover((max) => Math.max(max, activeCount));
-        return next;
-      });
+      if (!preserveKeys.includes(code) && !isReloadModifier) {
+        if (
+          code === 'Tab'
+          || code === 'AltLeft'
+          || code === 'AltRight'
+          || code === 'MetaLeft'
+          || code === 'MetaRight'
+          || code === 'ControlLeft'
+          || code === 'ControlRight'
+          || code === 'Backspace'
+          || code === 'ArrowDown'
+          || code === 'ArrowUp'
+          || code === 'ArrowLeft'
+          || code === 'ArrowRight'
+          || keyName === ' '
+          || code.startsWith('F')
+        ) {
+          e.preventDefault();
+        }
 
-      // Register tested keycap
-      setTestedKeys((prev) => ({ ...prev, [code]: true }));
-
-      // Resolve dynamic key labels based on current OS Layout
-      const targetLabel = getMacSensitiveDetails({ code, label: e.key });
-
-      // Set stats info
-      const keyDetail = {
-        code,
-        key: targetLabel.label === KEY_CHAR.SPACE ? KEY_NAME.SPACE : targetLabel.label,
-        keyCode: e.keyCode || e.which,
-        time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false })
-      };
-      setLastPressed(keyDetail);
-
-      // Save key logs up to 100 entries
-      setKeyHistory((prev) => [keyDetail, ...prev].slice(0, 100));
-
-      // Overrides browser actions (preventing default key shortcuts like F5 or Tab from messing up testing)
-      if (blockDefault) {
-        const defaultBlocked = [
-          "Tab", "Backspace", "Space", "F5", "F1", "F3", "F4", "F6", "F7", "F8", "F9", "F10", "F11", "F12",
-          "AltLeft", "AltRight", "ControlLeft", "ControlRight", "ShiftLeft", "ShiftRight", "ArrowUp", "ArrowDown",
-          "ArrowLeft", "ArrowRight"
-        ];
-        if (defaultBlocked.includes(code) || code.startsWith("Key") || code.startsWith("Digit")) {
+        if (e.altKey || e.metaKey || e.ctrlKey) {
           e.preventDefault();
         }
       }
+
+      setPressedKeys((prev) => {
+        const next = { ...prev, [code]: true };
+        const currentRolloverCount = Object.values(next).filter(Boolean).length;
+        setMaxRollover((currMax) => Math.max(currMax, currentRolloverCount));
+        return next;
+      });
+
+      setTestedKeys((prev) => ({ ...prev, [code]: true }));
+      setLastPressed({ code, key: keyName });
+
+      const timeStr = new Date().toLocaleTimeString(undefined, {
+        hour12: false,
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit',
+        fractionalSecondDigits: 3,
+      });
+      setHistoryLog((prev) => [
+        ...prev.slice(-49),
+        {
+          id: shortid.generate(), code, key: keyName, time: timeStr,
+        },
+      ]);
+
+      playKeySound(soundProfile, !soundEnabled, volume);
     };
 
     const handleKeyUp = (e) => {
-      const code = e.code;
-      if (!code) return;
-
-      setPressedKeys((prev) => {
-        const next = { ...prev };
-        delete next[code];
-        return next;
-      });
+      const { code } = e;
+      setPressedKeys((prev) => ({ ...prev, [code]: false }));
     };
 
     const handleBlur = () => {
-      // Clear stuck states if application window loses operational focus
       setPressedKeys({});
     };
 
-    window.addEventListener("keydown", handleKeyDown);
-    window.addEventListener("keyup", handleKeyUp);
-    window.addEventListener("blur", handleBlur);
+    window.addEventListener('keydown', handleKeyDown);
+    window.addEventListener('keyup', handleKeyUp);
+    window.addEventListener('blur', handleBlur);
 
     return () => {
-      window.removeEventListener("keydown", handleKeyDown);
-      window.removeEventListener("keyup", handleKeyUp);
-      window.removeEventListener("blur", handleBlur);
+      window.removeEventListener('keydown', handleKeyDown);
+      window.removeEventListener('keyup', handleKeyUp);
+      window.removeEventListener('blur', handleBlur);
     };
-  }, [blockDefault, switchSound, osLayout]);
+  }, [soundEnabled, soundProfile, volume]);
 
-  // Clean all tested counters
-  const handleResetBoard = () => {
+  // Scroll key log to bottom automatically without scrolling windows
+  useEffect(() => {
+    if (logContainerRef.current) {
+      const container = logContainerRef.current;
+      container.scrollTop = container.scrollHeight;
+    }
+  }, [historyLog]);
+
+  const resetTester = () => {
     setPressedKeys({});
     setTestedKeys({});
     setLastPressed(null);
-    setKeyHistory([]);
     setMaxRollover(0);
+    setHistoryLog([]);
   };
 
-  // Helper function to dynamically map Mac labels onto keycaps
-  const getMacSensitiveDetails = (key) => {
-    if (osLayout === OS_LAYOUT.MAC) {
-      switch (key.code) {
-        case "Backspace":
-          return { ...key, label: "Delete", subLabel: "⌫" };
-        case "Enter":
-          return { ...key, label: "Return", subLabel: "↩" };
-        case "CapsLock":
-          return { ...key, label: "Caps Lock", subLabel: "⇪" };
-        case "MetaLeft":
-        case "MetaRight":
-          return { ...key, label: "Command", subLabel: "⌘" };
-        case "AltLeft":
-        case "AltRight":
-          return { ...key, label: "Option", subLabel: "⌥" };
-        case "ControlLeft":
-        case "ControlRight":
-          return { ...key, label: "Control", subLabel: "⌃" };
-        default:
-          break;
-      }
-    }
-    return key;
+  const getComboState = (comboKeys) => {
+    const isCurrentlyActive = comboKeys.some((k) => pressedKeys[k]);
+    const isFullyTested = comboKeys.every((k) => testedKeys[k]);
+    return { active: isCurrentlyActive, tested: isFullyTested };
   };
 
-  const currentTheme = THEMES[theme];
-
-  // Helper renderer for standard key caps
-  const renderKeycap = (key) => {
-    if (key.type === KEY_TYPE.GAP) {
-      return <div key={key.code} className={`${key.width} shrink-0`} />;
-    }
-
-    if (key.type === KEY_TYPE.SPACER) {
-      return <div key={key.code} className={`${key.height} w-full shrink-0`} />;
-    }
-
-    const isPressed = !!pressedKeys[key.code];
-    const isTested = !!testedKeys[key.code];
-
-    let customKeyStyle = currentTheme.keyDefault;
-    if (isPressed) {
-      customKeyStyle = currentTheme.keyActive;
-    } else if (isTested) {
-      customKeyStyle = currentTheme.keyTested;
-    }
-
-    // Resolve key attributes based on selected keyboard OS (Windows vs Mac)
-    const resolvedKey = getMacSensitiveDetails(key);
-
-    // Default sizing values for standard keycaps
-    const capWidth = resolvedKey.width || "w-10 h-10 sm:w-11 sm:h-11 md:w-12 md:h-12";
-
-    return (
-      <motion.button
-        key={resolvedKey.code}
-        whileTap={{ scale: 0.94 }}
-        className={`rounded-lg select-none border border-b-2 flex flex-col items-center justify-between p-1.5 font-sans leading-none text-[10px] sm:text-xs font-semibold tracking-tight transition-all duration-75 shrink-0 ${capWidth} ${customKeyStyle}`}
-        style={{ touchAction: "none" }}
-      >
-        {/* Secondary shift characters on top, labels on bottom */}
-        {resolvedKey.subLabel ? (
-          <>
-            <span className="text-[9px] opacity-75 self-start leading-none">{resolvedKey.subLabel}</span>
-            <span className="self-end leading-none text-[10px] sm:text-[11px]">{resolvedKey.label}</span>
-          </>
-        ) : (
-          <span className="m-auto leading-none truncate w-full text-center">{resolvedKey.label}</span>
-        )}
-      </motion.button>
-    );
+  const handleLayoutChange = (type) => {
+    setLayoutType(type);
+    setPressedKeys({});
   };
 
-  // Dynamically compile the layout rows based on OS selection
-  const activeLayoutRows = [
-    ...LAYOUT_60_CORES,
-    osLayout === OS_LAYOUT.MAC ? ROW_4_MAC : ROW_4_WIN
-  ];
+  const unlockAudioEngine = () => {
+    if (!soundEnabled) {
+      setSoundEnabled(true);
+      playKeySound(soundProfile, false, volume);
+    }
+  };
+
+  const handleKeyClick = (code) => {
+    if (!code) return;
+    setTestedKeys((prev) => ({ ...prev, [code]: !prev[code] }));
+  };
+
+  // Helper functions for class names to avoid nested ternaries and long lines
+  const getKeyClass = (code, isSplit = false) => {
+    if (pressedKeys[code]) return theme.activeClass;
+    if (testedKeys[code]) return theme.testedClass;
+    const textCol = isSplit ? 'text-slate-500' : 'text-slate-600';
+    return `bg-slate-50 ${textCol} ${theme.keyBorderColor} border-slate-200`;
+  };
+
+  const getComboCardClass = (active, tested) => {
+    if (active) return 'bg-amber-50/50 border-amber-200';
+    if (tested) return 'bg-emerald-50/40 border-emerald-100';
+    return 'bg-slate-50 border-slate-150';
+  };
+
+  const getComboTitleClass = (active, tested) => {
+    if (tested) return 'text-emerald-700';
+    if (active) return 'text-amber-700';
+    return 'text-slate-700';
+  };
+
+  const getComboKeyClass = (kActive, kTested) => {
+    if (kActive) return 'bg-amber-400 text-slate-900 border-amber-500';
+    if (kTested) return 'bg-emerald-100 text-emerald-800 border-emerald-200';
+    return 'bg-white text-slate-500 border-slate-200';
+  };
+
+  const getComboPillLabel = (active, tested) => {
+    if (tested) return 'Verified';
+    if (active) return 'Active';
+    return 'Pending';
+  };
+
+  const getComboPillClass = (active, tested) => {
+    if (tested) return 'text-emerald-600 bg-emerald-50 border-emerald-100';
+    if (active) return 'text-amber-600 bg-amber-50 border-amber-100 animate-pulse';
+    return 'text-slate-400 bg-white border-slate-200';
+  };
 
   return (
     <PageContext.Provider value={{ activeItem: PAGE.KEYBOARD_TESTER }}>
@@ -562,315 +750,507 @@ export default function KeyboardTester() {
           animate={{ opacity: 1, y: 0 }}
           className="w-full flex flex-col space-y-6"
         >
-          {/* Header Title Section */}
-          <div className="flex flex-col md:flex-row md:items-center md:justify-between space-y-4 md:space-y-0">
+          {/* Main Title Area */}
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div>
-              <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight flex items-center gap-2">
-                <Keyboard className="w-7 h-7 text-indigo-600" />
-                Keyboard Tester
+              <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight flex items-center gap-2.5">
+                <Keyboard className="w-8 h-8 text-amber-500" />
+                Hardware Keyboard Tester
               </h1>
               <p className="mt-1 text-sm sm:text-base text-slate-500">
-                Verify input hardware keys, multi-key rollover (NKRO), and mechanical switch sound profiles.
+                Verify multi-key rollover (NKRO), diagnose sticky switches,
+                test ghosting nodes, and customize layout skins. (Keys like Fn and F1–F12 with OS conflicts can be clicked to test manually).
               </p>
             </div>
 
-            {/* Quick Actions Panel */}
-            <div className="flex flex-wrap items-center gap-2">
-              {/* Reset button */}
+            {/* Control Button panel */}
+            <div className="flex items-center gap-3 self-start sm:self-auto shrink-0">
               <button
-                onClick={handleResetBoard}
-                className="flex items-center gap-1.5 px-4 py-2 text-sm font-semibold bg-white text-slate-700 hover:text-slate-900 border border-slate-200 rounded-xl hover:bg-slate-50 hover:border-slate-300 shadow-sm transition-all"
+                type="button"
+                onClick={resetTester}
+                className="flex items-center gap-1.5 px-4 py-2.5 bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold rounded-2xl shadow-sm hover:shadow transition-all"
               >
                 <RotateCcw className="w-4 h-4" />
-                Reset Board
+                Reset Canvas
               </button>
+            </div>
+          </div>
 
-              {/* OS Layout Toggler */}
-              <div className="flex bg-slate-200/80 p-0.5 rounded-xl border border-slate-200/40">
-                <button
-                  onClick={() => setOsLayout(OS_LAYOUT.WIN)}
-                  className={`px-3 py-1.5 text-xs font-semibold rounded-lg transition-all ${
-                    osLayout === OS_LAYOUT.WIN
-                      ? "bg-white text-slate-800 shadow-sm"
-                      : "text-slate-500 hover:text-slate-800"
-                  }`}
-                >
-                  Windows Layout
-                </button>
-                <button
-                  onClick={() => setOsLayout(OS_LAYOUT.MAC)}
-                  className={`px-3 py-1.5 text-xs font-semibold rounded-lg transition-all ${
-                    osLayout === OS_LAYOUT.MAC
-                      ? "bg-white text-slate-800 shadow-sm"
-                      : "text-slate-500 hover:text-slate-800"
-                  }`}
-                >
-                  Mac Layout
-                </button>
+          {/* Quick Specifications Banner Stats */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div className="p-4 bg-white border border-slate-200 rounded-2xl shadow-sm flex items-center gap-3.5">
+              <div className="w-10 h-10 rounded-xl bg-amber-50 flex items-center justify-center text-amber-500 shrink-0">
+                <Sliders className="w-5 h-5" />
               </div>
+              <div className="min-w-0">
+                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Layout Template</span>
+                <span className="text-sm font-extrabold text-slate-800 capitalize block">
+                  {layoutLabel}
+                </span>
+              </div>
+            </div>
 
-              {/* Layout Size Toggler */}
-              <div className="flex bg-slate-200/80 p-0.5 rounded-xl border border-slate-200/40">
-                <button
-                  onClick={() => setLayoutType(LAYOUT.TKL)}
-                  className={`px-3 py-1.5 text-xs font-semibold rounded-lg transition-all ${
-                    layoutType === LAYOUT.TKL
-                      ? "bg-white text-slate-800 shadow-sm"
-                      : "text-slate-500 hover:text-slate-800"
-                  }`}
-                >
-                  TKL (80%)
-                </button>
-                <button
-                  onClick={() => setLayoutType(LAYOUT.COMPACT_60)}
-                  className={`px-3 py-1.5 text-xs font-semibold rounded-lg transition-all ${
-                    layoutType === LAYOUT.COMPACT_60
-                      ? "bg-white text-slate-800 shadow-sm"
-                      : "text-slate-500 hover:text-slate-800"
-                  }`}
-                >
-                  Compact (60%)
-                </button>
+            <div className="p-4 bg-white border border-slate-200 rounded-2xl shadow-sm flex items-center gap-3.5">
+              <div className="w-10 h-10 rounded-xl bg-emerald-50 flex items-center justify-center text-emerald-500 shrink-0">
+                <CheckCircle className="w-5 h-5" />
+              </div>
+              <div className="min-w-0 flex-1">
+                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Keys Calibrated</span>
+                <span className="text-sm font-extrabold text-slate-800 block">
+                  {testedKeysCount} / {totalKeysInLayout}
+                  <span className="text-xs font-medium text-slate-400 ml-1">
+                    ({testedPercentage}%)
+                  </span>
+                </span>
+              </div>
+            </div>
+
+            <div className="p-4 bg-white border border-slate-200 rounded-2xl shadow-sm flex items-center gap-3.5">
+              <div className="w-10 h-10 rounded-xl bg-rose-50 flex items-center justify-center text-rose-500 shrink-0">
+                <Flame className="w-5 h-5" />
+              </div>
+              <div className="min-w-0">
+                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Active Held Keys</span>
+                <span className="text-sm font-extrabold text-slate-800 block">
+                  {Object.values(pressedKeys).filter(Boolean).length} Keys Active
+                </span>
+              </div>
+            </div>
+
+            <div className="p-4 bg-white border border-slate-200 rounded-2xl shadow-sm flex items-center gap-3.5">
+              <div className="w-10 h-10 rounded-xl bg-indigo-50 flex items-center justify-center text-indigo-500 shrink-0">
+                <Sparkles className="w-5 h-5" />
+              </div>
+              <div className="min-w-0">
+                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">NKRO Rollover peak</span>
+                <span className="text-sm font-extrabold text-slate-800 block">
+                  {maxRollover} Max Congruent
+                </span>
               </div>
             </div>
           </div>
 
-          {/* Interactive Keyboard Visual Board */}
-          <div className={`p-4 sm:p-6 rounded-3xl border shadow-md transition-colors duration-200 overflow-x-auto w-full custom-scrollbar ${currentTheme.bg}`}>
-            <div className="min-w-[920px] flex flex-col space-y-4">
-              
-              {/* TKL Function Row Header */}
-              {layoutType === LAYOUT.TKL && (
-                <div className="flex justify-between items-center w-full">
-                  {/* Left Function Area */}
-                  <div className="flex gap-1">
-                    {TKL_FUNCTION_ROW.map((key) => renderKeycap(key))}
-                  </div>
+          {/* Quick Real-Time Large Visual Display of Last Key Pressed */}
+          <div className="bg-white border border-slate-200 rounded-3xl p-5 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div className="flex items-center gap-3.5">
+              <div className="p-2.5 rounded-xl bg-indigo-50 text-indigo-500">
+                <Terminal className="w-5 h-5" />
+              </div>
+              <div>
+                <span className="text-xs font-bold text-slate-400 block tracking-wide uppercase">Real-Time Core Stream</span>
+                <p className="text-sm text-slate-600 font-medium">
+                  Press any physical key on your keyboard to instantly run verification scans.
+                </p>
+              </div>
+            </div>
 
-                  {/* Right Navigation Controls Row 0 */}
-                  <div className="flex gap-1 ml-auto">
-                    {TKL_NAV_CLUSTER[0].map((key) => renderKeycap(key))}
+            <div className="flex items-center gap-4 shrink-0">
+              {lastPressed ? (
+                <div className="flex items-center gap-3.5 bg-slate-50 border border-slate-150 px-4 py-2 rounded-2xl">
+                  <div className="text-right">
+                    <span className="text-[10px] text-slate-400 uppercase font-bold block">Key Value</span>
+                    <span className="text-xs font-mono font-bold text-indigo-600">
+                      &quot;{lastPressed.key === ' ' ? 'Space' : lastPressed.key}&quot;
+                    </span>
+                  </div>
+                  <div className="h-6 w-px bg-slate-200" />
+                  <div>
+                    <span className="text-[10px] text-slate-400 uppercase font-bold block">Physical Code</span>
+                    <span className="text-xs font-mono font-bold text-emerald-600">{lastPressed.code}</span>
                   </div>
                 </div>
+              ) : (
+                <div className="text-xs font-semibold text-slate-400 px-4 py-2 bg-slate-50 border border-slate-100 rounded-2xl">
+                  Waiting for hardware event...
+                </div>
               )}
+            </div>
+          </div>
 
-              {/* Main Alpha Block & Navigation Cluster */}
-              <div className="flex w-full justify-between items-start gap-4">
-                
-                {/* Core Alphanumeric Keycap Block */}
-                <div className="flex flex-col space-y-1 sm:space-y-1.5 grow max-w-[800px]">
-                  {activeLayoutRows.map((row, idx) => (
-                    <div key={idx} className="flex gap-1 sm:gap-1.5 w-full">
-                      {row.map((key) => renderKeycap(key))}
+          {/* Keyboard Outer Container - Now taking 100% full width of screen at the top! */}
+          <div className="bg-white rounded-3xl border border-slate-200 p-6 shadow-sm overflow-x-auto select-none w-full">
+            {layoutType === 'mac' && (
+              <div className="flex flex-col gap-1.5 min-w-[700px] mx-auto py-1">
+                {MAC_LAYOUT.map((row, rIdx) => (
+                  <div key={rIdx} className="flex gap-1.5">
+                    {row.map((key, kIdx) => {
+                      if (key.type === 'split') {
+                        // Split arrow cluster for Apple layouts
+                        return (
+                          <div
+                            key={key.code}
+                            style={{ width: `${key.width * 48 - 6}px`, height: '42px' }}
+                            className="flex flex-col gap-1.5 shrink-0"
+                          >
+                            {key.subkeys.map((subk) => (
+                              <div
+                                key={subk.code}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleKeyClick(subk.code);
+                                }}
+                                className={`flex-1 flex items-center justify-center text-[9px] font-bold rounded-lg border transition-all cursor-pointer ${getKeyClass(subk.code, true)}`}
+                              >
+                                {subk.label}
+                              </div>
+                            ))}
+                          </div>
+                        );
+                      }
+
+                      return (
+                        <div
+                          key={kIdx}
+                          onClick={() => handleKeyClick(key.code)}
+                          style={{ width: `${key.width * 48 - 6}px`, height: '42px' }}
+                          className={`rounded-lg border text-[10px] font-semibold flex items-center justify-center text-center p-1 cursor-pointer select-none transition-all duration-75 shrink-0 ${getKeyClass(key.code)}`}
+                        >
+                          <span className="whitespace-pre-line leading-none">
+                            {key.label}
+                          </span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* Windows TKL or Full layout Rendering */}
+            {(layoutType === 'win-tkl' || layoutType === 'win-full') && (
+              <div className="flex gap-4 min-w-[750px] justify-between py-1">
+                {/* Part A: Windows main alphanumeric core */}
+                <div className="flex flex-col gap-1.5 flex-1 max-w-[720px]">
+                  {WIN_ALPHA_LAYOUT.map((row, rIdx) => (
+                    <div key={rIdx} className="flex gap-1.5">
+                      {row.map((key, kIdx) => {
+                        if (key.type === 'spacer') {
+                          return (
+                            <div
+                              key={`sp-${kIdx}`}
+                              style={{ width: `${key.width * 48 - 6}px` }}
+                              className="shrink-0"
+                            />
+                          );
+                        }
+
+                        return (
+                          <div
+                            key={kIdx}
+                            onClick={() => handleKeyClick(key.code)}
+                            style={{ width: `${key.width * 48 - 6}px`, height: '42px' }}
+                            className={`rounded-lg border text-[10px] font-semibold flex items-center justify-center text-center p-1 cursor-pointer select-none transition-all duration-75 shrink-0 ${getKeyClass(key.code)}`}
+                          >
+                            <span className="whitespace-pre-line leading-none">
+                              {key.label}
+                            </span>
+                          </div>
+                        );
+                      })}
                     </div>
                   ))}
                 </div>
 
-                {/* TKL Right hand navigation block columns */}
-                {layoutType === LAYOUT.TKL && (
-                  <div className="flex flex-col space-y-1.5 w-[145px] shrink-0 border-l border-white/5 pl-4 ml-auto">
-                    {/* Rows 1, 2, 3, 4, 5 of Nav Cluster */}
-                    {TKL_NAV_CLUSTER.slice(1).map((row, idx) => (
-                      <div key={idx} className="flex gap-1 w-full justify-end">
-                        {row.map((key) => renderKeycap(key))}
+                {/* Part B: Windows Standard Navigation Cluster */}
+                <div className="flex flex-col gap-1.5 w-[138px] shrink-0">
+                  {WIN_NAV_LAYOUT.map((row, rIdx) => (
+                    <div key={rIdx} className="flex gap-1.5">
+                      {row.map((key, kIdx) => {
+                        if (key.type === 'spacer') {
+                          return (
+                            <div
+                              key={`nav-sp-${kIdx}`}
+                              style={{ width: `${key.width * 48 - 6}px` }}
+                              className="h-[42px] shrink-0"
+                            />
+                          );
+                        }
+
+                        return (
+                          <div
+                            key={kIdx}
+                            onClick={() => handleKeyClick(key.code)}
+                            style={{ width: `${key.width * 48 - 6}px`, height: '42px' }}
+                            className={`rounded-lg border text-[10px] font-semibold flex items-center justify-center text-center p-1 cursor-pointer select-none transition-all duration-75 shrink-0 ${getKeyClass(key.code)}`}
+                          >
+                            <span className="leading-none">{key.label}</span>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  ))}
+                </div>
+
+                {/* Part C: Optional Full-size Numpad Section */}
+                {layoutType === 'win-full' && (
+                  <div className="grid grid-cols-4 grid-rows-5 gap-1.5 w-[202px] h-[234px] mt-[48px] border-l border-slate-100 pl-4 shrink-0">
+                    {WIN_NUMPAD_KEYS.map((key) => (
+                      <div
+                        key={key.code}
+                        onClick={() => handleKeyClick(key.code)}
+                        className={`rounded-lg border text-[10px] font-bold flex items-center justify-center text-center cursor-pointer select-none transition-all duration-75 ${key.col} ${key.row} ${getKeyClass(key.code)}`}
+                      >
+                        <span>{key.label}</span>
                       </div>
                     ))}
                   </div>
                 )}
               </div>
-            </div>
+            )}
           </div>
 
-          {/* Configuration & Stats Dashboard Grid */}
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            
-            {/* Column 1: Designer Keyboard Settings */}
-            <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm space-y-5">
-              <h2 className="text-base font-bold text-slate-900 flex items-center gap-2 border-b border-slate-100 pb-3">
-                <Zap className="w-5 h-5 text-amber-500" />
-                Customize Board
-              </h2>
+          {/* Underneath Keyboard: Controls Sidebar & Diagnostics Grid */}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
 
-              {/* Theme Settings Selector */}
-              <div className="space-y-2">
-                <label className="text-xs font-bold text-slate-500 uppercase tracking-wider block">
-                  Keyboard Skin Theme
-                </label>
-                <div className="grid grid-cols-2 gap-2">
-                  {Object.entries(THEMES).map(([key, item]) => (
-                    <button
-                      key={key}
-                      onClick={() => setTheme(key)}
-                      className={`p-2.5 text-left rounded-xl border text-xs font-semibold transition-all ${
-                        theme === key
-                          ? "bg-indigo-50 border-indigo-600 text-indigo-900 shadow-sm"
-                          : "bg-white border-slate-200 text-slate-700 hover:bg-slate-50"
-                      }`}
-                    >
-                      {item.name}
-                    </button>
-                  ))}
-                </div>
-              </div>
+            {/* Column 1: Config Panels (Layout, Synthesizer, Skins) */}
+            <div className="space-y-6">
+              {/* Option Selector 1: Layout Engine */}
+              <div className="bg-white rounded-3xl border border-slate-200 p-5 shadow-sm space-y-4">
+                <h3 className="text-sm font-extrabold text-slate-900 border-b border-slate-50 pb-2.5 flex items-center gap-2">
+                  <Settings className="w-4 h-4 text-amber-500" />
+                  Layout Engine
+                </h3>
 
-              {/* Sound Settings Selector */}
-              <div className="space-y-2">
-                <label className="text-xs font-bold text-slate-500 uppercase tracking-wider block">
-                  Mechanical Switches Audio
-                </label>
-                <div className="grid grid-cols-2 gap-2">
+                <div className="flex flex-col gap-2">
                   {[
-                    { id: SWITCH_SOUND.CLICKY, name: "Clicky Blue", icon: Volume2 },
-                    { id: SWITCH_SOUND.TACTILE, name: "Tactile Brown", icon: Volume2 },
-                    { id: SWITCH_SOUND.LINEAR, name: "Linear Red", icon: Volume2 },
-                    { id: SWITCH_SOUND.MUTE, name: "Sound Off", icon: VolumeX }
-                  ].map((sw) => (
+                    { id: 'mac', label: 'MacBook Pro Compact' },
+                    { id: 'win-tkl', label: 'Windows TKL (80%)' },
+                    { id: 'win-full', label: 'Windows Full (104 Key)' },
+                  ].map((lay) => (
                     <button
-                      key={sw.id}
-                      onClick={() => {
-                        setSwitchSound(sw.id);
-                        playSwitchSound(sw.id, sw.id === SWITCH_SOUND.MUTE);
-                      }}
-                      className={`p-2.5 text-left rounded-xl border text-xs font-semibold flex items-center justify-between transition-all ${
-                        switchSound === sw.id
-                          ? "bg-indigo-50 border-indigo-600 text-indigo-900 shadow-sm"
-                          : "bg-white border-slate-200 text-slate-700 hover:bg-slate-50"
-                      }`}
+                      key={lay.id}
+                      type="button"
+                      onClick={() => handleLayoutChange(lay.id)}
+                      className={`w-full px-3.5 py-2.5 rounded-xl border text-xs font-bold text-left transition-all ${layoutType === lay.id
+                        ? 'bg-slate-900 border-slate-900 text-white shadow-sm'
+                        : 'bg-slate-50 border-slate-200 text-slate-600 hover:bg-slate-100 hover:border-slate-300'
+                        }`}
                     >
-                      <span>{sw.name}</span>
-                      <sw.icon className="w-3.5 h-3.5 opacity-60" />
+                      {lay.label}
                     </button>
                   ))}
                 </div>
               </div>
 
-              {/* OS Default Prevention Toggler */}
-              <div className="pt-2">
-                <label className="flex items-center gap-2.5 cursor-pointer select-none">
-                  <input
-                    type="checkbox"
-                    checked={blockDefault}
-                    onChange={(e) => setBlockDefault(e.target.checked)}
-                    className="w-4 h-4 rounded text-indigo-600 border-slate-300 focus:ring-indigo-500"
-                  />
-                  <div className="flex flex-col">
-                    <span className="text-xs font-semibold text-slate-700">
-                      Intercept Browser Shortcuts
-                    </span>
-                    <span className="text-[10px] text-slate-400">
-                      Prevents Tab, Backspace, and F-keys from closing/navigating.
-                    </span>
+              {/* Option Selector 2: Sound Synthesis & Mechanical Switches */}
+              <div className="bg-white rounded-3xl border border-slate-200 p-5 shadow-sm space-y-4">
+                <div className="flex items-center justify-between border-b border-slate-50 pb-2.5">
+                  <h3 className="text-sm font-extrabold text-slate-900 flex items-center gap-2">
+                    {soundEnabled ? (
+                      <Volume2 className="w-4 h-4 text-emerald-500" />
+                    ) : (
+                      <VolumeX className="w-4 h-4 text-slate-400" />
+                    )}
+                    Switch Synthesizer
+                  </h3>
+
+                  <button
+                    type="button"
+                    onClick={unlockAudioEngine}
+                    className={`px-3 py-1.5 rounded-xl text-[10px] font-extrabold uppercase tracking-wide transition-all ${soundEnabled
+                      ? 'bg-emerald-50 text-emerald-600 border border-emerald-100'
+                      : 'bg-slate-100 text-slate-600 hover:bg-slate-200 border border-slate-200'
+                      }`}
+                  >
+                    {soundEnabled ? 'Active' : 'Muted'}
+                  </button>
+                </div>
+
+                <div className="space-y-3.5">
+                  {/* Switch profiles */}
+                  <div className="space-y-1.5">
+                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Stem Profile</span>
+                    <select
+                      value={soundProfile}
+                      onChange={(e) => setSoundProfile(e.target.value)}
+                      disabled={!soundEnabled}
+                      className="w-full text-xs font-semibold px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:border-amber-500 disabled:opacity-50 disabled:cursor-not-allowed text-slate-700"
+                    >
+                      <option value="clicky">Cherry MX Blue (Clicky)</option>
+                      <option value="tactile">Cherry MX Brown (Tactile)</option>
+                      <option value="linear">Cherry MX Red (Linear)</option>
+                    </select>
                   </div>
-                </label>
+
+                  {/* Volume Slider */}
+                  <div className="space-y-1.5">
+                    <div className="flex items-center justify-between">
+                      <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Synth Gain</span>
+                      <span className="text-[10px] font-bold text-slate-500">{Math.round(volume * 100)}%</span>
+                    </div>
+                    <input
+                      type="range"
+                      min="0"
+                      max="1"
+                      step="0.05"
+                      value={volume}
+                      disabled={!soundEnabled}
+                      onChange={(e) => setVolume(parseFloat(e.target.value))}
+                      className="w-full h-1 bg-slate-100 border border-slate-200 rounded-lg appearance-none cursor-pointer accent-slate-900 disabled:opacity-50"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Option Selector 3: Visual Theme Skin Customizer */}
+              <div className="bg-white rounded-3xl border border-slate-200 p-5 shadow-sm space-y-4">
+                <h3 className="text-sm font-extrabold text-slate-900 border-b border-slate-50 pb-2.5 flex items-center gap-2">
+                  <Layers className="w-4 h-4 text-indigo-500" />
+                  Keycap Skin Colors
+                </h3>
+
+                <div className="grid grid-cols-2 gap-2.5">
+                  {THEMES.map((th) => (
+                    <button
+                      key={th.id}
+                      type="button"
+                      onClick={() => setActiveTheme(th)}
+                      className={`p-2.5 rounded-xl border text-center flex flex-col items-center justify-center gap-1.5 transition-all ${activeTheme.id === th.id
+                        ? 'bg-slate-50 border-slate-900 ring-1 ring-slate-900'
+                        : 'bg-slate-50 border-slate-200 hover:border-slate-300'
+                        }`}
+                    >
+                      {/* Theme Indicator color circles */}
+                      <div className="flex gap-1">
+                        <span className={`w-3.5 h-3.5 rounded-full ${th.indicatorColor1}`} />
+                        <span className={`w-3.5 h-3.5 rounded-full ${th.indicatorColor2}`} />
+                      </div>
+                      <span className="text-[10px] font-extrabold text-slate-600 leading-tight">
+                        {th.name.split(' ')[1]}
+                      </span>
+                    </button>
+                  ))}
+                </div>
               </div>
             </div>
 
-            {/* Column 2: Operational Stats Tracker */}
-            <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm space-y-4">
-              <h2 className="text-base font-bold text-slate-900 flex items-center gap-2 border-b border-slate-100 pb-3">
-                <Activity className="w-5 h-5 text-indigo-600" />
-                Live Stats Dashboard
-              </h2>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div className="p-3 bg-slate-50 border border-slate-100 rounded-xl">
-                  <span className="text-xs font-semibold text-slate-400 block">
-                    Active Pressed Keys
-                  </span>
-                  <span className="text-2xl font-extrabold text-slate-900 tracking-tight">
-                    {Object.keys(pressedKeys).length}
-                  </span>
-                </div>
-
-                <div className="p-3 bg-slate-50 border border-slate-100 rounded-xl">
-                  <span className="text-xs font-semibold text-slate-400 block">
-                    Rollover Record (NKRO)
-                  </span>
-                  <span className="text-2xl font-extrabold text-slate-900 tracking-tight">
-                    {maxRollover}
-                  </span>
-                </div>
-
-                <div className="p-3 bg-slate-50 border border-slate-100 rounded-xl col-span-2">
-                  <span className="text-xs font-semibold text-slate-400 block">
-                    Tested Keys Coverage
-                  </span>
-                  <span className="text-2xl font-extrabold text-slate-900 tracking-tight">
-                    {Object.keys(testedKeys).length}{" "}
-                    <span className="text-xs font-medium text-slate-400">
-                      / {layoutType === LAYOUT.TKL ? "87" : "61"} total
-                    </span>
-                  </span>
-                </div>
+            {/* Column 2: Anti-Ghosting Combos Checklist */}
+            <div className="bg-white rounded-3xl border border-slate-200 p-5 shadow-sm space-y-4">
+              <div>
+                <h3 className="text-sm font-extrabold text-slate-900 flex items-center gap-2">
+                  <Grid className="w-4 h-4 text-indigo-500" />
+                  Anti-Ghosting Combos Checklist
+                </h3>
+                <p className="text-[11px] text-slate-400 mt-1">
+                  Hold these key combinations simultaneously to test layout
+                  hardware bottlenecks.
+                </p>
               </div>
 
-              {/* Active inputs descriptor info */}
-              <div className="p-4 bg-slate-50 border border-slate-200/60 rounded-xl space-y-2">
-                <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider block">
-                  Last Keypress Event Details
-                </span>
-                {lastPressed ? (
-                  <div className="grid grid-cols-2 gap-x-2 gap-y-1 text-xs">
-                    <span className="text-slate-400">Event Key Code:</span>
-                    <span className="font-semibold text-slate-800 font-mono">{lastPressed.code}</span>
-                    <span className="text-slate-400">Character Key:</span>
-                    <span className="font-semibold text-slate-800 font-mono">{lastPressed.key}</span>
-                    <span className="text-slate-400">JavaScript KeyCode:</span>
-                    <span className="font-semibold text-slate-800 font-mono">{lastPressed.keyCode}</span>
-                  </div>
-                ) : (
-                  <span className="text-xs italic text-slate-400 block">
-                    Waiting for hardware input presses...
-                  </span>
-                )}
-              </div>
-            </div>
-
-            {/* Column 3: Chronological Action Logs */}
-            <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm flex flex-col h-[320px] lg:h-auto">
-              <h2 className="text-base font-bold text-slate-900 flex items-center gap-2 border-b border-slate-100 pb-3 shrink-0">
-                <List className="w-5 h-5 text-emerald-500" />
-                Live Key Log History
-              </h2>
-
-              <div className="flex-1 overflow-y-auto mt-3 pr-1 space-y-1.5 custom-scrollbar text-xs font-mono">
-                <AnimatePresence initial={false}>
-                  {keyHistory.length > 0 ? (
-                    keyHistory.map((item, idx) => (
-                      <motion.div
-                        key={idx + "-" + item.code}
-                        initial={{ opacity: 0, x: -10 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        exit={{ opacity: 0 }}
-                        className="flex items-center justify-between p-2 rounded-lg bg-slate-50 border border-slate-100/50 hover:bg-slate-100/60 transition-colors"
-                      >
-                        <span className="font-bold text-slate-700 bg-white border border-slate-200/60 px-1.5 py-0.5 rounded shadow-sm">
-                          {item.code}
+              <div className="space-y-3 pt-1">
+                {COMBO_PRESETS.map((combo) => {
+                  const { active, tested } = getComboState(combo.keys);
+                  return (
+                    <div
+                      key={combo.name}
+                      className={`p-3 rounded-2xl border transition-all flex items-start justify-between gap-3 ${getComboCardClass(active, tested)}`}
+                    >
+                      <div className="min-w-0">
+                        <span className={`text-xs font-bold block ${getComboTitleClass(active, tested)}`}>
+                          {combo.name}
                         </span>
-                        <div className="flex items-center gap-3 text-[10px] text-slate-400">
-                          <span>Key: "{item.key}"</span>
-                          <span>ID: {item.keyCode}</span>
-                          <span className="opacity-75">{item.time}</span>
+                        <span className="text-[10px] text-slate-400 block pt-0.5 leading-normal">
+                          {combo.description}
+                        </span>
+                        {/* Visual pill caps for codes included in the combo */}
+                        <div className="flex flex-wrap gap-1 mt-2">
+                          {combo.keys.map((k) => {
+                            const kActive = pressedKeys[k];
+                            const kTested = testedKeys[k];
+                            return (
+                              <span
+                                key={k}
+                                className={`text-[9px] font-mono px-1.5 py-0.5 rounded-md border font-semibold ${getComboKeyClass(kActive, kTested)}`}
+                              >
+                                {k.replace('Key', '').replace('Digit', '').replace('Left', '').replace('Right', '')}
+                              </span>
+                            );
+                          })}
                         </div>
-                      </motion.div>
+                      </div>
+
+                      <div className="shrink-0 pt-0.5">
+                        <span className={`text-[10px] font-extrabold px-2 py-1 rounded-lg border uppercase tracking-wide ${getComboPillClass(active, tested)}`}
+                        >
+                          {getComboPillLabel(active, tested)}
+                        </span>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Column 3: Hardware Signal Log (Capped history container) */}
+            <div className="bg-white rounded-3xl border border-slate-200 p-5 shadow-sm flex flex-col justify-between h-[410px]">
+              <div className="space-y-4 flex flex-col h-full min-h-0">
+                <div className="flex items-center justify-between border-b border-slate-100 pb-2.5 shrink-0">
+                  <h3 className="text-sm font-extrabold text-slate-900 flex items-center gap-2">
+                    <History className="w-4 h-4 text-emerald-500" />
+                    Hardware Signal Log
+                  </h3>
+
+                  <button
+                    type="button"
+                    onClick={() => setHistoryLog([])}
+                    disabled={historyLog.length === 0}
+                    className="text-[10px] font-bold text-slate-400 hover:text-rose-500 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                  >
+                    Clear log
+                  </button>
+                </div>
+
+                {/* Scrollable log area with local scroll containerRef */}
+                <div
+                  ref={logContainerRef}
+                  className="flex-1 overflow-y-auto min-h-0 pr-1 space-y-1.5 text-xs font-mono select-text"
+                >
+                  {historyLog.length > 0 ? (
+                    historyLog.map((log) => (
+                      <div
+                        key={log.id}
+                        className="flex items-center justify-between py-1 px-2 hover:bg-slate-50 rounded-lg transition-colors border border-transparent hover:border-slate-100"
+                      >
+                        <span className="text-slate-400 text-[10px]">{log.time}</span>
+                        <span className="font-semibold text-slate-700">Code: {log.code}</span>
+                        <span className="text-indigo-600 font-extrabold">
+                          &quot;{log.key === ' ' ? 'Space' : log.key}&quot;
+                        </span>
+                      </div>
                     ))
                   ) : (
-                    <div className="h-full flex items-center justify-center text-slate-400 italic">
-                      No events registered. Press keys to begin logs.
+                    <div className="h-full flex flex-col items-center justify-center text-center p-4">
+                      <Terminal className="w-8 h-8 text-slate-300 stroke-[1.5] mb-2" />
+                      <span className="text-slate-400 text-xs font-semibold">No hardware events logged</span>
+                      <span className="text-[10px] text-slate-300 mt-1 max-w-[200px]">
+                        Physical key logs will stream here in real-time
+                      </span>
                     </div>
                   )}
-                </AnimatePresence>
+                </div>
               </div>
             </div>
 
           </div>
 
-          {/* Quick Informational Tips Section */}
-          <div className="bg-amber-50/50 border border-amber-200/60 rounded-2xl p-4 flex gap-3 text-xs text-amber-800 leading-relaxed">
-            <Shield className="w-5 h-5 shrink-0 text-amber-600" />
+          {/* Informational Guidelines Alert */}
+          <div
+            className="bg-amber-50/50 border border-amber-200/60 rounded-2xl p-4 flex gap-3 text-xs text-amber-800 leading-relaxed"
+          >
+            <HelpCircle className="w-5 h-5 shrink-0 text-amber-600 mt-0.5" />
             <div>
-              <span className="font-bold block mb-0.5">Privacy First Processing</span>
-              All keyboard interactions are processed fully inside your local browser sandbox. No keyboard events, strings, or passwords typed are ever transmitted over the network or saved. Feel safe testing your secure credentials.
+              <span className="font-extrabold block mb-0.5">Browser Sandbox Hotkey Restrictions</span>
+              To maintain strict system isolation and protect your active environment,
+              web browsers strictly sandbox keyboard events. Because of this,
+              certain high-privilege system combinations (such as{' '}
+              <span className="font-semibold">Cmd+Tab</span> on macOS,{' '}
+              <span className="font-semibold">Alt+Tab</span> or{' '}
+              <span className="font-semibold">Win/Super Key</span> shortcuts on Windows, and{' '}
+              <span className="font-semibold">Cmd+Q</span> /{' '}
+              <span className="font-semibold">Ctrl+W</span> window closing triggers)
+              cannot be fully bypassed by the tester canvas. If pressing them redirects
+              focus or closes tabs, it is a normal browser security boundary, not a
+              hardware fault!
             </div>
           </div>
         </motion.div>
