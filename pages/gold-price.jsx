@@ -531,134 +531,9 @@ export default function GoldPricePage() {
             </AnimatePresence>
           </div>
 
-          {/* ── 7-Day Trend ────────────────────────────────────────────── */}
-          <div className="mb-6">
-            <div className="flex items-center justify-between gap-2 mb-3 flex-wrap">
-              <h2 className="text-sm font-semibold text-slate-800 flex items-center gap-2">
-                <TrendingUp className="w-4 h-4 text-amber-500" />
-                Price Trend
-              </h2>
-              <div className="flex gap-1 bg-slate-100 rounded-xl p-1">
-                {DATE_RANGES.map((range, i) => (
-                  <button
-                    key={range.label}
-                    onClick={() => setChartRangeIdx(i)}
-                    className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
-                      i === chartRangeIdx
-                        ? "bg-white text-slate-900 shadow-sm"
-                        : "text-slate-500 hover:text-slate-800"
-                    }`}
-                  >
-                    {range.label}
-                  </button>
-                ))}
-              </div>
-            </div>
-            <TrendChart data={chartData} isLoading={chartLoading} />
-          </div>
-
-          {/* ── Controls Row ───────────────────────────────────────────── */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
-            {/* Karat Picker */}
-            <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-4 relative overflow-visible">
-              <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2 block">
-                Purity / Karat
-              </label>
-              <div className="relative">
-                <button
-                  onClick={() => setKaratOpen(!karatOpen)}
-                  className="w-full flex items-center justify-between px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-medium text-slate-900 hover:bg-slate-100 transition-colors"
-                >
-                  <div className="flex items-center gap-3">
-                    <span className="inline-flex items-center justify-center w-8 h-8 rounded-lg bg-gradient-to-br from-yellow-300 to-amber-500 text-white text-xs font-bold shadow-sm">
-                      {karat.label}
-                    </span>
-                    <div className="text-left">
-                      <div className="font-semibold">{karat.label}</div>
-                      <div className="text-xs text-slate-400">{karat.desc} · {(karat.purity * 100).toFixed(1)}%</div>
-                    </div>
-                  </div>
-                  <ChevronDown
-                    className={`w-4 h-4 text-slate-400 transition-transform ${karatOpen ? "rotate-180" : ""}`}
-                  />
-                </button>
-
-                <AnimatePresence>
-                  {karatOpen && (
-                    <motion.div
-                      initial={{ opacity: 0, y: -4, scale: 0.98 }}
-                      animate={{ opacity: 1, y: 0, scale: 1 }}
-                      exit={{ opacity: 0, y: -4, scale: 0.98 }}
-                      transition={{ duration: 0.15 }}
-                      className="absolute top-full left-0 right-0 z-50 mt-2 bg-white border border-slate-200 rounded-xl shadow-xl overflow-hidden"
-                    >
-                      {KARATS.map((k, i) => (
-                        <button
-                          key={k.label}
-                          onClick={() => {
-                            setSelectedKarat(i);
-                            setKaratOpen(false);
-                          }}
-                          className={`w-full flex items-center gap-3 px-4 py-3 text-sm transition-colors ${
-                            i === selectedKarat
-                              ? "bg-amber-50 text-amber-900"
-                              : "hover:bg-slate-50 text-slate-700"
-                          }`}
-                        >
-                          <span className="inline-flex items-center justify-center w-7 h-7 rounded-md bg-gradient-to-br from-yellow-300 to-amber-500 text-white text-[10px] font-bold">
-                            {k.label}
-                          </span>
-                          <div className="text-left">
-                            <div className="font-medium">{k.label}</div>
-                            <div className="text-xs text-slate-400">{k.desc}</div>
-                          </div>
-                          <span className="ml-auto text-xs font-mono text-slate-400">
-                            {(k.purity * 100).toFixed(1)}%
-                          </span>
-                        </button>
-                      ))}
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-              </div>
-            </div>
-
-            {/* Currency Toggle */}
-            <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-4">
-              <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2 block">
-                Display Currency
-              </label>
-              <div className="flex gap-2">
-                {[
-                  { key: "USD", label: "USD", symbol: "$", flag: "🇺🇸" },
-                  { key: "KHR", label: "KHR", symbol: "៛", flag: "🇰🇭" },
-                ].map((c) => (
-                  <button
-                    key={c.key}
-                    onClick={() => setCurrency(c.key)}
-                    className={`flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-xl text-sm font-medium transition-all ${
-                      currency === c.key
-                        ? "bg-slate-900 text-white shadow-md"
-                        : "bg-slate-50 border border-slate-200 text-slate-600 hover:bg-slate-100"
-                    }`}
-                  >
-                    <span className="text-base">{c.flag}</span>
-                    <span>{c.label}</span>
-                    <span className="text-xs opacity-60">{c.symbol}</span>
-                  </button>
-                ))}
-              </div>
-              {currency === "KHR" && (
-                <p className="text-[10px] text-slate-400 mt-2 text-center">
-                  Rate: 1 USD = {KHR_RATE.toLocaleString()} KHR (fixed reference)
-                </p>
-              )}
-            </div>
-          </div>
-
-          {/* ── Price Per Unit Table ────────────────────────────────────── */}
-          <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-5 sm:p-6 mb-6 relative overflow-hidden">
-            <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-amber-400 to-yellow-400" />
+          {/* ── Price Per Unit (with purity & currency controls) ───────── */}
+          <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-5 sm:p-6 mb-6 relative overflow-visible">
+            <div className="absolute top-0 left-0 w-full h-1 rounded-t-2xl bg-gradient-to-r from-amber-400 to-yellow-400" />
             <h2 className="text-sm font-semibold text-slate-800 mb-4 flex items-center gap-2">
               <ArrowUpDown className="w-4 h-4 text-amber-500" />
               Price Per Unit
@@ -667,6 +542,106 @@ export default function GoldPricePage() {
               </span>
             </h2>
 
+            {/* Controls: purity / karat + currency */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-5">
+              {/* Karat Picker */}
+              <div className="relative overflow-visible">
+                <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2 block">
+                  Purity / Karat
+                </label>
+                <div className="relative">
+                  <button
+                    onClick={() => setKaratOpen(!karatOpen)}
+                    className="w-full flex items-center justify-between px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-medium text-slate-900 hover:bg-slate-100 transition-colors"
+                  >
+                    <div className="flex items-center gap-3">
+                      <span className="inline-flex items-center justify-center w-8 h-8 rounded-lg bg-gradient-to-br from-yellow-300 to-amber-500 text-white text-xs font-bold shadow-sm">
+                        {karat.label}
+                      </span>
+                      <div className="text-left">
+                        <div className="font-semibold">{karat.label}</div>
+                        <div className="text-xs text-slate-400">{karat.desc} · {(karat.purity * 100).toFixed(1)}%</div>
+                      </div>
+                    </div>
+                    <ChevronDown
+                      className={`w-4 h-4 text-slate-400 transition-transform ${karatOpen ? "rotate-180" : ""}`}
+                    />
+                  </button>
+
+                  <AnimatePresence>
+                    {karatOpen && (
+                      <motion.div
+                        initial={{ opacity: 0, y: -4, scale: 0.98 }}
+                        animate={{ opacity: 1, y: 0, scale: 1 }}
+                        exit={{ opacity: 0, y: -4, scale: 0.98 }}
+                        transition={{ duration: 0.15 }}
+                        className="absolute top-full left-0 right-0 z-50 mt-2 bg-white border border-slate-200 rounded-xl shadow-xl overflow-hidden"
+                      >
+                        {KARATS.map((k, i) => (
+                          <button
+                            key={k.label}
+                            onClick={() => {
+                              setSelectedKarat(i);
+                              setKaratOpen(false);
+                            }}
+                            className={`w-full flex items-center gap-3 px-4 py-3 text-sm transition-colors ${
+                              i === selectedKarat
+                                ? "bg-amber-50 text-amber-900"
+                                : "hover:bg-slate-50 text-slate-700"
+                            }`}
+                          >
+                            <span className="inline-flex items-center justify-center w-7 h-7 rounded-md bg-gradient-to-br from-yellow-300 to-amber-500 text-white text-[10px] font-bold">
+                              {k.label}
+                            </span>
+                            <div className="text-left">
+                              <div className="font-medium">{k.label}</div>
+                              <div className="text-xs text-slate-400">{k.desc}</div>
+                            </div>
+                            <span className="ml-auto text-xs font-mono text-slate-400">
+                              {(k.purity * 100).toFixed(1)}%
+                            </span>
+                          </button>
+                        ))}
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </div>
+              </div>
+
+              {/* Currency Toggle */}
+              <div>
+                <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2 block">
+                  Display Currency
+                </label>
+                <div className="flex gap-2">
+                  {[
+                    { key: "USD", label: "USD", symbol: "$", flag: "🇺🇸" },
+                    { key: "KHR", label: "KHR", symbol: "៛", flag: "🇰🇭" },
+                  ].map((c) => (
+                    <button
+                      key={c.key}
+                      onClick={() => setCurrency(c.key)}
+                      className={`flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-xl text-sm font-medium transition-all ${
+                        currency === c.key
+                          ? "bg-slate-900 text-white shadow-md"
+                          : "bg-slate-50 border border-slate-200 text-slate-600 hover:bg-slate-100"
+                      }`}
+                    >
+                      <span className="text-base">{c.flag}</span>
+                      <span>{c.label}</span>
+                      <span className="text-xs opacity-60">{c.symbol}</span>
+                    </button>
+                  ))}
+                </div>
+                {currency === "KHR" && (
+                  <p className="text-[10px] text-slate-400 mt-2 text-center">
+                    Rate: 1 USD = {KHR_RATE.toLocaleString()} KHR (fixed reference)
+                  </p>
+                )}
+              </div>
+            </div>
+
+            {/* Unit price grid */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
               {UNITS.map((u) => (
                 <div
@@ -692,6 +667,32 @@ export default function GoldPricePage() {
                 </div>
               ))}
             </div>
+          </div>
+
+          {/* ── 7-Day Trend ────────────────────────────────────────────── */}
+          <div className="mb-6">
+            <div className="flex items-center justify-between gap-2 mb-3 flex-wrap">
+              <h2 className="text-sm font-semibold text-slate-800 flex items-center gap-2">
+                <TrendingUp className="w-4 h-4 text-amber-500" />
+                Price Trend
+              </h2>
+              <div className="flex gap-1 bg-slate-100 rounded-xl p-1">
+                {DATE_RANGES.map((range, i) => (
+                  <button
+                    key={range.label}
+                    onClick={() => setChartRangeIdx(i)}
+                    className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+                      i === chartRangeIdx
+                        ? "bg-white text-slate-900 shadow-sm"
+                        : "text-slate-500 hover:text-slate-800"
+                    }`}
+                  >
+                    {range.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <TrendChart data={chartData} isLoading={chartLoading} />
           </div>
 
           {/* ── Weight Converter ────────────────────────────────────────── */}

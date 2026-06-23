@@ -344,6 +344,7 @@ function LocationCard({ loc, index, onChange, onRemove }) {
 export default function NginxConfigGenerator() {
   const [state, setState] = useState(DEFAULT_STATE);
   const [copied, setCopied] = useState(false);
+  const [cmdCopied, setCmdCopied] = useState(false);
 
   const set = useCallback((key, value) => {
     setState((prev) => ({ ...prev, [key]: value }));
@@ -385,6 +386,22 @@ export default function NginxConfigGenerator() {
     navigator.clipboard.writeText(config);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
+  };
+
+  const deployCommand = useMemo(
+    () =>
+      [
+        `sudo nano /etc/nginx/sites-available/${fileName}.conf`,
+        `sudo ln -s /etc/nginx/sites-available/${fileName}.conf /etc/nginx/sites-enabled/`,
+        "sudo nginx -t && sudo systemctl reload nginx",
+      ].join("\n"),
+    [fileName]
+  );
+
+  const copyCommand = () => {
+    navigator.clipboard.writeText(deployCommand);
+    setCmdCopied(true);
+    setTimeout(() => setCmdCopied(false), 2000);
   };
 
   const downloadConfig = () => {
@@ -688,12 +705,50 @@ export default function NginxConfigGenerator() {
               </div>
 
               <div className="mt-4 bg-emerald-50 border border-emerald-100 rounded-2xl p-4">
-                <p className="text-sm text-emerald-800 flex gap-2">
-                  <ChevronRight className="w-4 h-4 shrink-0 mt-0.5" />
-                  Save this to <span className="font-mono font-semibold">/etc/nginx/sites-available/</span>,
-                  symlink it into <span className="font-mono font-semibold">sites-enabled/</span>, then run
-                  <span className="font-mono font-semibold"> nginx -t && systemctl reload nginx</span>.
-                </p>
+                <p className="text-sm font-semibold text-emerald-900">Deploy steps</p>
+                <ul className="mt-2 space-y-1.5">
+                  <li className="flex gap-2 text-sm text-emerald-800">
+                    <ChevronRight className="w-4 h-4 shrink-0 mt-0.5" />
+                    <span>
+                      Save the config to{" "}
+                      <span className="font-mono font-semibold">/etc/nginx/sites-available/</span>
+                    </span>
+                  </li>
+                  <li className="flex gap-2 text-sm text-emerald-800">
+                    <ChevronRight className="w-4 h-4 shrink-0 mt-0.5" />
+                    <span>
+                      Symlink it into{" "}
+                      <span className="font-mono font-semibold">sites-enabled/</span>
+                    </span>
+                  </li>
+                  <li className="flex gap-2 text-sm text-emerald-800">
+                    <ChevronRight className="w-4 h-4 shrink-0 mt-0.5" />
+                    <span>
+                      Test and reload with{" "}
+                      <span className="font-mono font-semibold whitespace-nowrap">nginx -t &amp;&amp; systemctl reload nginx</span>
+                    </span>
+                  </li>
+                </ul>
+
+                <div className="mt-3 rounded-xl bg-[#1e1e1e] border border-emerald-900/30 overflow-hidden">
+                  <div className="flex items-center justify-between px-3 py-1.5 border-b border-white/5">
+                    <span className="text-xs font-mono text-slate-400">deploy.sh</span>
+                    <button
+                      onClick={copyCommand}
+                      className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-semibold transition-all ${
+                        cmdCopied
+                          ? "bg-emerald-500/20 text-emerald-400"
+                          : "bg-[#2d2d2d] text-slate-300 hover:bg-[#3a3a3a]"
+                      }`}
+                    >
+                      {cmdCopied ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
+                      {cmdCopied ? "Copied" : "Copy"}
+                    </button>
+                  </div>
+                  <pre className="px-3 py-2.5 text-xs text-slate-200 font-mono overflow-x-auto leading-relaxed custom-scrollbar">
+                    <code>{deployCommand}</code>
+                  </pre>
+                </div>
               </div>
             </div>
           </div>
