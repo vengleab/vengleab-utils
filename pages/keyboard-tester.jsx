@@ -465,6 +465,77 @@ const WIN_NUMPAD_KEYS = [
   },
 ];
 
+// macOS keys that cannot be tested via a normal hardware keypress, with an
+// explanation shown on hover. Keyed by physical `code`.
+const MAC_CONFLICT_NOTES = {
+  F11: {
+    title: 'macOS Shortcut Conflict',
+    body: (
+      <>
+        F11/Fn+F11 is mapped to <span className="font-semibold text-slate-200">Show Desktop</span> by macOS.
+        <div className="mt-1.5 text-[10px] text-slate-300 space-y-1">
+          <p>1. Open <span className="font-semibold">System Settings &gt; Keyboard &gt; Keyboard Shortcuts &gt; Desktop &amp; Dock</span>.</p>
+          <p>2. Uncheck <span className="font-semibold">Show Desktop</span>.</p>
+        </div>
+        <div className="mt-1.5 pt-1.5 border-t border-slate-800 text-[10px] text-slate-400">
+          You can also click this key on screen to test manually.
+        </div>
+      </>
+    ),
+  },
+  Fn: {
+    title: 'Hardware Key — Not Detectable',
+    placement: 'top', // bottom-row key: open upward so the container doesn't clip it
+    align: 'left', // leftmost key: anchor left edge so a centered tooltip isn't clipped
+    body: (
+      <>
+        The <span className="font-semibold text-slate-200">Fn</span> key is processed inside the
+        keyboard&apos;s firmware and never sends a key event to the OS or browser — so it cannot be
+        detected electronically by any web page.
+        <div className="mt-1.5 pt-1.5 border-t border-slate-800 text-[10px] text-slate-400">
+          Click this key on screen to mark it tested manually.
+        </div>
+      </>
+    ),
+  },
+  F13: {
+    title: 'Touch ID — Not a Standard Key',
+    body: (
+      <>
+        <span className="font-semibold text-slate-200">Touch ID</span> is a biometric/power sensor,
+        not a typing key, so it does not emit a keyboard event that the browser can read.
+        <div className="mt-1.5 pt-1.5 border-t border-slate-800 text-[10px] text-slate-400">
+          Click this key on screen to mark it tested manually.
+        </div>
+      </>
+    ),
+  },
+};
+
+// Reusable hover tooltip + pulsing marker for OS-reserved / undetectable keys.
+// `note.placement === 'top'` opens the tooltip upward (for bottom-row keys whose
+// downward tooltip would be clipped by the keyboard container's overflow).
+const KeyConflictTooltip = ({ note }) => {
+  const posClass = note.placement === 'top'
+    ? 'bottom-full mb-2'
+    : 'top-full mt-2';
+  const alignClass = note.align === 'left'
+    ? 'left-0'
+    : 'left-1/2 -translate-x-1/2';
+  return (
+    <>
+      <span className="absolute top-1 right-1 w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" />
+      <div className={`absolute ${alignClass} ${posClass} w-64 bg-slate-950 text-white text-[11px] p-3.5 rounded-xl shadow-xl border border-slate-800 hidden group-hover:block z-50 pointer-events-none font-normal text-left leading-normal`}>
+        <div className="font-bold text-amber-400 mb-1 flex items-center gap-1">
+          <HelpCircle className="w-3.5 h-3.5 shrink-0 text-amber-400" />
+          {note.title}
+        </div>
+        {note.body}
+      </div>
+    </>
+  );
+};
+
 // Presets for ghosting combinations
 const COMBO_PRESETS = [
   {
@@ -496,7 +567,14 @@ const COMBO_PRESETS = [
 
 export default function KeyboardTester() {
   const [layoutType, setLayoutType] = useState('mac');
+  const [isMac, setIsMac] = useState(false);
   const [activeTheme, setActiveTheme] = useState(THEMES[0]);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      setIsMac(/Mac|iPad|iPhone|iPod/.test(window.navigator.userAgent || window.navigator.platform));
+    }
+  }, []);
 
   // Audio state
   const [soundEnabled, setSoundEnabled] = useState(false);
@@ -590,10 +668,11 @@ export default function KeyboardTester() {
       const { code } = e;
       const keyName = e.key;
 
-      const preserveKeys = ['F5', 'F12'];
+      // Keep an escape hatch so the user can still reload / open devtools via the
+      // standard modifier shortcuts (Ctrl/Cmd+R, Ctrl/Cmd+I) while testing.
       const isReloadModifier = (e.ctrlKey || e.metaKey) && (code === 'KeyR' || code === 'KeyI');
 
-      if (!preserveKeys.includes(code) && !isReloadModifier) {
+      if (!isReloadModifier) {
         if (
           code === 'Tab'
           || code === 'AltLeft'
@@ -608,8 +687,12 @@ export default function KeyboardTester() {
           || code === 'ArrowLeft'
           || code === 'ArrowRight'
           || keyName === ' '
-          || code.startsWith('F')
+          || /^F\d{1,2}$/.test(code)
         ) {
+          // Suppress browser defaults for function keys (F5 reload, F1 help, etc.)
+          // so the keypress registers in the tester instead. Note: F11 (fullscreen)
+          // and F12 (devtools) may still be intercepted by the browser/OS before
+          // the page sees them, depending on platform.
           e.preventDefault();
         }
 
@@ -759,7 +842,8 @@ export default function KeyboardTester() {
               </h1>
               <p className="mt-1 text-sm sm:text-base text-slate-500">
                 Verify multi-key rollover (NKRO), diagnose sticky switches,
-                test ghosting nodes, and customize layout skins. (Keys like Fn and F1–F12 with OS conflicts can be clicked to test manually).
+                test ghosting nodes, and customize layout skins. (Keys with
+                OS conflicts like F1–F12 or Fn can be clicked to test manually).
               </p>
             </div>
 
@@ -903,11 +987,14 @@ export default function KeyboardTester() {
                           key={kIdx}
                           onClick={() => handleKeyClick(key.code)}
                           style={{ width: `${key.width * 48 - 6}px`, height: '42px' }}
-                          className={`rounded-lg border text-[10px] font-semibold flex items-center justify-center text-center p-1 cursor-pointer select-none transition-all duration-75 shrink-0 ${getKeyClass(key.code)}`}
+                          className={`rounded-lg border text-[10px] font-semibold flex items-center justify-center text-center p-1 cursor-pointer select-none transition-all duration-75 shrink-0 ${isMac && MAC_CONFLICT_NOTES[key.code] ? 'relative group' : ''} ${getKeyClass(key.code)}`}
                         >
                           <span className="whitespace-pre-line leading-none">
                             {key.label}
                           </span>
+                          {isMac && MAC_CONFLICT_NOTES[key.code] && (
+                            <KeyConflictTooltip note={MAC_CONFLICT_NOTES[key.code]} />
+                          )}
                         </div>
                       );
                     })}
@@ -939,11 +1026,14 @@ export default function KeyboardTester() {
                             key={kIdx}
                             onClick={() => handleKeyClick(key.code)}
                             style={{ width: `${key.width * 48 - 6}px`, height: '42px' }}
-                            className={`rounded-lg border text-[10px] font-semibold flex items-center justify-center text-center p-1 cursor-pointer select-none transition-all duration-75 shrink-0 ${getKeyClass(key.code)}`}
+                            className={`rounded-lg border text-[10px] font-semibold flex items-center justify-center text-center p-1 cursor-pointer select-none transition-all duration-75 shrink-0 ${isMac && MAC_CONFLICT_NOTES[key.code] ? 'relative group' : ''} ${getKeyClass(key.code)}`}
                           >
                             <span className="whitespace-pre-line leading-none">
                               {key.label}
                             </span>
+                            {isMac && MAC_CONFLICT_NOTES[key.code] && (
+                              <KeyConflictTooltip note={MAC_CONFLICT_NOTES[key.code]} />
+                            )}
                           </div>
                         );
                       })}
@@ -1024,7 +1114,7 @@ export default function KeyboardTester() {
                       className={`w-full px-3.5 py-2.5 rounded-xl border text-xs font-bold text-left transition-all ${layoutType === lay.id
                         ? 'bg-slate-900 border-slate-900 text-white shadow-sm'
                         : 'bg-slate-50 border-slate-200 text-slate-600 hover:bg-slate-100 hover:border-slate-300'
-                        }`}
+                      }`}
                     >
                       {lay.label}
                     </button>
@@ -1050,7 +1140,7 @@ export default function KeyboardTester() {
                     className={`px-3 py-1.5 rounded-xl text-[10px] font-extrabold uppercase tracking-wide transition-all ${soundEnabled
                       ? 'bg-emerald-50 text-emerald-600 border border-emerald-100'
                       : 'bg-slate-100 text-slate-600 hover:bg-slate-200 border border-slate-200'
-                      }`}
+                    }`}
                   >
                     {soundEnabled ? 'Active' : 'Muted'}
                   </button>
@@ -1108,7 +1198,7 @@ export default function KeyboardTester() {
                       className={`p-2.5 rounded-xl border text-center flex flex-col items-center justify-center gap-1.5 transition-all ${activeTheme.id === th.id
                         ? 'bg-slate-50 border-slate-900 ring-1 ring-slate-900'
                         : 'bg-slate-50 border-slate-200 hover:border-slate-300'
-                        }`}
+                      }`}
                     >
                       {/* Theme Indicator color circles */}
                       <div className="flex gap-1">
@@ -1239,18 +1329,36 @@ export default function KeyboardTester() {
           >
             <HelpCircle className="w-5 h-5 shrink-0 text-amber-600 mt-0.5" />
             <div>
-              <span className="font-extrabold block mb-0.5">Browser Sandbox Hotkey Restrictions</span>
-              To maintain strict system isolation and protect your active environment,
-              web browsers strictly sandbox keyboard events. Because of this,
-              certain high-privilege system combinations (such as{' '}
-              <span className="font-semibold">Cmd+Tab</span> on macOS,{' '}
-              <span className="font-semibold">Alt+Tab</span> or{' '}
-              <span className="font-semibold">Win/Super Key</span> shortcuts on Windows, and{' '}
-              <span className="font-semibold">Cmd+Q</span> /{' '}
-              <span className="font-semibold">Ctrl+W</span> window closing triggers)
-              cannot be fully bypassed by the tester canvas. If pressing them redirects
-              focus or closes tabs, it is a normal browser security boundary, not a
-              hardware fault!
+              <span className="font-extrabold block mb-0.5">
+                Browser Sandbox &amp; System Hotkey Conflicts
+              </span>
+              <p>
+                To maintain system security, web browsers sandbox keyboard events,
+                meaning high-privilege OS-level shortcuts cannot be blocked.
+              </p>
+              <div className="mt-2 space-y-1">
+                <p>
+                  • <span className="font-bold">macOS F11/Fn+F11 conflict:</span> By
+                  default, macOS maps F11 to{' '}
+                  <span className="font-semibold">Show Desktop</span> (Mission
+                  Control). Pressing F11 or Fn+F11 triggers this system shortcut
+                  instead of sending the key event to the browser. To test your
+                  F11 key, you can disable this shortcut in{' '}
+                  <span className="font-semibold">
+                    System Settings &gt; Keyboard &gt; Keyboard Shortcuts &gt;
+                    Desktop &amp; Dock &gt; Show Desktop
+                  </span>
+                  , or click the F11 key on the screen to test manually.
+                </p>
+                <p>
+                  • <span className="font-bold">Other restricted keys:</span> System
+                  shortcuts like <span className="font-semibold">Cmd+Tab</span>,{' '}
+                  <span className="font-semibold">Alt+Tab</span>, or{' '}
+                  <span className="font-semibold">Cmd+Q</span> /{' '}
+                  <span className="font-semibold">Ctrl+W</span> will be intercepted
+                  by the OS/browser and cannot be registered by the tester.
+                </p>
+              </div>
             </div>
           </div>
         </motion.div>

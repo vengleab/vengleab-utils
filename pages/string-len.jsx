@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { motion } from "framer-motion";
-import { Activity } from "lucide-react";
+import { Activity, Type, AlignLeft, Sparkles } from "lucide-react";
 import Layout from "../components/Layout";
 import PageContext from "../contexts/page";
 import { PAGE } from "../constants/PageURL";
@@ -19,6 +19,16 @@ export default function StringLength() {
     setText(value);
     StringLengthStorage.set("text", value);
   };
+
+  const { wordCount, sentenceCount, tokenCount } = useMemo(() => {
+    const words = text.trim() ? text.trim().split(/\s+/).length : 0;
+    const sentences = (text.match(/[^.!?]+[.!?]+(\s|$)|[^.!?]+$/g) || [])
+      .map(s => s.trim())
+      .filter(Boolean).length;
+    // Rough heuristic approximating common LLM tokenizers (~4 chars/token).
+    const tokens = text.trim() ? Math.ceil(text.length / 4) : 0;
+    return { wordCount: words, sentenceCount: sentences, tokenCount: tokens };
+  }, [text]);
 
   return (
     <PageContext.Provider value={{ activeItem: PAGE.STRING_LEN }}>
@@ -58,6 +68,42 @@ export default function StringLength() {
                 <Activity className="w-4 h-4" />
                 Text Length
               </div>
+            </div>
+
+            <div className="mt-8 pt-8 border-t border-slate-300/50 grid grid-cols-1 sm:grid-cols-3 gap-4">
+              {[
+                {
+                  label: "Words",
+                  value: wordCount,
+                  icon: Type,
+                  color: "text-violet-600",
+                },
+                {
+                  label: "Sentences",
+                  value: sentenceCount,
+                  icon: AlignLeft,
+                  color: "text-emerald-600",
+                },
+                {
+                  label: "LLM Tokens (est.)",
+                  value: tokenCount,
+                  icon: Sparkles,
+                  color: "text-amber-600",
+                },
+              ].map(({ label, value, icon: Icon, color }) => (
+                <div
+                  key={label}
+                  className="rounded-xl border border-slate-200 bg-slate-50 p-4 flex flex-col items-center justify-center"
+                >
+                  <span className="text-3xl sm:text-4xl font-bold tracking-tight text-slate-900">
+                    {value.toLocaleString()}
+                  </span>
+                  <div className="mt-2 flex items-center gap-1.5 text-slate-600 font-medium uppercase tracking-widest text-[10px] sm:text-xs">
+                    <Icon className={`w-3.5 h-3.5 ${color}`} />
+                    {label}
+                  </div>
+                </div>
+              ))}
             </div>
           </div>
         </motion.div>
