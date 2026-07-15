@@ -1,59 +1,58 @@
-import React, { useState, useEffect } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import React, { useState, useEffect } from 'react';
+import { motion } from 'framer-motion';
 import {
   Clock,
   Copy,
   Check,
-  HelpCircle,
   Play,
   Calendar,
   Layers,
   Sliders,
-  BookOpen
-} from "lucide-react";
-import Layout from "../components/Layout";
-import PageContext from "../contexts/page";
-import { PAGE } from "../constants/PageURL";
-import { parseCron } from "../utils/cron";
-import CronStorage from "../utils/storage/Cron";
+  BookOpen,
+} from 'lucide-react';
+import Layout from '../components/Layout';
+import PageContext from '../contexts/page';
+import { PAGE } from '../constants/PageURL';
+import { parseCron } from '../utils/cron';
+import CronStorage from '../utils/storage/Cron';
 
 const PRESETS = [
-  { name: "Every Minute", value: "* * * * *" },
-  { name: "Every 5 Minutes", value: "*/5 * * * *" },
-  { name: "Every 15 Minutes", value: "*/15 * * * *" },
-  { name: "Hourly (at :00)", value: "0 * * * *" },
-  { name: "Every 2 Hours", value: "0 */2 * * *" },
-  { name: "Daily at Midnight", value: "0 0 * * *" },
-  { name: "Daily at 9:00 AM", value: "0 9 * * *" },
-  { name: "Every Weekday at Midnight", value: "0 0 * * 1-5" },
-  { name: "Every Weekend at Midnight", value: "0 0 * * 0,6" },
-  { name: "Weekly on Sunday", value: "0 0 * * 0" },
-  { name: "Monthly on the 1st", value: "0 0 1 * *" },
-  { name: "Quarterly on 1st Day", value: "0 0 1 */3 *" }
+  { name: 'Every Minute', value: '* * * * *' },
+  { name: 'Every 5 Minutes', value: '*/5 * * * *' },
+  { name: 'Every 15 Minutes', value: '*/15 * * * *' },
+  { name: 'Hourly (at :00)', value: '0 * * * *' },
+  { name: 'Every 2 Hours', value: '0 */2 * * *' },
+  { name: 'Daily at Midnight', value: '0 0 * * *' },
+  { name: 'Daily at 9:00 AM', value: '0 9 * * *' },
+  { name: 'Every Weekday at Midnight', value: '0 0 * * 1-5' },
+  { name: 'Every Weekend at Midnight', value: '0 0 * * 0,6' },
+  { name: 'Weekly on Sunday', value: '0 0 * * 0' },
+  { name: 'Monthly on the 1st', value: '0 0 1 * *' },
+  { name: 'Quarterly on 1st Day', value: '0 0 1 */3 *' },
 ];
 
 const CHEATSHEET = [
-  { field: "Minute", values: "0-59", special: "* , - /" },
-  { field: "Hour", values: "0-23", special: "* , - /" },
-  { field: "Day of Month", values: "1-31", special: "* , - /" },
-  { field: "Month", values: "1-12 (or JAN-DEC)", special: "* , - /" },
-  { field: "Day of Week", values: "0-7 (0 or 7 is Sun, or SUN-SAT)", special: "* , - /" }
+  { field: 'Minute', values: '0-59', special: '* , - /' },
+  { field: 'Hour', values: '0-23', special: '* , - /' },
+  { field: 'Day of Month', values: '1-31', special: '* , - /' },
+  { field: 'Month', values: '1-12 (or JAN-DEC)', special: '* , - /' },
+  { field: 'Day of Week', values: '0-7 (0 or 7 is Sun, or SUN-SAT)', special: '* , - /' },
 ];
 
 export default function CronExpressionParser() {
-  const [expression, setExpression] = useState("*/5 * * * *");
+  const [expression, setExpression] = useState('*/5 * * * *');
   const [copied, setCopied] = useState(false);
-  const [activeTab, setActiveTab] = useState("presets"); // presets | builder
+  const [activeTab, setActiveTab] = useState('presets'); // presets | builder
 
   // Builder states
-  const [builderMinute, setBuilderMinute] = useState("*");
-  const [builderHour, setBuilderHour] = useState("*");
-  const [builderDom, setBuilderDom] = useState("*");
-  const [builderMonth, setBuilderMonth] = useState("*");
-  const [builderDow, setBuilderDow] = useState("*");
+  const [builderMinute, setBuilderMinute] = useState('*');
+  const [builderHour, setBuilderHour] = useState('*');
+  const [builderDom, setBuilderDom] = useState('*');
+  const [builderMonth, setBuilderMonth] = useState('*');
+  const [builderDow, setBuilderDow] = useState('*');
 
   useEffect(() => {
-    const savedExpr = CronStorage.get("cronExpression");
+    const savedExpr = CronStorage.get('cronExpression');
     if (savedExpr) {
       setExpression(savedExpr);
       syncBuilderFromExpr(savedExpr);
@@ -62,7 +61,7 @@ export default function CronExpressionParser() {
 
   const handleExpressionChange = (val) => {
     setExpression(val);
-    CronStorage.set("cronExpression", val);
+    CronStorage.set('cronExpression', val);
     syncBuilderFromExpr(val);
   };
 
@@ -84,15 +83,15 @@ export default function CronExpressionParser() {
     let mon = builderMonth;
     let dow = builderDow;
 
-    if (field === "minute") { setBuilderMinute(value); m = value; }
-    if (field === "hour") { setBuilderHour(value); h = value; }
-    if (field === "dom") { setBuilderDom(value); dom = value; }
-    if (field === "month") { setBuilderMonth(value); mon = value; }
-    if (field === "dow") { setBuilderDow(value); dow = value; }
+    if (field === 'minute') { setBuilderMinute(value); m = value; }
+    if (field === 'hour') { setBuilderHour(value); h = value; }
+    if (field === 'dom') { setBuilderDom(value); dom = value; }
+    if (field === 'month') { setBuilderMonth(value); mon = value; }
+    if (field === 'dow') { setBuilderDow(value); dow = value; }
 
     const newExpr = `${m} ${h} ${dom} ${mon} ${dow}`;
     setExpression(newExpr);
-    CronStorage.set("cronExpression", newExpr);
+    CronStorage.set('cronExpression', newExpr);
   };
 
   const copyToClipboard = () => {
@@ -125,12 +124,12 @@ export default function CronExpressionParser() {
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            
+
             {/* Input & Form Builder */}
             <div className="lg:col-span-2 space-y-6">
               <div className="bg-white rounded-3xl shadow-sm border border-slate-200 p-6 sm:p-8 relative overflow-hidden">
                 <div className="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-orange-500 to-amber-500" />
-                
+
                 {/* Main Input */}
                 <div className="space-y-4">
                   <label className="text-xs font-bold text-slate-700 uppercase tracking-wider block">
@@ -148,9 +147,9 @@ export default function CronExpressionParser() {
                     <button
                       onClick={copyToClipboard}
                       className={`absolute right-3 p-2.5 rounded-xl transition-all border ${
-                        copied 
-                          ? "bg-emerald-50 text-emerald-600 border-emerald-200" 
-                          : "bg-white text-slate-400 hover:text-orange-600 hover:bg-orange-50 border-slate-200 hover:border-orange-200"
+                        copied
+                          ? 'bg-emerald-50 text-emerald-600 border-emerald-200'
+                          : 'bg-white text-slate-400 hover:text-orange-600 hover:bg-orange-50 border-slate-200 hover:border-orange-200'
                       }`}
                       title="Copy Expression"
                     >
@@ -162,22 +161,22 @@ export default function CronExpressionParser() {
                 {/* Switcher Tab */}
                 <div className="flex border-b border-slate-100 mt-8 mb-6">
                   <button
-                    onClick={() => setActiveTab("presets")}
+                    onClick={() => setActiveTab('presets')}
                     className={`pb-3 font-semibold text-sm px-4 border-b-2 transition-all flex items-center gap-2 ${
-                      activeTab === "presets"
-                        ? "border-orange-500 text-orange-600"
-                        : "border-transparent text-slate-400 hover:text-slate-600"
+                      activeTab === 'presets'
+                        ? 'border-orange-500 text-orange-600'
+                        : 'border-transparent text-slate-400 hover:text-slate-600'
                     }`}
                   >
                     <Layers className="w-4 h-4" />
                     Presets
                   </button>
                   <button
-                    onClick={() => setActiveTab("builder")}
+                    onClick={() => setActiveTab('builder')}
                     className={`pb-3 font-semibold text-sm px-4 border-b-2 transition-all flex items-center gap-2 ${
-                      activeTab === "builder"
-                        ? "border-orange-500 text-orange-600"
-                        : "border-transparent text-slate-400 hover:text-slate-600"
+                      activeTab === 'builder'
+                        ? 'border-orange-500 text-orange-600'
+                        : 'border-transparent text-slate-400 hover:text-slate-600'
                     }`}
                   >
                     <Sliders className="w-4 h-4" />
@@ -186,7 +185,7 @@ export default function CronExpressionParser() {
                 </div>
 
                 {/* Presets List */}
-                {activeTab === "presets" && (
+                {activeTab === 'presets' && (
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     {PRESETS.map((preset) => (
                       <button
@@ -194,8 +193,8 @@ export default function CronExpressionParser() {
                         onClick={() => handleExpressionChange(preset.value)}
                         className={`flex flex-col items-start p-4 rounded-2xl border text-left transition-all ${
                           expression === preset.value
-                            ? "bg-orange-50/50 border-orange-200 shadow-sm"
-                            : "bg-white border-slate-100 hover:border-orange-200 hover:bg-slate-50/30"
+                            ? 'bg-orange-50/50 border-orange-200 shadow-sm'
+                            : 'bg-white border-slate-100 hover:border-orange-200 hover:bg-slate-50/30'
                         }`}
                       >
                         <span className="font-semibold text-sm text-slate-800">{preset.name}</span>
@@ -206,10 +205,10 @@ export default function CronExpressionParser() {
                 )}
 
                 {/* Custom Builder */}
-                {activeTab === "builder" && (
+                {activeTab === 'builder' && (
                   <div className="space-y-6">
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                      
+
                       {/* Minute Field */}
                       <div className="space-y-2">
                         <label className="text-xs font-bold text-slate-500 uppercase tracking-wider block">
@@ -217,7 +216,7 @@ export default function CronExpressionParser() {
                         </label>
                         <select
                           value={builderMinute}
-                          onChange={(e) => updateExpressionFromBuilder("minute", e.target.value)}
+                          onChange={(e) => updateExpressionFromBuilder('minute', e.target.value)}
                           className="w-full h-11 px-3 bg-slate-50 border border-slate-200 rounded-xl text-slate-700 text-sm focus:outline-none focus:border-orange-500"
                         >
                           <option value="*">Every minute (*)</option>
@@ -238,7 +237,7 @@ export default function CronExpressionParser() {
                         </label>
                         <select
                           value={builderHour}
-                          onChange={(e) => updateExpressionFromBuilder("hour", e.target.value)}
+                          onChange={(e) => updateExpressionFromBuilder('hour', e.target.value)}
                           className="w-full h-11 px-3 bg-slate-50 border border-slate-200 rounded-xl text-slate-700 text-sm focus:outline-none focus:border-orange-500"
                         >
                           <option value="*">Every hour (*)</option>
@@ -261,7 +260,7 @@ export default function CronExpressionParser() {
                         </label>
                         <select
                           value={builderDom}
-                          onChange={(e) => updateExpressionFromBuilder("dom", e.target.value)}
+                          onChange={(e) => updateExpressionFromBuilder('dom', e.target.value)}
                           className="w-full h-11 px-3 bg-slate-50 border border-slate-200 rounded-xl text-slate-700 text-sm focus:outline-none focus:border-orange-500"
                         >
                           <option value="*">Every day of month (*)</option>
@@ -278,7 +277,7 @@ export default function CronExpressionParser() {
                         </label>
                         <select
                           value={builderMonth}
-                          onChange={(e) => updateExpressionFromBuilder("month", e.target.value)}
+                          onChange={(e) => updateExpressionFromBuilder('month', e.target.value)}
                           className="w-full h-11 px-3 bg-slate-50 border border-slate-200 rounded-xl text-slate-700 text-sm focus:outline-none focus:border-orange-500"
                         >
                           <option value="*">Every month (*)</option>
@@ -296,7 +295,7 @@ export default function CronExpressionParser() {
                         </label>
                         <select
                           value={builderDow}
-                          onChange={(e) => updateExpressionFromBuilder("dow", e.target.value)}
+                          onChange={(e) => updateExpressionFromBuilder('dow', e.target.value)}
                           className="w-full h-11 px-3 bg-slate-50 border border-slate-200 rounded-xl text-slate-700 text-sm focus:outline-none focus:border-orange-500"
                         >
                           <option value="*">Every day of the week (*)</option>
@@ -317,7 +316,7 @@ export default function CronExpressionParser() {
 
             {/* Results Sidebar */}
             <div className="space-y-6">
-              
+
               {/* Output Description */}
               <div className="bg-white rounded-3xl shadow-sm border border-slate-200 p-6 relative overflow-hidden">
                 <div className="absolute top-0 left-0 w-full h-1 bg-orange-500" />
@@ -325,13 +324,13 @@ export default function CronExpressionParser() {
                   <Play className="w-4 h-4 text-orange-500 shrink-0" />
                   Description
                 </h3>
-                
+
                 {result.isValid ? (
                   <div className="space-y-4">
                     <div className="p-4 bg-orange-50/50 border border-orange-100 rounded-2xl text-slate-800 leading-relaxed font-medium">
                       {result.explanation.summary}
                     </div>
-                    
+
                     {/* Breakdown */}
                     <div className="space-y-2 pt-2 border-t border-slate-100 text-xs text-slate-600">
                       <div className="flex justify-between">
@@ -381,17 +380,17 @@ export default function CronExpressionParser() {
                         <span className="text-[10px] text-amber-500 font-bold w-4">{idx + 1}.</span>
                         <span className="font-medium">
                           {runDate.toLocaleDateString(undefined, {
-                            weekday: "short",
-                            year: "numeric",
-                            month: "short",
-                            day: "numeric"
+                            weekday: 'short',
+                            year: 'numeric',
+                            month: 'short',
+                            day: 'numeric',
                           })}
                         </span>
                         <span className="ml-auto font-bold text-slate-900 bg-white border border-slate-150 px-2 py-0.5 rounded">
                           {runDate.toLocaleTimeString(undefined, {
-                            hour: "2-digit",
-                            minute: "2-digit",
-                            second: "2-digit"
+                            hour: '2-digit',
+                            minute: '2-digit',
+                            second: '2-digit',
                           })}
                         </span>
                       </div>

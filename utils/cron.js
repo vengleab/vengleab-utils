@@ -1,10 +1,20 @@
 const MONTH_MAP = {
-  JAN: 1, FEB: 2, MAR: 3, APR: 4, MAY: 5, JUN: 6,
-  JUL: 7, AUG: 8, SEP: 9, OCT: 10, NOV: 11, DEC: 12
+  JAN: 1,
+  FEB: 2,
+  MAR: 3,
+  APR: 4,
+  MAY: 5,
+  JUN: 6,
+  JUL: 7,
+  AUG: 8,
+  SEP: 9,
+  OCT: 10,
+  NOV: 11,
+  DEC: 12,
 };
 
 const WEEK_MAP = {
-  SUN: 0, MON: 1, TUE: 2, WED: 3, THU: 4, FRI: 5, SAT: 6
+  SUN: 0, MON: 1, TUE: 2, WED: 3, THU: 4, FRI: 5, SAT: 6,
 };
 
 function formatOrdinal(num) {
@@ -17,15 +27,15 @@ function formatHour(h) {
   const hr = parseInt(h, 10);
   if (hr === 0) return '12 AM';
   if (hr === 12) return '12 PM';
-  if (hr > 12) return (hr - 12) + ' PM';
-  return hr + ' AM';
+  if (hr > 12) return `${hr - 12} PM`;
+  return `${hr} AM`;
 }
 
 function formatMonth(m) {
   const idx = parseInt(m, 10) - 1;
   const months = [
     'January', 'February', 'March', 'April', 'May', 'June',
-    'July', 'August', 'September', 'October', 'November', 'December'
+    'July', 'August', 'September', 'October', 'November', 'December',
   ];
   return months[idx] || m;
 }
@@ -33,14 +43,14 @@ function formatMonth(m) {
 function formatDayOfWeek(d) {
   const idx = parseInt(d, 10);
   const days = [
-    'Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'
+    'Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday',
   ];
   return days[idx] || d;
 }
 
 function expandField(fieldStr, min, max, nameMap = null) {
   const allowed = new Set();
-  
+
   let cleanStr = fieldStr.toUpperCase().trim();
   if (nameMap) {
     for (const [name, val] of Object.entries(nameMap)) {
@@ -56,10 +66,10 @@ function expandField(fieldStr, min, max, nameMap = null) {
       const [range, stepStr] = part.split('/');
       const step = parseInt(stepStr, 10);
       if (isNaN(step) || step <= 0) throw new Error(`Invalid step value: "${stepStr}"`);
-      
+
       let rangeMin = min;
       let rangeMax = max;
-      
+
       if (range !== '*') {
         if (range.includes('-')) {
           const [rMin, rMax] = range.split('-');
@@ -69,11 +79,11 @@ function expandField(fieldStr, min, max, nameMap = null) {
           rangeMin = parseInt(range, 10);
         }
       }
-      
+
       if (isNaN(rangeMin) || isNaN(rangeMax) || rangeMin < min || rangeMax > max || rangeMin > rangeMax) {
         throw new Error(`Invalid range for step in value: "${part}"`);
       }
-      
+
       for (let i = rangeMin; i <= rangeMax; i += step) {
         allowed.add(i);
       }
@@ -100,8 +110,8 @@ function expandField(fieldStr, min, max, nameMap = null) {
 
 function explainField(fieldStr, unitSingular, unitPlural, formatVal = (v) => v) {
   if (fieldStr === '*') return `every ${unitSingular}`;
-  
-  const terms = fieldStr.split(',').map(term => {
+
+  const terms = fieldStr.split(',').map((term) => {
     if (term === '*') return `every ${unitSingular}`;
     if (term.includes('/')) {
       const [range, step] = term.split('/');
@@ -131,7 +141,7 @@ export function parseCron(expression) {
     if (parts.length !== 5) {
       return {
         isValid: false,
-        error: 'Cron expression must contain exactly 5 space-separated fields (minute, hour, day of month, month, day of week).'
+        error: 'Cron expression must contain exactly 5 space-separated fields (minute, hour, day of month, month, day of week).',
       };
     }
 
@@ -154,7 +164,7 @@ export function parseCron(expression) {
       months,
       daysOfWeek,
       isDomAsterisk: parts[2] === '*',
-      isDowAsterisk: parts[4] === '*'
+      isDowAsterisk: parts[4] === '*',
     };
 
     // Construct human-readable explanations
@@ -174,7 +184,7 @@ export function parseCron(expression) {
       if (parts[2] !== '*') sentenceParts.push(domDesc);
       if (parts[3] !== '*') sentenceParts.push(`in ${monthDesc}`);
       if (parts[4] !== '*') sentenceParts.push(`on ${dowDesc}`);
-      summary = sentenceParts.join(', ') + '.';
+      summary = `${sentenceParts.join(', ')}.`;
     }
 
     // Generate next run dates
@@ -189,27 +199,29 @@ export function parseCron(expression) {
           hour: hourDesc,
           dayOfMonth: domDesc,
           month: monthDesc,
-          dayOfWeek: dowDesc
-        }
+          dayOfWeek: dowDesc,
+        },
       },
-      nextRuns
+      nextRuns,
     };
   } catch (err) {
     return {
       isValid: false,
-      error: err.message
+      error: err.message,
     };
   }
 }
 
 function getNextRuns(cronSets, count = 5, startDate = new Date()) {
-  const { minutes, hours, daysOfMonth, months, daysOfWeek, isDomAsterisk, isDowAsterisk } = cronSets;
+  const {
+    minutes, hours, daysOfMonth, months, daysOfWeek, isDomAsterisk, isDowAsterisk,
+  } = cronSets;
   const nextRuns = [];
-  
-  let current = new Date(startDate.getTime());
+
+  const current = new Date(startDate.getTime());
   current.setSeconds(0);
   current.setMilliseconds(0);
-  
+
   // Start from next minute
   current.setMinutes(current.getMinutes() + 1);
 
@@ -233,7 +245,7 @@ function getNextRuns(cronSets, count = 5, startDate = new Date()) {
     // Cron DOW/DOM rule: if both are restricted, match either. Otherwise match both.
     const domRestricted = !isDomAsterisk;
     const dowRestricted = !isDowAsterisk;
-    
+
     let dateMatch = false;
     if (domRestricted && dowRestricted) {
       dateMatch = daysOfMonth.has(d) || daysOfWeek.has(dw);
