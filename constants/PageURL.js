@@ -19,6 +19,8 @@ export const PAGE = {
   DAY_COUNT: 'day-count',
   GOLD_PRICE: 'gold-price',
   NGINX_CONFIG: 'nginx-config-generator',
+  CRON_EXPRESSION: 'cron-expression',
+  CODE_HIGHLIGHTER: 'code-highlighter',
 };
 
 export const MENU_ITEMS = {
@@ -82,6 +84,14 @@ export const MENU_ITEMS = {
     name: 'Nginx Config Generator',
     page: PAGE.NGINX_CONFIG,
   },
+  cron_expression: {
+    name: 'Cron Expression',
+    page: PAGE.CRON_EXPRESSION,
+  },
+  code_highlighter: {
+    name: 'Code Highlighter',
+    page: PAGE.CODE_HIGHLIGHTER,
+  },
 };
 
 // Sidebar grouping — ordered sections, each listing MENU_ITEMS keys.
@@ -89,12 +99,12 @@ export const MENU_GROUPS = [
   {
     id: 'converters',
     name: 'Converters & Encoders',
-    items: ['base_64_encode_decoder', 'json_beautifier', 'jwt_token_viewer', 'table_converter'],
+    items: ['base_64_encode_decoder', 'json_beautifier', 'jwt_token_viewer', 'table_converter', 'code_highlighter'],
   },
   {
     id: 'generators',
     name: 'Generators',
-    items: ['password_generator', 'qr_code_generator', 'nginx_config'],
+    items: ['password_generator', 'qr_code_generator', 'nginx_config', 'cron_expression'],
   },
   {
     id: 'text',

@@ -23,7 +23,9 @@ import {
   Sparkles,
   Table,
   Coins,
-  Server
+  Server,
+  Clock,
+  Terminal
 } from "lucide-react";
 import { MENU_ITEMS, MENU_GROUPS, PAGE } from "../../constants/PageURL";
 
@@ -45,7 +47,9 @@ const ICON_MAP = {
   table_converter: Table,
   day_count: CalendarDays,
   gold_price: Coins,
-  nginx_config: Server
+  nginx_config: Server,
+  cron_expression: Clock,
+  code_highlighter: Terminal
 };
 
 export default function MySideBar({

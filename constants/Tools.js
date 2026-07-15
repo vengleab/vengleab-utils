@@ -14,6 +14,8 @@ import {
   Table,
   Coins,
   Server,
+  Clock,
+  Terminal,
 } from 'lucide-react';
 
 export const TOOLS = [
@@ -162,6 +164,24 @@ export const TOOLS = [
     color: 'text-emerald-600',
     bg: 'bg-emerald-100/50',
     border: 'hover:border-emerald-500/30 group-hover:shadow-emerald-500/10',
+  },
+  {
+    id: 'cron_expression',
+    name: 'Cron Expression',
+    description: 'Parse cron schedules into plain English, build expressions visually, and calculate next execution runs.',
+    icon: Clock,
+    color: 'text-orange-600',
+    bg: 'bg-orange-100/50',
+    border: 'hover:border-orange-500/30 group-hover:shadow-orange-500/10',
+  },
+  {
+    id: 'code_highlighter',
+    name: 'Code Highlighter',
+    description: 'Apply beautiful, themed syntax highlighting to code snippets and copy output in raw or styled HTML format.',
+    icon: Terminal,
+    color: 'text-indigo-600',
+    bg: 'bg-indigo-100/50',
+    border: 'hover:border-indigo-500/30 group-hover:shadow-indigo-500/10',
   },
 ];
 
