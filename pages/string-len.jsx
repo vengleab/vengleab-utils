@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useMemo } from "react";
 import { motion } from "framer-motion";
 import { Activity, Type, AlignLeft, Sparkles } from "lucide-react";
+import { encode } from "gpt-tokenizer/encoding/o200k_base";
 import Layout from "../components/Layout";
 import PageContext from "../contexts/page";
 import { PAGE } from "../constants/PageURL";
@@ -25,8 +26,8 @@ export default function StringLength() {
     const sentences = (text.match(/[^.!?]+[.!?]+(\s|$)|[^.!?]+$/g) || [])
       .map(s => s.trim())
       .filter(Boolean).length;
-    // Rough heuristic approximating common LLM tokenizers (~4 chars/token).
-    const tokens = text.trim() ? Math.ceil(text.length / 4) : 0;
+    // BPE token count using OpenAI's o200k_base encoding (GPT-4o / GPT-4.1).
+    const tokens = text ? encode(text).length : 0;
     return { wordCount: words, sentenceCount: sentences, tokenCount: tokens };
   }, [text]);
 
@@ -85,7 +86,7 @@ export default function StringLength() {
                   color: "text-emerald-600",
                 },
                 {
-                  label: "LLM Tokens (est.)",
+                  label: "LLM Tokens (o200k)",
                   value: tokenCount,
                   icon: Sparkles,
                   color: "text-amber-600",
