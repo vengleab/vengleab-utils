@@ -9,6 +9,7 @@ import {
   Layers,
   Sliders,
   BookOpen,
+  Globe,
 } from 'lucide-react';
 import Layout from '../components/Layout';
 import PageContext from '../contexts/page';
@@ -39,8 +40,35 @@ const CHEATSHEET = [
   { field: 'Day of Week', values: '0-7 (0 or 7 is Sun, or SUN-SAT)', special: '* , - /' },
 ];
 
+const TIMEZONE_OPTIONS = [
+  { label: 'Local Time (Browser)', value: 'local' },
+  { label: 'UTC (Coordinated Universal Time)', value: 'UTC' },
+  { label: 'America/New_York (US Eastern)', value: 'America/New_York' },
+  { label: 'America/Chicago (US Central)', value: 'America/Chicago' },
+  { label: 'America/Denver (US Mountain)', value: 'America/Denver' },
+  { label: 'America/Los_Angeles (US Pacific)', value: 'America/Los_Angeles' },
+  { label: 'America/Sao_Paulo (Brazil)', value: 'America/Sao_Paulo' },
+  { label: 'Europe/London (UK, GMT/BST)', value: 'Europe/London' },
+  { label: 'Europe/Paris (Central Europe)', value: 'Europe/Paris' },
+  { label: 'Europe/Berlin (Germany)', value: 'Europe/Berlin' },
+  { label: 'Europe/Moscow (MSK)', value: 'Europe/Moscow' },
+  { label: 'Africa/Cairo (EET)', value: 'Africa/Cairo' },
+  { label: 'Asia/Dubai (Gulf Standard Time)', value: 'Asia/Dubai' },
+  { label: 'Asia/Kolkata (India Standard Time)', value: 'Asia/Kolkata' },
+  { label: 'Asia/Bangkok (Indochina Time)', value: 'Asia/Bangkok' },
+  { label: 'Asia/Phnom_Penh (Cambodia)', value: 'Asia/Phnom_Penh' },
+  { label: 'Asia/Singapore (Singapore)', value: 'Asia/Singapore' },
+  { label: 'Asia/Shanghai (China Standard Time)', value: 'Asia/Shanghai' },
+  { label: 'Asia/Tokyo (Japan Standard Time)', value: 'Asia/Tokyo' },
+  { label: 'Asia/Seoul (Korea Standard Time)', value: 'Asia/Seoul' },
+  { label: 'Australia/Sydney (AEST/AEDT)', value: 'Australia/Sydney' },
+  { label: 'Pacific/Auckland (NZST/NZDT)', value: 'Pacific/Auckland' },
+];
+
 export default function CronExpressionParser() {
   const [expression, setExpression] = useState('*/5 * * * *');
+  const [timezone, setTimezone] = useState('local');
+  const [detectedTz, setDetectedTz] = useState('');
   const [copied, setCopied] = useState(false);
   const [activeTab, setActiveTab] = useState('presets'); // presets | builder
 
@@ -52,10 +80,24 @@ export default function CronExpressionParser() {
   const [builderDow, setBuilderDow] = useState('*');
 
   useEffect(() => {
+    if (typeof Intl !== 'undefined') {
+      try {
+        const userTz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+        setDetectedTz(userTz);
+      } catch (e) {
+        // Fallback silently if timezone detection fails
+      }
+    }
+
     const savedExpr = CronStorage.get('cronExpression');
     if (savedExpr) {
       setExpression(savedExpr);
       syncBuilderFromExpr(savedExpr);
+    }
+
+    const savedTz = CronStorage.get('cronTimezone');
+    if (savedTz) {
+      setTimezone(savedTz);
     }
   }, []);
 
@@ -63,6 +105,11 @@ export default function CronExpressionParser() {
     setExpression(val);
     CronStorage.set('cronExpression', val);
     syncBuilderFromExpr(val);
+  };
+
+  const handleTimezoneChange = (val) => {
+    setTimezone(val);
+    CronStorage.set('cronTimezone', val);
   };
 
   const syncBuilderFromExpr = (expr) => {
@@ -100,7 +147,7 @@ export default function CronExpressionParser() {
     setTimeout(() => setCopied(false), 2000);
   };
 
-  const result = parseCron(expression);
+  const result = parseCron(expression, timezone);
 
   return (
     <PageContext.Provider value={{ activeItem: PAGE.CRON_EXPRESSION }}>
@@ -119,7 +166,7 @@ export default function CronExpressionParser() {
               Cron Expression Parser & Generator
             </h1>
             <p className="mt-2 text-slate-500 max-w-2xl">
-              Parse cron expressions into human-readable text, verify their schedule execution dates, and build custom expressions visually.
+              Parse cron expressions into human-readable text, verify their schedule execution dates across timezones, and build custom expressions visually.
             </p>
           </div>
 
@@ -130,11 +177,29 @@ export default function CronExpressionParser() {
               <div className="bg-white rounded-3xl shadow-sm border border-slate-200 p-6 sm:p-8 relative overflow-hidden">
                 <div className="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-orange-500 to-amber-500" />
 
-                {/* Main Input */}
+                {/* Main Input & Timezone Selector */}
                 <div className="space-y-4">
-                  <label className="text-xs font-bold text-slate-700 uppercase tracking-wider block">
-                    Cron Expression
-                  </label>
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                    <label className="text-xs font-bold text-slate-700 uppercase tracking-wider block">
+                      Cron Expression
+                    </label>
+                    <div className="flex items-center gap-2">
+                      <Globe className="w-4 h-4 text-slate-400 shrink-0" />
+                      <span className="text-xs font-medium text-slate-500 shrink-0">Timezone:</span>
+                      <select
+                        value={timezone}
+                        onChange={(e) => handleTimezoneChange(e.target.value)}
+                        className="h-9 px-3 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-700 focus:outline-none focus:border-orange-500 cursor-pointer shadow-2xs transition-colors"
+                      >
+                        {TIMEZONE_OPTIONS.map((tz) => (
+                          <option key={tz.value} value={tz.value}>
+                            {tz.value === 'local' && detectedTz ? `Local (${detectedTz})` : tz.label}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  </div>
+
                   <div className="relative flex items-center">
                     <input
                       type="text"
@@ -366,35 +431,65 @@ export default function CronExpressionParser() {
               {result.isValid && (
                 <div className="bg-white rounded-3xl shadow-sm border border-slate-200 p-6 relative overflow-hidden">
                   <div className="absolute top-0 left-0 w-full h-1 bg-amber-500" />
-                  <h3 className="text-sm font-bold text-slate-800 mb-4 uppercase tracking-wider flex items-center gap-2">
-                    <Calendar className="w-4 h-4 text-amber-500 shrink-0" />
-                    Next execution runs
-                  </h3>
+                  <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
+                    <h3 className="text-sm font-bold text-slate-800 uppercase tracking-wider flex items-center gap-2">
+                      <Calendar className="w-4 h-4 text-amber-500 shrink-0" />
+                      Next execution runs
+                    </h3>
+                    <div className="flex items-center gap-1.5 text-[11px] font-mono text-amber-800 bg-amber-50 px-2.5 py-1 rounded-lg border border-amber-200/80 font-semibold shadow-2xs">
+                      <Globe className="w-3.5 h-3.5 text-amber-600 shrink-0" />
+                      {timezone === 'local' ? (detectedTz ? `Local (${detectedTz})` : 'Local Time') : timezone}
+                    </div>
+                  </div>
 
                   <div className="space-y-2.5 font-mono text-xs">
-                    {result.nextRuns.map((runDate, idx) => (
-                      <div
-                        key={idx}
-                        className="flex items-center gap-3 p-3 bg-slate-50 rounded-xl text-slate-700 border border-slate-100 hover:border-amber-200 transition-colors"
-                      >
-                        <span className="text-[10px] text-amber-500 font-bold w-4">{idx + 1}.</span>
-                        <span className="font-medium">
-                          {runDate.toLocaleDateString(undefined, {
-                            weekday: 'short',
-                            year: 'numeric',
-                            month: 'short',
-                            day: 'numeric',
-                          })}
-                        </span>
-                        <span className="ml-auto font-bold text-slate-900 bg-white border border-slate-150 px-2 py-0.5 rounded">
-                          {runDate.toLocaleTimeString(undefined, {
+                    {result.nextRuns.map((runDate, idx) => {
+                      const targetTz = timezone === 'local' ? undefined : timezone;
+                      const dateStr = runDate.toLocaleDateString(undefined, {
+                        timeZone: targetTz,
+                        weekday: 'short',
+                        year: 'numeric',
+                        month: 'short',
+                        day: 'numeric',
+                      });
+                      const timeStr = runDate.toLocaleTimeString(undefined, {
+                        timeZone: targetTz,
+                        hour: '2-digit',
+                        minute: '2-digit',
+                        second: '2-digit',
+                        timeZoneName: 'short',
+                      });
+                      const isDifferentFromLocal = timezone !== 'local' && detectedTz && timezone !== detectedTz;
+                      const localTimeStr = isDifferentFromLocal
+                        ? runDate.toLocaleTimeString(undefined, {
                             hour: '2-digit',
                             minute: '2-digit',
                             second: '2-digit',
-                          })}
-                        </span>
-                      </div>
-                    ))}
+                          })
+                        : null;
+
+                      return (
+                        <div
+                          key={idx}
+                          className="flex flex-col sm:flex-row sm:items-center justify-between p-3 bg-slate-50 rounded-xl text-slate-700 border border-slate-100 hover:border-amber-200 transition-colors gap-1.5 sm:gap-2"
+                        >
+                          <div className="flex items-center gap-2.5">
+                            <span className="text-[10px] text-amber-500 font-bold w-4">{idx + 1}.</span>
+                            <span className="font-medium">{dateStr}</span>
+                          </div>
+                          <div className="flex items-center gap-2 ml-6 sm:ml-auto flex-wrap">
+                            <span className="font-bold text-slate-900 bg-white border border-slate-200 px-2 py-0.5 rounded shadow-2xs">
+                              {timeStr}
+                            </span>
+                            {localTimeStr && (
+                              <span className="text-[10px] text-slate-400 font-normal" title="Equivalent local browser time">
+                                ({localTimeStr} local)
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })}
                   </div>
                 </div>
               )}
@@ -430,3 +525,4 @@ export default function CronExpressionParser() {
     </PageContext.Provider>
   );
 }
+

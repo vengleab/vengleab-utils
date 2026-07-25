@@ -135,7 +135,7 @@ function explainField(fieldStr, unitSingular, unitPlural, formatVal = (v) => v) 
   return `${terms.slice(0, -1).join(', ')}, and ${terms[terms.length - 1]}`;
 }
 
-export function parseCron(expression) {
+export function parseCron(expression, timeZone = 'local') {
   try {
     const parts = expression.trim().split(/\s+/);
     if (parts.length !== 5) {
@@ -188,7 +188,7 @@ export function parseCron(expression) {
     }
 
     // Generate next run dates
-    const nextRuns = getNextRuns(cronSets, 5);
+    const nextRuns = getNextRuns(cronSets, 5, new Date(), timeZone);
 
     return {
       isValid: true,
@@ -203,6 +203,7 @@ export function parseCron(expression) {
         },
       },
       nextRuns,
+      timeZone,
     };
   } catch (err) {
     return {
@@ -212,69 +213,123 @@ export function parseCron(expression) {
   }
 }
 
-function getNextRuns(cronSets, count = 5, startDate = new Date()) {
+function getWallClockComponents(date, timeZone, cachedFormatter) {
+  if (!timeZone || timeZone === 'local') {
+    return {
+      year: date.getFullYear(),
+      month: date.getMonth() + 1,
+      day: date.getDate(),
+      dow: date.getDay(),
+      hours: date.getHours(),
+      minutes: date.getMinutes(),
+    };
+  }
+
+  if (timeZone === 'UTC') {
+    return {
+      year: date.getUTCFullYear(),
+      month: date.getUTCMonth() + 1,
+      day: date.getUTCDate(),
+      dow: date.getUTCDay(),
+      hours: date.getUTCHours(),
+      minutes: date.getUTCMinutes(),
+    };
+  }
+
+  const parts = cachedFormatter.formatToParts(date);
+  let year = 0; let month = 0; let day = 0; let hours = 0; let minutes = 0;
+  for (let i = 0; i < parts.length; i++) {
+    const p = parts[i];
+    if (p.type === 'year') year = parseInt(p.value, 10);
+    else if (p.type === 'month') month = parseInt(p.value, 10);
+    else if (p.type === 'day') day = parseInt(p.value, 10);
+    else if (p.type === 'hour') hours = parseInt(p.value, 10) % 24;
+    else if (p.type === 'minute') minutes = parseInt(p.value, 10);
+  }
+  const dow = new Date(Date.UTC(year, month - 1, day)).getUTCDay();
+
+  return { year, month, day, dow, hours, minutes };
+}
+
+function getNextRuns(cronSets, count = 5, startDate = new Date(), timeZone = 'local') {
   const {
     minutes, hours, daysOfMonth, months, daysOfWeek, isDomAsterisk, isDowAsterisk,
   } = cronSets;
   const nextRuns = [];
+
+  let formatter = null;
+  if (timeZone && timeZone !== 'local' && timeZone !== 'UTC') {
+    try {
+      formatter = new Intl.DateTimeFormat('en-US', {
+        timeZone,
+        year: 'numeric',
+        month: 'numeric',
+        day: 'numeric',
+        hour: 'numeric',
+        minute: 'numeric',
+        second: 'numeric',
+        hourCycle: 'h23',
+      });
+    } catch (e) {
+      timeZone = 'local';
+    }
+  }
 
   const current = new Date(startDate.getTime());
   current.setSeconds(0);
   current.setMilliseconds(0);
 
   // Start from next minute
-  current.setMinutes(current.getMinutes() + 1);
+  current.setTime(current.getTime() + 60000);
 
   let iterations = 0;
-  const maxIterations = 50000; // Safeguard
+  const maxIterations = 50000;
 
   while (nextRuns.length < count && iterations < maxIterations) {
     iterations++;
 
-    const m = current.getMonth() + 1; // getMonth is 0-11
-    if (!months.has(m)) {
-      current.setMonth(current.getMonth() + 1);
-      current.setDate(1);
-      current.setHours(0, 0, 0, 0);
+    const wc = getWallClockComponents(current, timeZone, formatter);
+
+    // 1. Month check
+    if (!months.has(wc.month)) {
+      const msToJump = Math.max(60000, (24 - wc.hours) * 3600000 - wc.minutes * 60000);
+      current.setTime(current.getTime() + msToJump);
       continue;
     }
 
-    const d = current.getDate();
-    const dw = current.getDay(); // 0 is Sunday, 6 is Saturday
-
-    // Cron DOW/DOM rule: if both are restricted, match either. Otherwise match both.
+    // 2. Date / Day-of-week check
     const domRestricted = !isDomAsterisk;
     const dowRestricted = !isDowAsterisk;
 
     let dateMatch = false;
     if (domRestricted && dowRestricted) {
-      dateMatch = daysOfMonth.has(d) || daysOfWeek.has(dw);
+      dateMatch = daysOfMonth.has(wc.day) || daysOfWeek.has(wc.dow);
     } else {
-      dateMatch = daysOfMonth.has(d) && daysOfWeek.has(dw);
+      dateMatch = daysOfMonth.has(wc.day) && daysOfWeek.has(wc.dow);
     }
 
     if (!dateMatch) {
-      current.setDate(current.getDate() + 1);
-      current.setHours(0, 0, 0, 0);
+      const msToJump = Math.max(60000, (24 - wc.hours) * 3600000 - wc.minutes * 60000);
+      current.setTime(current.getTime() + msToJump);
       continue;
     }
 
-    const h = current.getHours();
-    if (!hours.has(h)) {
-      current.setHours(current.getHours() + 1);
-      current.setMinutes(0, 0, 0);
+    // 3. Hour check
+    if (!hours.has(wc.hours)) {
+      const msToJump = Math.max(60000, (60 - wc.minutes) * 60000);
+      current.setTime(current.getTime() + msToJump);
       continue;
     }
 
-    const min = current.getMinutes();
-    if (!minutes.has(min)) {
-      current.setMinutes(current.getMinutes() + 1);
+    // 4. Minute check
+    if (!minutes.has(wc.minutes)) {
+      current.setTime(current.getTime() + 60000);
       continue;
     }
 
-    // Success!
+    // Match found
     nextRuns.push(new Date(current.getTime()));
-    current.setMinutes(current.getMinutes() + 1);
+    current.setTime(current.getTime() + 60000);
   }
 
   return nextRuns;
