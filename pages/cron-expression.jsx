@@ -41,8 +41,8 @@ const CHEATSHEET = [
 ];
 
 const TIMEZONE_OPTIONS = [
-  { label: 'Local Time (Browser)', value: 'local' },
   { label: 'UTC (Coordinated Universal Time)', value: 'UTC' },
+  { label: 'Local Time (Browser)', value: 'local' },
   { label: 'America/New_York (US Eastern)', value: 'America/New_York' },
   { label: 'America/Chicago (US Central)', value: 'America/Chicago' },
   { label: 'America/Denver (US Mountain)', value: 'America/Denver' },
@@ -67,7 +67,7 @@ const TIMEZONE_OPTIONS = [
 
 export default function CronExpressionParser() {
   const [expression, setExpression] = useState('*/5 * * * *');
-  const [timezone, setTimezone] = useState('local');
+  const [timezone, setTimezone] = useState('UTC');
   const [detectedTz, setDetectedTz] = useState('');
   const [copied, setCopied] = useState(false);
   const [activeTab, setActiveTab] = useState('presets'); // presets | builder
@@ -96,8 +96,10 @@ export default function CronExpressionParser() {
     }
 
     const savedTz = CronStorage.get('cronTimezone');
-    if (savedTz) {
+    if (savedTz && savedTz !== 'local') {
       setTimezone(savedTz);
+    } else {
+      setTimezone('UTC');
     }
   }, []);
 
@@ -431,7 +433,7 @@ export default function CronExpressionParser() {
               {result.isValid && (
                 <div className="bg-white rounded-3xl shadow-sm border border-slate-200 p-6 relative overflow-hidden">
                   <div className="absolute top-0 left-0 w-full h-1 bg-amber-500" />
-                  <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
+                  <div className="flex items-center justify-between mb-2 flex-wrap gap-2">
                     <h3 className="text-sm font-bold text-slate-800 uppercase tracking-wider flex items-center gap-2">
                       <Calendar className="w-4 h-4 text-amber-500 shrink-0" />
                       Next execution runs
@@ -442,9 +444,19 @@ export default function CronExpressionParser() {
                     </div>
                   </div>
 
-                  <div className="space-y-2.5 font-mono text-xs">
+                  <p className="text-[11px] text-slate-400 mb-4 leading-normal">
+                    {timezone === 'UTC'
+                      ? 'Server schedules run in UTC. Converted to your local browser time below.'
+                      : timezone === 'local'
+                      ? 'Evaluated in your local browser timezone.'
+                      : `Evaluated in ${timezone}.`}
+                  </p>
+
+                  <div className="space-y-3 font-mono text-xs">
                     {result.nextRuns.map((runDate, idx) => {
                       const targetTz = timezone === 'local' ? undefined : timezone;
+
+                      // Primary Cron Execution Time (in selected timezone)
                       const dateStr = runDate.toLocaleDateString(undefined, {
                         timeZone: targetTz,
                         weekday: 'short',
@@ -459,7 +471,16 @@ export default function CronExpressionParser() {
                         second: '2-digit',
                         timeZoneName: 'short',
                       });
+
+                      // Converted Local Browser Time
                       const isDifferentFromLocal = timezone !== 'local' && detectedTz && timezone !== detectedTz;
+                      const localDateStr = isDifferentFromLocal
+                        ? runDate.toLocaleDateString(undefined, {
+                            weekday: 'short',
+                            month: 'short',
+                            day: 'numeric',
+                          })
+                        : null;
                       const localTimeStr = isDifferentFromLocal
                         ? runDate.toLocaleTimeString(undefined, {
                             hour: '2-digit',
@@ -468,25 +489,52 @@ export default function CronExpressionParser() {
                           })
                         : null;
 
+                      // Converted UTC Server Time (when evaluated in local time)
+                      const utcTimeStr = timezone === 'local'
+                        ? runDate.toLocaleTimeString(undefined, {
+                            timeZone: 'UTC',
+                            hour: '2-digit',
+                            minute: '2-digit',
+                            second: '2-digit',
+                            timeZoneName: 'short',
+                          })
+                        : null;
+
                       return (
                         <div
                           key={idx}
-                          className="flex flex-col sm:flex-row sm:items-center justify-between p-3 bg-slate-50 rounded-xl text-slate-700 border border-slate-100 hover:border-amber-200 transition-colors gap-1.5 sm:gap-2"
+                          className="p-3 bg-slate-50 rounded-xl text-slate-700 border border-slate-100 hover:border-amber-200 transition-colors space-y-2"
                         >
-                          <div className="flex items-center gap-2.5">
-                            <span className="text-[10px] text-amber-500 font-bold w-4">{idx + 1}.</span>
-                            <span className="font-medium">{dateStr}</span>
-                          </div>
-                          <div className="flex items-center gap-2 ml-6 sm:ml-auto flex-wrap">
+                          {/* Primary Execution Time */}
+                          <div className="flex items-center justify-between gap-2 flex-wrap">
+                            <div className="flex items-center gap-2">
+                              <span className="text-[10px] text-amber-500 font-bold w-4">{idx + 1}.</span>
+                              <span className="font-medium text-slate-800">{dateStr}</span>
+                            </div>
                             <span className="font-bold text-slate-900 bg-white border border-slate-200 px-2 py-0.5 rounded shadow-2xs">
                               {timeStr}
                             </span>
-                            {localTimeStr && (
-                              <span className="text-[10px] text-slate-400 font-normal" title="Equivalent local browser time">
-                                ({localTimeStr} local)
-                              </span>
-                            )}
                           </div>
+
+                          {/* Converted Local Time Equivalent */}
+                          {isDifferentFromLocal && (
+                            <div className="flex items-center justify-between pt-1.5 border-t border-slate-200/50 text-[11px]">
+                              <span className="text-slate-400 font-normal">Local ({detectedTz}):</span>
+                              <span className="font-semibold text-amber-700 bg-amber-50 px-2 py-0.5 rounded border border-amber-100">
+                                {localDateStr}, {localTimeStr}
+                              </span>
+                            </div>
+                          )}
+
+                          {/* Converted UTC Time Equivalent */}
+                          {timezone === 'local' && (
+                            <div className="flex items-center justify-between pt-1.5 border-t border-slate-200/50 text-[11px]">
+                              <span className="text-slate-400 font-normal">UTC Server Equivalent:</span>
+                              <span className="font-semibold text-slate-600 bg-white px-2 py-0.5 rounded border border-slate-200">
+                                {utcTimeStr}
+                              </span>
+                            </div>
+                          )}
                         </div>
                       );
                     })}
