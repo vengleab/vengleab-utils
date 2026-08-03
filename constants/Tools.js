@@ -3,6 +3,7 @@ import {
   Hash,
   Type,
   Calculator,
+  PiggyBank,
   CalendarDays,
   Key,
   Users,
@@ -55,6 +56,15 @@ export const TOOLS = [
     color: 'text-teal-600',
     bg: 'bg-teal-100/50',
     border: 'hover:border-teal-500/30 group-hover:shadow-teal-500/10',
+  },
+  {
+    id: 'savings_plan',
+    name: 'Savings Plan (Monthly Deposit)',
+    description: 'Calculate future wealth, compound interest earned, and monthly deposit growth schedules.',
+    icon: PiggyBank,
+    color: 'text-emerald-600',
+    bg: 'bg-emerald-100/50',
+    border: 'hover:border-emerald-500/30 group-hover:shadow-emerald-500/10',
   },
   {
     id: 'kh_tax',

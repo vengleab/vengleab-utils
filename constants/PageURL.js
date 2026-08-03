@@ -6,6 +6,7 @@ export const PAGE = {
   JSON_BEAUTIFIER: 'json-beautifier',
   JWT_TOKEN_VIEWER: 'jwt-token-viewer',
   LOAN_CALCULATOR: 'loan-calculator',
+  SAVINGS_PLAN: 'savings-plan',
   KH_SALARY_TAX_CALCULATOR: 'kh-salary-tax-calculator',
   KH_SALARY_TAX_CALCULATOR_GROSS: 'kh-salary-tax-calculator-gross',
   PASSWORD_GENERATOR: 'password-generator',
@@ -32,6 +33,10 @@ export const MENU_ITEMS = {
   json_beautifier: { name: 'JSON Beautifier', page: PAGE.JSON_BEAUTIFIER },
   jwt_token_viewer: { name: 'JWT Token Viewer', page: PAGE.JWT_TOKEN_VIEWER },
   emi: { name: 'Loan Calculator (EMI)', page: PAGE.LOAN_CALCULATOR },
+  savings_plan: {
+    name: 'Savings Plan (Monthly Deposit)',
+    page: PAGE.SAVINGS_PLAN,
+  },
   kh_tax: {
     name: 'Cambodia Gross Salary Calculator',
     page: PAGE.KH_SALARY_TAX_CALCULATOR,
@@ -114,7 +119,7 @@ export const MENU_GROUPS = [
   {
     id: 'finance',
     name: 'Finance & Time',
-    items: ['emi', 'kh_tax', 'kh_tax_gross', 'gold_price', 'day_count'],
+    items: ['emi', 'savings_plan', 'kh_tax', 'kh_tax_gross', 'gold_price', 'day_count'],
   },
   {
     id: 'random',
