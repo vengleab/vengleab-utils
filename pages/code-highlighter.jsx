@@ -10,6 +10,12 @@ import {
   RefreshCw,
   Eye,
   Camera,
+  Image as ImageIcon,
+  ChevronRight,
+  CornerDownRight,
+  Hash,
+  AlignLeft,
+  AlertTriangle,
 } from 'lucide-react';
 import Layout from '../components/Layout';
 import PageContext from '../contexts/page';
@@ -46,6 +52,113 @@ const SNAPSHOT_BACKGROUNDS = [
   { name: 'Dark Steel', id: 'steel', class: 'bg-gradient-to-tr from-slate-700 via-slate-800 to-slate-900' },
   { name: 'None (Transparent)', id: 'none', class: 'bg-transparent border border-dashed border-slate-200/50' },
 ];
+
+// Terminal mode palettes. Values are raw hex because they are applied as inline
+// styles (Tailwind cannot generate classes from runtime values).
+const TERMINAL_THEMES = [
+  {
+    id: 'macos',
+    name: 'macOS Dark',
+    bg: '#1e1e21',
+    headerBg: '#323236',
+    border: '#3a3a3e',
+    title: '#b0b0ba',
+    prompt: '#5af78e',
+    command: '#f8f8f2',
+    output: '#c0c0c8',
+    comment: '#6b6b76',
+    success: '#5af78e',
+    error: '#ff5c57',
+  },
+  {
+    id: 'ubuntu',
+    name: 'Ubuntu',
+    bg: '#300a24',
+    headerBg: '#3b1032',
+    border: '#4a1b40',
+    title: '#d7c9d3',
+    prompt: '#8ae234',
+    command: '#ffffff',
+    output: '#d3c9d0',
+    comment: '#8f7f8a',
+    success: '#8ae234',
+    error: '#ef5350',
+  },
+  {
+    id: 'matrix',
+    name: 'Matrix Green',
+    bg: '#04120a',
+    headerBg: '#07200f',
+    border: '#0d3a1c',
+    title: '#2fa361',
+    prompt: '#00ff6a',
+    command: '#c8ffdd',
+    output: '#3ddc84',
+    comment: '#1b6b3a',
+    success: '#00ff6a',
+    error: '#ff4d4d',
+  },
+  {
+    id: 'powershell',
+    name: 'PowerShell Blue',
+    bg: '#012456',
+    headerBg: '#01193d',
+    border: '#0b3170',
+    title: '#a9c6ea',
+    prompt: '#ffd866',
+    command: '#ffffff',
+    output: '#cfe3ff',
+    comment: '#6f8fb8',
+    success: '#a7e22e',
+    error: '#ff6b6b',
+  },
+  {
+    id: 'lightterm',
+    name: 'Light Terminal',
+    bg: '#fdfdfd',
+    headerBg: '#ededed',
+    border: '#dcdcdc',
+    title: '#57606a',
+    prompt: '#1a7f37',
+    command: '#1f2328',
+    output: '#57606a',
+    comment: '#8c959f',
+    success: '#1a7f37',
+    error: '#cf222e',
+  },
+];
+
+// Line markers the terminal editor toolbar writes/strips at the start of a line.
+const TERMINAL_LINE_TYPES = [
+  {
+    id: 'command', name: 'Command', prefix: '$ ', Icon: ChevronRight,
+  },
+  {
+    id: 'continuation', name: 'Continued', prefix: '> ', Icon: CornerDownRight,
+  },
+  {
+    id: 'output', name: 'Output', prefix: '', Icon: AlignLeft,
+  },
+  {
+    id: 'comment', name: 'Comment', prefix: '# ', Icon: Hash,
+  },
+  {
+    id: 'success', name: 'Success', prefix: '+ ', Icon: Check,
+  },
+  {
+    id: 'error', name: 'Error', prefix: '! ', Icon: AlertTriangle,
+  },
+];
+
+const TERMINAL_MARKER_RE = /^\s*([$>#!+])\s?/;
+
+const MARKER_TYPES = {
+  $: 'command',
+  '>': 'continuation',
+  '#': 'comment',
+  '+': 'success',
+  '!': 'error',
+};
 
 const THEME_STYLING = {
   default: {
@@ -367,12 +480,60 @@ function greetUser(name = "Developer") {
   return { message: greeting, date: new Date() };
 }`;
 
+const DEFAULT_PROMPT = 'user@macbook ~ %';
+
+const DEFAULT_TERMINAL = `# install dependencies first
+$ npm install
+added 214 packages in 3.2s
+
+$ npm run build
+   ▲ Next.js 15.0.0
++ Compiled successfully
++ Generating static pages (14/14)
+
+Route (pages)                Size     First Load JS
+┌ ○ /                        2.1 kB          92.4 kB
+└ ○ /code-highlighter        4.8 kB         104.0 kB
+
+$ docker run -d \\
+    --name toolkit \\
+    -p 3001:3001 \\
+    vengleab/util:latest
+! Error: missing DEPLOY_TOKEN`;
+
+// Lines are typed by their leading marker: "$" command, ">" continuation,
+// "#" comment, "+" success, "!" error. Anything else is plain command output,
+// except a line following a command that ends in "\" — the shell's own way of
+// spelling a multi-line command, so it continues without needing a marker.
+const parseTerminalLines = (text) => {
+  let continuing = false;
+
+  return text.split('\n').map((line) => {
+    const trimmed = line.trimStart();
+    const marker = TERMINAL_MARKER_RE.test(trimmed) ? trimmed[0] : null;
+    const content = marker ? trimmed.slice(1).trimStart() : line;
+    let type = MARKER_TYPES[marker];
+
+    if (!type) type = continuing ? 'continuation' : 'output';
+
+    continuing = (type === 'command' || type === 'continuation')
+      && content.trimEnd().endsWith('\\');
+
+    return { type, content: type === 'comment' ? trimmed : content };
+  });
+};
+
 export default function CodeHighlighter() {
+  const [mode, setMode] = useState('code');
   const [code, setCode] = useState(DEFAULT_CODE);
   const [language, setLanguage] = useState('javascript');
   const [theme, setTheme] = useState('tomorrow');
   const [snapshotBg, setSnapshotBg] = useState('sunset');
   const [showLineNumbers, setShowLineNumbers] = useState(true);
+
+  const [terminalText, setTerminalText] = useState(DEFAULT_TERMINAL);
+  const [terminalTheme, setTerminalTheme] = useState('macos');
+  const [prompt, setPrompt] = useState(DEFAULT_PROMPT);
 
   const [prismLoaded, setPrismLoaded] = useState(false);
   const [html2canvasLoaded, setHtml2canvasLoaded] = useState(false);
@@ -381,9 +542,13 @@ export default function CodeHighlighter() {
   const [copiedRaw, setCopiedRaw] = useState(false);
   const [copiedHtml, setCopiedHtml] = useState(false);
   const [copiedRich, setCopiedRich] = useState(false);
+  const [copiedImage, setCopiedImage] = useState(false);
+  const [copiedCommands, setCopiedCommands] = useState(false);
+  const [copyingImage, setCopyingImage] = useState(false);
   const [exporting, setExporting] = useState(false);
 
   const previewRef = useRef(null);
+  const textareaRef = useRef(null);
 
   // Load external scripts dynamically on mount
   useEffect(() => {
@@ -392,12 +557,20 @@ export default function CodeHighlighter() {
     const savedTheme = CodeHighlighterStorage.get('theme');
     const savedLines = CodeHighlighterStorage.get('lineNumbers');
     const savedBg = CodeHighlighterStorage.get('snapshotBg');
+    const savedMode = CodeHighlighterStorage.get('mode');
+    const savedTerminal = CodeHighlighterStorage.get('terminalText');
+    const savedTerminalTheme = CodeHighlighterStorage.get('terminalTheme');
+    const savedPrompt = CodeHighlighterStorage.get('prompt');
 
     if (savedCode) setCode(savedCode);
     if (savedLang) setLanguage(savedLang);
     if (savedTheme) setTheme(savedTheme);
     if (savedLines) setShowLineNumbers(savedLines === 'true');
     if (savedBg) setSnapshotBg(savedBg);
+    if (savedMode) setMode(savedMode);
+    if (savedTerminal) setTerminalText(savedTerminal);
+    if (savedTerminalTheme) setTerminalTheme(savedTerminalTheme);
+    if (savedPrompt) setPrompt(savedPrompt);
 
     const loadPrismCore = async () => {
       if (window.Prism) {
@@ -461,6 +634,56 @@ export default function CodeHighlighter() {
     document.body.appendChild(script);
   }, [language, prismLoaded, loadedLanguages]);
 
+  const termStyle = TERMINAL_THEMES.find((t) => t.id === terminalTheme) || TERMINAL_THEMES[0];
+  const isTerminal = mode === 'terminal';
+  const activeText = isTerminal ? terminalText : code;
+
+  const handleModeChange = (next) => {
+    setMode(next);
+    CodeHighlighterStorage.set('mode', next);
+  };
+
+  const handleTerminalChange = (e) => {
+    setTerminalText(e.target.value);
+    CodeHighlighterStorage.set('terminalText', e.target.value);
+  };
+
+  const handlePromptChange = (e) => {
+    setPrompt(e.target.value);
+    CodeHighlighterStorage.set('prompt', e.target.value);
+  };
+
+  // Re-mark every line touched by the cursor/selection with the chosen format.
+  const applyLineFormat = (prefix) => {
+    const el = textareaRef.current;
+    if (!el) return;
+
+    const blockStart = terminalText.lastIndexOf('\n', el.selectionStart - 1) + 1;
+    const nextBreak = terminalText.indexOf('\n', el.selectionEnd);
+    const blockEnd = nextBreak === -1 ? terminalText.length : nextBreak;
+
+    const block = terminalText
+      .slice(blockStart, blockEnd)
+      .split('\n')
+      .map((line) => `${prefix}${line.replace(TERMINAL_MARKER_RE, '')}`)
+      .join('\n');
+
+    const next = terminalText.slice(0, blockStart) + block + terminalText.slice(blockEnd);
+    setTerminalText(next);
+    CodeHighlighterStorage.set('terminalText', next);
+
+    setTimeout(() => {
+      el.focus();
+      el.selectionStart = blockStart;
+      el.selectionEnd = blockStart + block.length;
+    }, 0);
+  };
+
+  const handleTerminalThemeChange = (e) => {
+    setTerminalTheme(e.target.value);
+    CodeHighlighterStorage.set('terminalTheme', e.target.value);
+  };
+
   const handleCodeChange = (e) => {
     setCode(e.target.value);
     CodeHighlighterStorage.set('codeText', e.target.value);
@@ -473,10 +696,16 @@ export default function CodeHighlighter() {
       const end = e.target.selectionEnd;
 
       // Insert 2 spaces for tab
-      const newValue = `${code.substring(0, start)}  ${code.substring(end)}`;
+      const source = isTerminal ? terminalText : code;
+      const newValue = `${source.substring(0, start)}  ${source.substring(end)}`;
 
-      setCode(newValue);
-      CodeHighlighterStorage.set('codeText', newValue);
+      if (isTerminal) {
+        setTerminalText(newValue);
+        CodeHighlighterStorage.set('terminalText', newValue);
+      } else {
+        setCode(newValue);
+        CodeHighlighterStorage.set('codeText', newValue);
+      }
 
       setTimeout(() => {
         e.target.selectionStart = start + 2;
@@ -515,7 +744,7 @@ export default function CodeHighlighter() {
   };
 
   const copyRaw = () => {
-    navigator.clipboard.writeText(code);
+    navigator.clipboard.writeText(activeText);
     setCopiedRaw(true);
     setTimeout(() => setCopiedRaw(false), 2000);
   };
@@ -533,14 +762,18 @@ export default function CodeHighlighter() {
 
     try {
       const innerHtml = previewRef.current.innerHTML;
-      const cleanHtml = `<pre style="font-family: monospace; font-size: 14px; padding: 16px; border-radius: 8px; background: ${
-        theme === 'default' || theme === 'solarized' ? '#f5f2f0' : '#2d2d2d'
-      }; color: ${
-        theme === 'default' || theme === 'solarized' ? '#000' : '#ccc'
-      }">${innerHtml}</pre>`;
+      let background = theme === 'default' || theme === 'solarized' ? '#f5f2f0' : '#2d2d2d';
+      let color = theme === 'default' || theme === 'solarized' ? '#000' : '#ccc';
+
+      if (isTerminal) {
+        background = termStyle.bg;
+        color = termStyle.output;
+      }
+
+      const cleanHtml = `<pre style="font-family: monospace; font-size: 14px; padding: 16px; border-radius: 8px; background: ${background}; color: ${color}">${innerHtml}</pre>`;
 
       const blobHtml = new Blob([cleanHtml], { type: 'text/html' });
-      const blobText = new Blob([code], { type: 'text/plain' });
+      const blobText = new Blob([activeText], { type: 'text/plain' });
 
       const item = new ClipboardItem({
         'text/html': blobHtml,
@@ -555,35 +788,82 @@ export default function CodeHighlighter() {
     }
   };
 
-  // Capture code container and export as crisp retina image
-  const downloadSnapshot = () => {
-    if (!html2canvasLoaded || !window.html2canvas) return;
+  // Capture the snapshot container as a crisp retina canvas
+  const captureSnapshot = () => {
     const target = document.getElementById('snapshot-capture-area');
-    if (!target) return;
+    if (!html2canvasLoaded || !window.html2canvas || !target) {
+      return Promise.reject(new Error('Snapshot renderer is not ready'));
+    }
 
-    setExporting(true);
-
-    setTimeout(() => {
-      window.html2canvas(target, {
-        scale: 3, // Retina resolution export
-        useCORS: true,
-        backgroundColor: null, // Supports transparent backgrounds
-        logging: false,
-      })
-        .then((canvas) => {
-          const link = document.createElement('a');
-          link.download = `code-snapshot-${language}.png`;
-          link.href = canvas.toDataURL('image/png');
-          link.click();
-          setExporting(false);
+    // Let the pending state paint before html2canvas walks the DOM
+    return new Promise((resolve, reject) => {
+      setTimeout(() => {
+        window.html2canvas(target, {
+          scale: 3, // Retina resolution export
+          useCORS: true,
+          backgroundColor: null, // Supports transparent backgrounds
+          logging: false,
         })
-        .catch(() => {
-          setExporting(false);
-        });
-    }, 150);
+          .then(resolve)
+          .catch(reject);
+      }, 150);
+    });
   };
 
+  const downloadSnapshot = () => {
+    setExporting(true);
+
+    captureSnapshot()
+      .then((canvas) => {
+        const link = document.createElement('a');
+        link.download = isTerminal ? 'terminal-snapshot.png' : `code-snapshot-${language}.png`;
+        link.href = canvas.toDataURL('image/png');
+        link.click();
+      })
+      .catch(() => {})
+      .then(() => setExporting(false));
+  };
+
+  const copyImage = () => {
+    setCopyingImage(true);
+
+    captureSnapshot()
+      .then((canvas) => new Promise((resolve, reject) => {
+        canvas.toBlob((blob) => (blob ? resolve(blob) : reject(new Error('Empty canvas'))), 'image/png');
+      }))
+      .then((blob) => navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })]))
+      .then(() => {
+        setCopiedImage(true);
+        setTimeout(() => setCopiedImage(false), 2000);
+      })
+      .catch(() => {})
+      .then(() => setCopyingImage(false));
+  };
+
+  let ImageBtnIcon = ImageIcon;
+  let imageBtnLabel = 'Copy Image to Clipboard (PNG)';
+  if (copyingImage) {
+    ImageBtnIcon = RefreshCw;
+    imageBtnLabel = 'Copying Image...';
+  } else if (copiedImage) {
+    ImageBtnIcon = Check;
+    imageBtnLabel = 'Image Copied!';
+  }
+
   const lines = code.split('\n');
+  const terminalLines = parseTerminalLines(terminalText);
+
+  // Just the runnable part of the session — no prompts, comments, or output
+  const commandText = terminalLines
+    .filter((line) => line.type === 'command' || line.type === 'continuation')
+    .map((line) => line.content)
+    .join('\n');
+
+  const copyCommands = () => {
+    navigator.clipboard.writeText(commandText);
+    setCopiedCommands(true);
+    setTimeout(() => setCopiedCommands(false), 2000);
+  };
   const selectedBgClass = SNAPSHOT_BACKGROUNDS.find((bg) => bg.id === snapshotBg)?.class || SNAPSHOT_BACKGROUNDS[0].class;
   const currentStyle = THEME_STYLING[theme] || THEME_STYLING.tomorrow;
 
@@ -605,7 +885,9 @@ export default function CodeHighlighter() {
               Code Highlighter & Snapshot
             </h1>
             <p className="mt-2 text-slate-500 max-w-2xl">
-              Beautify code snippets with high-fidelity syntax highlighting. Export beautiful macOS-styled image snapshots or copy formatted HTML/Rich Text in seconds.
+              Beautify code snippets with high-fidelity syntax highlighting, or mock up a terminal
+              session with commands and their output. Export beautiful macOS-styled image snapshots
+              or copy formatted HTML/Rich Text in seconds.
             </p>
           </div>
 
@@ -616,40 +898,91 @@ export default function CodeHighlighter() {
                 <div className="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-indigo-500 to-violet-500" />
 
                 <div className="flex flex-col space-y-6">
+                  {/* Mode switch */}
+                  <div className="grid grid-cols-2 gap-2 p-1 bg-slate-100 rounded-2xl">
+                    {[
+                      { id: 'code', name: 'Code Snippet', Icon: Code },
+                      { id: 'terminal', name: 'Terminal Session', Icon: Terminal },
+                    ].map(({ id, name, Icon }) => (
+                      <button
+                        key={id}
+                        onClick={() => handleModeChange(id)}
+                        className={`flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-semibold transition-all cursor-pointer ${
+                          mode === id
+                            ? 'bg-white text-indigo-600 shadow-sm'
+                            : 'text-slate-500 hover:text-slate-700'
+                        }`}
+                      >
+                        <Icon className="w-4 h-4" />
+                        {name}
+                      </button>
+                    ))}
+                  </div>
+
                   {/* Option controls */}
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                    <div className="space-y-2">
-                      <label className="text-xs font-bold text-slate-500 uppercase tracking-wider block">
-                        Language
-                      </label>
-                      <select
-                        value={language}
-                        onChange={handleLangChange}
-                        className="w-full h-11 px-3 bg-slate-50 border border-slate-200 rounded-xl text-slate-700 text-sm font-medium focus:outline-none focus:border-indigo-500 transition-colors"
-                      >
-                        {LANGUAGES.map((l) => (
-                          <option key={l.id} value={l.id}>
-                            {l.name}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
+                    {isTerminal ? (
+                      <div className="space-y-2">
+                        <label className="text-xs font-bold text-slate-500 uppercase tracking-wider block">
+                          Prompt
+                        </label>
+                        <input
+                          type="text"
+                          value={prompt}
+                          onChange={handlePromptChange}
+                          placeholder="user@macbook ~ %"
+                          className="w-full h-11 px-3 bg-slate-50 border border-slate-200 rounded-xl text-slate-700 text-sm font-mono focus:outline-none focus:border-indigo-500 transition-colors"
+                          spellCheck={false}
+                        />
+                      </div>
+                    ) : (
+                      <div className="space-y-2">
+                        <label className="text-xs font-bold text-slate-500 uppercase tracking-wider block">
+                          Language
+                        </label>
+                        <select
+                          value={language}
+                          onChange={handleLangChange}
+                          className="w-full h-11 px-3 bg-slate-50 border border-slate-200 rounded-xl text-slate-700 text-sm font-medium focus:outline-none focus:border-indigo-500 transition-colors"
+                        >
+                          {LANGUAGES.map((l) => (
+                            <option key={l.id} value={l.id}>
+                              {l.name}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                    )}
 
                     <div className="space-y-2">
                       <label className="text-xs font-bold text-slate-500 uppercase tracking-wider block">
                         Visual Theme
                       </label>
-                      <select
-                        value={theme}
-                        onChange={(e) => setTheme(e.target.value)}
-                        className="w-full h-11 px-3 bg-slate-50 border border-slate-200 rounded-xl text-slate-700 text-sm font-medium focus:outline-none focus:border-indigo-500 transition-colors"
-                      >
-                        {THEMES.map((t) => (
-                          <option key={t.id} value={t.id}>
-                            {t.name}
-                          </option>
-                        ))}
-                      </select>
+                      {isTerminal ? (
+                        <select
+                          value={terminalTheme}
+                          onChange={handleTerminalThemeChange}
+                          className="w-full h-11 px-3 bg-slate-50 border border-slate-200 rounded-xl text-slate-700 text-sm font-medium focus:outline-none focus:border-indigo-500 transition-colors"
+                        >
+                          {TERMINAL_THEMES.map((t) => (
+                            <option key={t.id} value={t.id}>
+                              {t.name}
+                            </option>
+                          ))}
+                        </select>
+                      ) : (
+                        <select
+                          value={theme}
+                          onChange={(e) => setTheme(e.target.value)}
+                          className="w-full h-11 px-3 bg-slate-50 border border-slate-200 rounded-xl text-slate-700 text-sm font-medium focus:outline-none focus:border-indigo-500 transition-colors"
+                        >
+                          {THEMES.map((t) => (
+                            <option key={t.id} value={t.id}>
+                              {t.name}
+                            </option>
+                          ))}
+                        </select>
+                      )}
                     </div>
 
                     <div className="space-y-2">
@@ -673,32 +1006,71 @@ export default function CodeHighlighter() {
                     </div>
                   </div>
 
-                  <div className="flex items-center justify-between py-2 border-y border-slate-100">
-                    <span className="text-sm font-semibold text-slate-700">Display Line Numbers</span>
-                    <button
-                      onClick={toggleLineNumbers}
-                      className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
-                        showLineNumbers ? 'bg-indigo-600' : 'bg-slate-200'
-                      }`}
-                    >
-                      <span
-                        className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
-                          showLineNumbers ? 'translate-x-5' : 'translate-x-0'
+                  {isTerminal ? (
+                    <div className="py-3 border-y border-slate-100 space-y-2.5">
+                      <div className="flex items-baseline justify-between gap-3">
+                        <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">
+                          Line Format
+                        </span>
+                        <span className="text-[11px] text-slate-400">
+                          Applies to the line(s) at your cursor
+                        </span>
+                      </div>
+                      <div className="flex flex-wrap gap-2">
+                        {TERMINAL_LINE_TYPES.map(({
+                          id, name, prefix, Icon,
+                        }) => (
+                          <button
+                            key={id}
+                            onClick={() => applyLineFormat(prefix)}
+                            title={`Mark the selected line(s) as ${name.toLowerCase()}`}
+                            className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold border border-slate-200 bg-white text-slate-600 hover:border-indigo-200 hover:text-indigo-600 hover:bg-indigo-50/40 transition-all cursor-pointer"
+                          >
+                            <Icon className="w-3.5 h-3.5" />
+                            {name}
+                            <span className="font-mono text-[10px] text-slate-400">
+                              {prefix.trim() || '—'}
+                            </span>
+                          </button>
+                        ))}
+                      </div>
+                      <p className="text-[11px] text-slate-400 leading-relaxed">
+                        A command ending in
+                        {' '}
+                        <code className="px-1 py-0.5 bg-slate-100 rounded font-mono text-slate-500">\</code>
+                        {' '}
+                        continues onto the next line automatically.
+                      </p>
+                    </div>
+                  ) : (
+                    <div className="flex items-center justify-between py-2 border-y border-slate-100">
+                      <span className="text-sm font-semibold text-slate-700">Display Line Numbers</span>
+                      <button
+                        onClick={toggleLineNumbers}
+                        className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
+                          showLineNumbers ? 'bg-indigo-600' : 'bg-slate-200'
                         }`}
-                      />
-                    </button>
-                  </div>
+                      >
+                        <span
+                          className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
+                            showLineNumbers ? 'translate-x-5' : 'translate-x-0'
+                          }`}
+                        />
+                      </button>
+                    </div>
+                  )}
 
                   {/* Textarea */}
                   <div className="space-y-2 flex-1">
                     <label className="text-xs font-bold text-slate-500 uppercase tracking-wider block">
-                      Input Code Snippet
+                      {isTerminal ? 'Input Terminal Session' : 'Input Code Snippet'}
                     </label>
                     <textarea
-                      value={code}
-                      onChange={handleCodeChange}
+                      ref={textareaRef}
+                      value={activeText}
+                      onChange={isTerminal ? handleTerminalChange : handleCodeChange}
                       onKeyDown={handleKeyDown}
-                      placeholder="Paste your source code here..."
+                      placeholder={isTerminal ? '$ npm run build\nbuild finished in 3.2s' : 'Paste your source code here...'}
                       className="w-full min-h-[300px] p-4 font-mono text-sm bg-slate-50 border border-slate-200 rounded-2xl outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/10 transition-all resize-y"
                       spellCheck={false}
                     />
@@ -720,9 +1092,17 @@ export default function CodeHighlighter() {
 
                   <div className="flex gap-2">
                     <button
-                      onClick={() => setCode('')}
+                      onClick={() => {
+                        if (isTerminal) {
+                          setTerminalText('');
+                          CodeHighlighterStorage.set('terminalText', '');
+                        } else {
+                          setCode('');
+                          CodeHighlighterStorage.set('codeText', '');
+                        }
+                      }}
                       className="p-2 text-slate-400 hover:text-indigo-600 hover:bg-slate-50 rounded-xl transition-all"
-                      title="Clear code"
+                      title={isTerminal ? 'Clear session' : 'Clear code'}
                     >
                       <RefreshCw className="w-4 h-4" />
                     </button>
@@ -735,6 +1115,79 @@ export default function CodeHighlighter() {
                     id="snapshot-capture-area"
                     className={`p-6 sm:p-10 rounded-2xl flex items-center justify-center transition-all overflow-hidden ${selectedBgClass}`}
                   >
+                    {isTerminal ? (
+                      <div
+                        className="w-full rounded-xl shadow-2xl overflow-hidden border select-none text-left"
+                        style={{ backgroundColor: termStyle.bg, borderColor: termStyle.border }}
+                      >
+                        {/* Terminal Header Toolbar */}
+                        <div
+                          className="flex items-center justify-between px-4 py-3 border-b select-none"
+                          style={{
+                            backgroundColor: termStyle.headerBg,
+                            borderColor: termStyle.border,
+                          }}
+                        >
+                          <div className="flex gap-1.5 shrink-0">
+                            <span className="w-3 h-3 rounded-full bg-rose-500 inline-block" />
+                            <span className="w-3 h-3 rounded-full bg-amber-500 inline-block" />
+                            <span className="w-3 h-3 rounded-full bg-emerald-500 inline-block" />
+                          </div>
+                          <div
+                            className="text-[10px] font-bold tracking-wider uppercase font-mono truncate px-4"
+                            style={{ color: termStyle.title }}
+                          >
+                            {prompt || 'bash'}
+                          </div>
+                          <div className="w-12 shrink-0" />
+                        </div>
+
+                        {/* Session Transcript */}
+                        <div
+                          ref={previewRef}
+                          className="p-6 font-mono text-[13px] sm:text-[14px] leading-relaxed"
+                        >
+                          {terminalLines.map((line, i) => {
+                            if (line.type === 'command' || line.type === 'continuation') {
+                              const isCont = line.type === 'continuation';
+                              const linePrompt = isCont ? '>' : prompt;
+
+                              return (
+                                <div key={i} className="whitespace-pre-wrap break-words">
+                                  <span
+                                    style={{
+                                      color: termStyle.prompt,
+                                      opacity: isCont ? 0.65 : 1,
+                                    }}
+                                  >
+                                    {linePrompt}
+                                  </span>
+                                  {linePrompt ? ' ' : ''}
+                                  <span style={{ color: termStyle.command, fontWeight: 600 }}>
+                                    {line.content}
+                                  </span>
+                                </div>
+                              );
+                            }
+
+                            return (
+                              <div
+                                key={i}
+                                className="whitespace-pre-wrap break-words"
+                                style={{
+                                  color: termStyle[line.type] || termStyle.output,
+                                  fontStyle: line.type === 'comment' ? 'italic' : 'normal',
+                                }}
+                              >
+                                {line.type === 'success' && '✓ '}
+                                {line.type === 'error' && '✗ '}
+                                {line.content || ' '}
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    ) : (
                     <div className={`w-full rounded-xl shadow-2xl overflow-hidden border ${currentStyle.bg} ${currentStyle.borderColor} select-none text-left`}>
                       {/* Window Header Toolbar */}
                       <div className={`flex items-center justify-between px-4 py-3 ${currentStyle.headerBg} border-b ${currentStyle.borderColor} select-none`}>
@@ -770,6 +1223,7 @@ export default function CodeHighlighter() {
                         </pre>
                       </div>
                     </div>
+                    )}
                   </div>
                 </div>
 
@@ -796,6 +1250,37 @@ export default function CodeHighlighter() {
                       </>
                     )}
                   </button>
+
+                  <button
+                    onClick={copyImage}
+                    disabled={!html2canvasLoaded || copyingImage || exporting}
+                    className={`w-full flex items-center justify-center gap-2 py-3 px-4 rounded-xl text-sm font-bold border transition-all ${
+                      copiedImage
+                        ? 'bg-emerald-50 text-emerald-600 border-emerald-200'
+                        : 'bg-white text-slate-600 border-slate-200 hover:border-indigo-200 hover:text-indigo-600 cursor-pointer disabled:cursor-not-allowed disabled:opacity-60'
+                    }`}
+                  >
+                    <ImageBtnIcon className={`w-4 h-4 ${copyingImage ? 'animate-spin' : ''}`} />
+                    {imageBtnLabel}
+                  </button>
+
+                  {isTerminal && (
+                    <button
+                      onClick={copyCommands}
+                      disabled={!commandText}
+                      title="Copy only the commands, ready to paste into a shell"
+                      className={`w-full flex items-center justify-center gap-2 py-3 px-4 rounded-xl text-sm font-bold border transition-all ${
+                        copiedCommands
+                          ? 'bg-emerald-50 text-emerald-600 border-emerald-200'
+                          : 'bg-white text-slate-600 border-slate-200 hover:border-indigo-200 hover:text-indigo-600 cursor-pointer disabled:cursor-not-allowed disabled:opacity-60'
+                      }`}
+                    >
+                      {copiedCommands
+                        ? <Check className="w-4 h-4" />
+                        : <Terminal className="w-4 h-4" />}
+                      {copiedCommands ? 'Commands Copied!' : 'Copy Commands to Run'}
+                    </button>
+                  )}
 
                   <div className="grid grid-cols-3 gap-2">
                     <button
