@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useMemo } from "react";
+import React, { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import Layout from "../components/Layout";
 import PageContext from "../contexts/page";
@@ -81,12 +81,48 @@ function relativeTime(date) {
   return `${diffHr}h ago`;
 }
 
+// ─── Chart Date Helpers ──────────────────────────────────────────────────────
+
+function formatChartDate(timestamp, days = 7) {
+  if (!timestamp) return "";
+  const d = new Date(timestamp);
+  if (days <= 1) {
+    return d.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
+  }
+  if (days <= 7) {
+    return (
+      d.toLocaleDateString([], { weekday: "short", month: "short", day: "numeric" }) +
+      " · " +
+      d.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })
+    );
+  }
+  return d.toLocaleDateString([], { month: "short", day: "numeric", year: "numeric" });
+}
+
+function formatAxisDate(timestamp, days = 7) {
+  if (!timestamp) return "";
+  const d = new Date(timestamp);
+  if (days <= 1) {
+    return d.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
+  }
+  return `${d.getMonth() + 1}/${d.getDate()}`;
+}
+
 // ─── SVG Chart Component ─────────────────────────────────────────────────────
 
-function TrendChart({ data, isLoading }) {
+function TrendChart({
+  data,
+  isLoading,
+  currency = "USD",
+  karat = KARATS[0],
+  days = 7,
+}) {
+  const [hoverIdx, setHoverIdx] = useState(null);
+  const svgRef = useRef(null);
+
   if (isLoading) {
     return (
-      <div className="w-full h-[220px] sm:h-[260px] rounded-2xl bg-slate-50 border border-slate-200 flex items-center justify-center">
+      <div className="w-full h-[260px] rounded-2xl bg-slate-50 border border-slate-200 flex items-center justify-center">
         <div className="flex flex-col items-center gap-2">
           <RefreshCw className="w-5 h-5 text-slate-400 animate-spin" />
           <span className="text-xs text-slate-400 font-medium">Loading chart…</span>
@@ -97,15 +133,15 @@ function TrendChart({ data, isLoading }) {
 
   if (!data || data.length === 0) {
     return (
-      <div className="w-full h-[220px] sm:h-[260px] rounded-2xl bg-slate-50 border border-slate-200 flex items-center justify-center">
+      <div className="w-full h-[260px] rounded-2xl bg-slate-50 border border-slate-200 flex items-center justify-center">
         <span className="text-xs text-slate-400 font-medium">No chart data available</span>
       </div>
     );
   }
 
   const W = 600;
-  const H = 200;
-  const PAD = { top: 20, right: 16, bottom: 32, left: 60 };
+  const H = 210;
+  const PAD = { top: 22, right: 18, bottom: 32, left: 60 };
   const innerW = W - PAD.left - PAD.right;
   const innerH = H - PAD.top - PAD.bottom;
 
@@ -114,11 +150,13 @@ function TrendChart({ data, isLoading }) {
   const minP = Math.min(...prices);
   const maxP = Math.max(...prices);
   const range = maxP - minP || 1;
+  const count = prices.length;
+  const denom = count > 1 ? count - 1 : 1;
 
   const points = prices.map((p, i) => {
-    const x = PAD.left + (i / (prices.length - 1)) * innerW;
+    const x = PAD.left + (i / denom) * innerW;
     const y = PAD.top + innerH - ((p - minP) / range) * innerH;
-    return { x, y, price: p, time: timestamps[i] };
+    return { x, y, price: p, time: timestamps[i], idx: i };
   });
 
   const pathD = points
@@ -129,12 +167,35 @@ function TrendChart({ data, isLoading }) {
     pathD +
     ` L ${points[points.length - 1].x.toFixed(2)} ${PAD.top + innerH} L ${points[0].x.toFixed(2)} ${PAD.top + innerH} Z`;
 
-  const isUp = prices[prices.length - 1] >= prices[0];
-  const strokeColor = isUp ? "#10b981" : "#ef4444";
-  const fillGradientId = isUp ? "chartGradGreen" : "chartGradRed";
+  const isOverallUp = prices[prices.length - 1] >= prices[0];
+  const strokeColor = isOverallUp ? "#10b981" : "#ef4444";
+  const fillGradientId = isOverallUp ? "chartGradGreen" : "chartGradRed";
 
   const minIdx = prices.indexOf(minP);
   const maxIdx = prices.indexOf(maxP);
+
+  // Active point: either hovered or latest
+  const isHovering = hoverIdx !== null && points[hoverIdx] != null;
+  const activePt = isHovering ? points[hoverIdx] : points[points.length - 1];
+
+  // Prices calculation across all units for active point
+  const activePrice = activePt.price;
+  const purity = karat?.purity ?? 1;
+  const activePricePerGram = (activePrice / TROY_OZ_GRAMS) * purity;
+
+  const activeUnitPrices = {
+    damleung: activePricePerGram * 37.5,
+    chi: activePricePerGram * 3.75,
+    hun: activePricePerGram * 0.375,
+    g: activePricePerGram * 1,
+    oz: activePricePerGram * TROY_OZ_GRAMS,
+    kg: activePricePerGram * 1000,
+  };
+
+  const startPrice = prices[0];
+  const changeFromStart = activePrice - startPrice;
+  const changePercentFromStart = startPrice > 0 ? (changeFromStart / startPrice) * 100 : 0;
+  const isPointUp = changeFromStart >= 0;
 
   // Y-axis labels
   const yLabels = [minP, minP + range * 0.25, minP + range * 0.5, minP + range * 0.75, maxP];
@@ -142,96 +203,458 @@ function TrendChart({ data, isLoading }) {
   // X-axis labels (first, middle, last)
   const xLabelIdxs = [0, Math.floor(timestamps.length / 2), timestamps.length - 1];
 
-  return (
-    <div className="w-full rounded-2xl bg-white border border-slate-200 shadow-sm p-3 sm:p-4 overflow-hidden">
-      <svg viewBox={`0 0 ${W} ${H}`} className="w-full h-auto" preserveAspectRatio="xMidYMid meet">
-        <defs>
-          <linearGradient id="chartGradGreen" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stopColor="#10b981" stopOpacity="0.25" />
-            <stop offset="100%" stopColor="#10b981" stopOpacity="0" />
-          </linearGradient>
-          <linearGradient id="chartGradRed" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stopColor="#ef4444" stopOpacity="0.25" />
-            <stop offset="100%" stopColor="#ef4444" stopOpacity="0" />
-          </linearGradient>
-        </defs>
+  // Pointer interaction
+  const handlePointerMove = (e) => {
+    if (!svgRef.current || points.length === 0) return;
+    const rect = svgRef.current.getBoundingClientRect();
+    const clientX = e.clientX;
+    if (clientX < rect.left || clientX > rect.right) {
+      return;
+    }
+    const svgX = ((clientX - rect.left) / rect.width) * W;
+    const clampedX = Math.max(PAD.left, Math.min(PAD.left + innerW, svgX));
+    const fraction = (clampedX - PAD.left) / innerW;
+    const idx = Math.round(fraction * (points.length - 1));
+    const safeIdx = Math.max(0, Math.min(points.length - 1, idx));
+    setHoverIdx(safeIdx);
+  };
 
-        {/* Grid lines */}
-        {yLabels.map((v, i) => {
-          const y = PAD.top + innerH - ((v - minP) / range) * innerH;
-          return (
-            <g key={i}>
+  const handlePointerLeave = (e) => {
+    if (e.pointerType === "mouse") {
+      setHoverIdx(null);
+    }
+  };
+
+  const DISPLAYED_UNITS = [
+    { key: "damleung", label: "Damleung", labelKh: "ដំឡឹង", grams: 37.5 },
+    { key: "chi", label: "Chi", labelKh: "ជី", grams: 3.75 },
+    { key: "hun", label: "Hun", labelKh: "ហ៊ុន", grams: 0.375 },
+    { key: "g", label: "Gram", labelKh: null, grams: 1 },
+    { key: "oz", label: "Troy Ounce", labelKh: null, grams: TROY_OZ_GRAMS },
+    { key: "kg", label: "Kilogram", labelKh: null, grams: 1000 },
+  ];
+
+  return (
+    <div className="w-full rounded-2xl bg-white border border-slate-200 shadow-sm p-4 sm:p-5 overflow-hidden">
+      {/* ── All Prices Live/Hover Inspector Bar ───────────────────── */}
+      <div
+        className={`mb-4 p-3 sm:p-4 rounded-xl border transition-colors ${
+          isHovering
+            ? "bg-amber-50/70 border-amber-200/90 shadow-xs"
+            : "bg-slate-50 border-slate-200/80"
+        }`}
+      >
+        {/* Header row of Inspector */}
+        <div className="flex flex-wrap items-center justify-between gap-2 mb-3 pb-2.5 border-b border-slate-200/70">
+          <div className="flex items-center gap-2">
+            <span
+              className={`w-2.5 h-2.5 rounded-full ${
+                isHovering
+                  ? "bg-amber-500 animate-pulse ring-2 ring-amber-300"
+                  : "bg-emerald-500"
+              }`}
+            />
+            <span className="text-xs font-bold uppercase tracking-wider text-slate-700 flex items-center gap-1.5">
+              {isHovering ? "Inspecting Price Point" : "Prices Across All Units"}
+            </span>
+            <span className="text-xs text-slate-400">·</span>
+            <span className="text-xs font-semibold text-slate-600">
+              {formatChartDate(activePt.time, days)}
+            </span>
+            {isHovering && (
+              <button
+                type="button"
+                onClick={() => setHoverIdx(null)}
+                className="text-[10px] text-amber-800 bg-amber-100 hover:bg-amber-200 px-1.5 py-0.5 rounded font-medium transition-colors"
+                title="Reset inspection"
+              >
+                Reset
+              </button>
+            )}
+          </div>
+
+          <div className="flex items-center gap-2 text-xs">
+            <span className="px-2 py-0.5 rounded-md bg-white border border-slate-200 font-semibold text-slate-700">
+              {karat.label} ({(karat.purity * 100).toFixed(1)}%)
+            </span>
+            <span
+              className={`inline-flex items-center gap-0.5 px-2 py-0.5 rounded-md font-bold text-xs ${
+                isPointUp
+                  ? "bg-emerald-100 text-emerald-700"
+                  : "bg-red-100 text-red-700"
+              }`}
+            >
+              {isPointUp ? "+" : ""}
+              {changePercentFromStart.toFixed(2)}%
+              <span className="opacity-75 font-normal ml-0.5 hidden sm:inline">
+                ({isPointUp ? "+" : ""}${changeFromStart.toFixed(2)})
+              </span>
+            </span>
+            {!isHovering && (
+              <span className="text-[11px] text-slate-400 hidden md:inline ml-1">
+                (Hover chart to inspect historical prices)
+              </span>
+            )}
+          </div>
+        </div>
+
+        {/* All Prices 6-Unit Grid */}
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2">
+          {DISPLAYED_UNITS.map((u) => {
+            const rawVal = activeUnitPrices[u.key];
+            const isUsdMode = currency === "USD";
+            const primaryVal = isUsdMode ? rawVal : rawVal * KHR_RATE;
+            const secondaryVal = isUsdMode ? rawVal * KHR_RATE : rawVal;
+
+            return (
+              <div
+                key={u.key}
+                className={`p-2.5 rounded-lg border transition-all ${
+                  isHovering
+                    ? "bg-white border-amber-200 shadow-xs"
+                    : "bg-white/80 border-slate-200"
+                }`}
+              >
+                <div className="flex items-baseline justify-between gap-1 mb-1">
+                  <span className="text-xs font-bold text-slate-800 truncate">
+                    {u.label}
+                  </span>
+                  {u.labelKh && (
+                    <span className="text-[10px] font-medium text-amber-600">
+                      {u.labelKh}
+                    </span>
+                  )}
+                  {!u.labelKh && (
+                    <span className="text-[10px] text-slate-400">
+                      {u.grams >= 1 ? `${u.grams}g` : `${u.grams * 1000}mg`}
+                    </span>
+                  )}
+                </div>
+
+                <div className="text-sm font-bold text-slate-900 tabular-nums">
+                  {formatPrice(primaryVal, currency)}
+                </div>
+
+                <div className="text-[10px] text-slate-500 tabular-nums truncate">
+                  ≈ {formatPrice(secondaryVal, isUsdMode ? "KHR" : "USD")}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* ── SVG Chart Area with Interactive Crosshair & Tooltip ───── */}
+      <div className="relative w-full">
+        <svg
+          ref={svgRef}
+          viewBox={`0 0 ${W} ${H}`}
+          className="w-full h-auto cursor-crosshair select-none touch-none"
+          preserveAspectRatio="xMidYMid meet"
+          onPointerMove={handlePointerMove}
+          onPointerDown={handlePointerMove}
+          onPointerLeave={handlePointerLeave}
+        >
+          <defs>
+            <linearGradient id="chartGradGreen" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor="#10b981" stopOpacity="0.25" />
+              <stop offset="100%" stopColor="#10b981" stopOpacity="0" />
+            </linearGradient>
+            <linearGradient id="chartGradRed" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor="#ef4444" stopOpacity="0.25" />
+              <stop offset="100%" stopColor="#ef4444" stopOpacity="0" />
+            </linearGradient>
+          </defs>
+
+          {/* Grid lines */}
+          {yLabels.map((v, i) => {
+            const y = PAD.top + innerH - ((v - minP) / range) * innerH;
+            return (
+              <g key={i}>
+                <line
+                  x1={PAD.left}
+                  y1={y}
+                  x2={W - PAD.right}
+                  y2={y}
+                  stroke="#e2e8f0"
+                  strokeWidth="0.8"
+                  strokeDasharray="4 3"
+                />
+                <text
+                  x={PAD.left - 6}
+                  y={y + 3}
+                  textAnchor="end"
+                  fill="#94a3b8"
+                  fontSize="9"
+                  fontFamily="system-ui"
+                >
+                  ${v.toFixed(0)}
+                </text>
+              </g>
+            );
+          })}
+
+          {/* X-axis labels */}
+          {xLabelIdxs.map((idx) => {
+            const pt = points[idx];
+            if (!pt) return null;
+            return (
+              <text
+                key={idx}
+                x={pt.x}
+                y={H - 6}
+                textAnchor="middle"
+                fill="#94a3b8"
+                fontSize="9"
+                fontFamily="system-ui"
+              >
+                {formatAxisDate(timestamps[idx], days)}
+              </text>
+            );
+          })}
+
+          {/* Area fill */}
+          <path d={areaD} fill={`url(#${fillGradientId})`} />
+
+          {/* Line */}
+          <path
+            d={pathD}
+            fill="none"
+            stroke={strokeColor}
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
+
+          {/* Static High marker */}
+          <circle
+            cx={points[maxIdx].x}
+            cy={points[maxIdx].y}
+            r="3.5"
+            fill="#fff"
+            stroke="#10b981"
+            strokeWidth="2"
+            opacity={isHovering && Math.abs(hoverIdx - maxIdx) < 4 ? 0.25 : 1}
+          />
+          <text
+            x={points[maxIdx].x}
+            y={points[maxIdx].y - 8}
+            textAnchor="middle"
+            fill="#10b981"
+            fontSize="8"
+            fontWeight="600"
+            fontFamily="system-ui"
+            opacity={isHovering && Math.abs(hoverIdx - maxIdx) < 4 ? 0.25 : 1}
+          >
+            H ${maxP.toFixed(0)}
+          </text>
+
+          {/* Static Low marker */}
+          <circle
+            cx={points[minIdx].x}
+            cy={points[minIdx].y}
+            r="3.5"
+            fill="#fff"
+            stroke="#ef4444"
+            strokeWidth="2"
+            opacity={isHovering && Math.abs(hoverIdx - minIdx) < 4 ? 0.25 : 1}
+          />
+          <text
+            x={points[minIdx].x}
+            y={points[minIdx].y + 14}
+            textAnchor="middle"
+            fill="#ef4444"
+            fontSize="8"
+            fontWeight="600"
+            fontFamily="system-ui"
+            opacity={isHovering && Math.abs(hoverIdx - minIdx) < 4 ? 0.25 : 1}
+          >
+            L ${minP.toFixed(0)}
+          </text>
+
+          {/* ── Hover Crosshairs & Indicators ── */}
+          {isHovering && (
+            <g className="pointer-events-none">
+              {/* Vertical crosshair line */}
               <line
-                x1={PAD.left}
-                y1={y}
-                x2={W - PAD.right}
-                y2={y}
-                stroke="#e2e8f0"
-                strokeWidth="0.8"
+                x1={activePt.x}
+                y1={PAD.top}
+                x2={activePt.x}
+                y2={PAD.top + innerH}
+                stroke="#64748b"
+                strokeWidth="1.2"
                 strokeDasharray="4 3"
               />
-              <text x={PAD.left - 6} y={y + 3} textAnchor="end" fill="#94a3b8" fontSize="9" fontFamily="system-ui">
-                ${v.toFixed(0)}
-              </text>
+
+              {/* Horizontal crosshair line */}
+              <line
+                x1={PAD.left}
+                y1={activePt.y}
+                x2={W - PAD.right}
+                y2={activePt.y}
+                stroke="#94a3b8"
+                strokeWidth="0.8"
+                strokeDasharray="3 3"
+                strokeOpacity="0.6"
+              />
+
+              {/* Pulse glow circle */}
+              <circle
+                cx={activePt.x}
+                cy={activePt.y}
+                r="8"
+                fill={strokeColor}
+                fillOpacity="0.3"
+              />
+              <circle
+                cx={activePt.x}
+                cy={activePt.y}
+                r="4"
+                fill="#ffffff"
+                stroke={strokeColor}
+                strokeWidth="2.5"
+              />
+
+              {/* X-axis date badge */}
+              <g
+                transform={`translate(${Math.max(
+                  PAD.left + 30,
+                  Math.min(W - PAD.right - 30, activePt.x)
+                )}, ${H - 12})`}
+              >
+                <rect
+                  x="-30"
+                  y="-9"
+                  width="60"
+                  height="17"
+                  rx="4"
+                  fill="#0f172a"
+                />
+                <text
+                  x="0"
+                  y="3"
+                  textAnchor="middle"
+                  fill="#ffffff"
+                  fontSize="8.5"
+                  fontWeight="600"
+                  fontFamily="system-ui"
+                >
+                  {formatAxisDate(activePt.time, days)}
+                </text>
+              </g>
+
+              {/* Y-axis price badge */}
+              <g transform={`translate(${PAD.left - 4}, ${activePt.y})`}>
+                <rect
+                  x="-50"
+                  y="-9"
+                  width="48"
+                  height="17"
+                  rx="4"
+                  fill="#0f172a"
+                />
+                <text
+                  x="-26"
+                  y="3"
+                  textAnchor="middle"
+                  fill="#ffffff"
+                  fontSize="8.5"
+                  fontWeight="600"
+                  fontFamily="system-ui"
+                >
+                  ${activePt.price.toFixed(0)}
+                </text>
+              </g>
             </g>
-          );
-        })}
+          )}
 
-        {/* X-axis labels */}
-        {xLabelIdxs.map((idx) => {
-          const pt = points[idx];
-          if (!pt) return null;
-          const d = new Date(timestamps[idx]);
-          const label = `${d.getMonth() + 1}/${d.getDate()}`;
-          return (
-            <text
-              key={idx}
-              x={pt.x}
-              y={H - 6}
-              textAnchor="middle"
-              fill="#94a3b8"
-              fontSize="9"
-              fontFamily="system-ui"
-            >
-              {label}
-            </text>
-          );
-        })}
+          {/* Invisible event capture layer */}
+          <rect
+            x={PAD.left}
+            y={PAD.top}
+            width={innerW}
+            height={innerH}
+            fill="transparent"
+            className="cursor-crosshair"
+          />
+        </svg>
 
-        {/* Area fill */}
-        <path d={areaD} fill={`url(#${fillGradientId})`} />
+        {/* ── Floating Hover Tooltip ── */}
+        {isHovering && (
+          <div
+            className="absolute pointer-events-none z-30 transition-transform duration-75 ease-out max-w-[260px] w-auto bg-slate-900/95 backdrop-blur-md text-white border border-slate-700/70 rounded-xl shadow-2xl p-3"
+            style={{
+              left: `${(activePt.x / W) * 100}%`,
+              top: `${Math.max(12, Math.min(80, (activePt.y / H) * 100))}%`,
+              transform:
+                activePt.x > W * 0.52
+                  ? "translate(calc(-100% - 14px), -50%)"
+                  : "translate(14px, -50%)",
+            }}
+          >
+            <div className="flex items-center justify-between gap-2 border-b border-slate-700/60 pb-1.5 mb-2">
+              <span className="text-[11px] font-semibold text-slate-300">
+                {formatChartDate(activePt.time, days)}
+              </span>
+              <span
+                className={`text-[10px] font-bold px-1.5 py-0.5 rounded ${
+                  isPointUp
+                    ? "bg-emerald-950 text-emerald-400 border border-emerald-800/50"
+                    : "bg-red-950 text-red-400 border border-red-800/50"
+                }`}
+              >
+                {isPointUp ? "+" : ""}
+                {changePercentFromStart.toFixed(2)}%
+              </span>
+            </div>
 
-        {/* Line */}
-        <path d={pathD} fill="none" stroke={strokeColor} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+            {/* Spot Price Highlight */}
+            <div className="mb-2">
+              <div className="text-[10px] uppercase font-semibold text-slate-400">
+                Spot Price ({karat.label})
+              </div>
+              <div className="text-base font-bold text-amber-400 tabular-nums">
+                ${activePrice.toLocaleString(undefined, {
+                  minimumFractionDigits: 2,
+                  maximumFractionDigits: 2,
+                })}
+                <span className="text-xs font-normal text-slate-400 ml-1">/oz</span>
+              </div>
+              <div className="text-[10px] text-slate-400">
+                ≈ ៛{Math.round(activePrice * KHR_RATE).toLocaleString()} /oz
+              </div>
+            </div>
 
-        {/* High marker */}
-        <circle cx={points[maxIdx].x} cy={points[maxIdx].y} r="3.5" fill="#fff" stroke="#10b981" strokeWidth="2" />
-        <text
-          x={points[maxIdx].x}
-          y={points[maxIdx].y - 8}
-          textAnchor="middle"
-          fill="#10b981"
-          fontSize="8"
-          fontWeight="600"
-          fontFamily="system-ui"
-        >
-          H ${maxP.toFixed(0)}
-        </text>
-
-        {/* Low marker */}
-        <circle cx={points[minIdx].x} cy={points[minIdx].y} r="3.5" fill="#fff" stroke="#ef4444" strokeWidth="2" />
-        <text
-          x={points[minIdx].x}
-          y={points[minIdx].y + 14}
-          textAnchor="middle"
-          fill="#ef4444"
-          fontSize="8"
-          fontWeight="600"
-          fontFamily="system-ui"
-        >
-          L ${minP.toFixed(0)}
-        </text>
-      </svg>
+            {/* Cambodian & Metric Quick Unit Prices */}
+            <div className="border-t border-slate-800/80 pt-2 space-y-1 text-xs">
+              <div className="flex items-center justify-between text-[11px]">
+                <span className="text-slate-400 font-medium">Damleung (ដំឡឹង):</span>
+                <span className="font-bold text-slate-100 tabular-nums">
+                  {formatPrice(activeUnitPrices.damleung, currency)}
+                </span>
+              </div>
+              <div className="flex items-center justify-between text-[11px]">
+                <span className="text-slate-400 font-medium">Chi (ជី):</span>
+                <span className="font-bold text-slate-100 tabular-nums">
+                  {formatPrice(activeUnitPrices.chi, currency)}
+                </span>
+              </div>
+              <div className="flex items-center justify-between text-[11px]">
+                <span className="text-slate-400 font-medium">Hun (ហ៊ុន):</span>
+                <span className="font-bold text-slate-100 tabular-nums">
+                  {formatPrice(activeUnitPrices.hun, currency)}
+                </span>
+              </div>
+              <div className="flex items-center justify-between text-[11px]">
+                <span className="text-slate-400 font-medium">Gram (1g):</span>
+                <span className="font-bold text-slate-100 tabular-nums">
+                  {formatPrice(activeUnitPrices.g, currency)}
+                </span>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
     </div>
   );
 }
@@ -692,7 +1115,13 @@ export default function GoldPricePage() {
                 ))}
               </div>
             </div>
-            <TrendChart data={chartData} isLoading={chartLoading} />
+            <TrendChart
+              data={chartData}
+              isLoading={chartLoading}
+              currency={currency}
+              karat={karat}
+              days={DATE_RANGES[chartRangeIdx].days}
+            />
           </div>
 
           {/* ── Weight Converter ────────────────────────────────────────── */}
