@@ -840,16 +840,23 @@ export default function CodeHighlighter() {
     }
   };
 
+  const escapeHtml = (value = '') => value
+    .replaceAll('&', '&amp;')
+    .replaceAll('<', '&lt;')
+    .replaceAll('>', '&gt;')
+    .replaceAll('"', '&quot;')
+    .replaceAll("'", '&#39;');
+
   const getHighlightedCode = () => {
     const activeLang = LANGUAGES.find((l) => l.id === language) || LANGUAGES[0];
     if (prismLoaded && window.Prism && window.Prism.languages[activeLang.prismId]) {
       try {
         return window.Prism.highlight(code, window.Prism.languages[activeLang.prismId], activeLang.prismId);
       } catch (err) {
-        return code;
+        return escapeHtml(code);
       }
     }
-    return code;
+    return escapeHtml(code);
   };
 
   const copyRaw = () => {
