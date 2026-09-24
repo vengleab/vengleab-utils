@@ -16,7 +16,7 @@ import {
 
 // ─── Constants ───────────────────────────────────────────────────────────────
 
-const TROY_OZ_GRAMS = 31.1035;
+const TROY_OZ_GRAMS = 31.1034768;
 const KHR_RATE = 4100;
 
 const PRICE_CACHE_KEY = "gold_price_cache_v1";
@@ -32,7 +32,7 @@ const DATE_RANGES = [
 ];
 
 const KARATS = [
-  { label: "24K", purity: 0.999, desc: "Fine Gold (99.9%)" },
+  { label: "24K", purity: 1.0, desc: "Pure Gold (99.99%)" },
   { label: "22K", purity: 0.916, desc: "Standard Jewelry" },
   { label: "21K", purity: 0.875, desc: "High-End Jewelry" },
   { label: "18K", purity: 0.750, desc: "Premium / Platine" },
@@ -116,9 +116,81 @@ function TrendChart({
   currency = "USD",
   karat = KARATS[0],
   days = 7,
+  onHoverPointChange,
+  resetTrigger,
 }) {
   const [hoverIdx, setHoverIdx] = useState(null);
   const svgRef = useRef(null);
+
+  const W = 600;
+  const H = 210;
+  const PAD = { top: 22, right: 18, bottom: 32, left: 60 };
+  const innerW = W - PAD.left - PAD.right;
+  const innerH = H - PAD.top - PAD.bottom;
+
+  const hasData = Boolean(!isLoading && data && data.length > 0);
+  const prices = hasData ? data.map((d) => d[1]) : [];
+  const timestamps = hasData ? data.map((d) => d[0]) : [];
+  const minP = hasData ? Math.min(...prices) : 0;
+  const maxP = hasData ? Math.max(...prices) : 0;
+  const range = maxP - minP || 1;
+  const count = prices.length;
+  const denom = count > 1 ? count - 1 : 1;
+
+  const points = hasData
+    ? prices.map((p, i) => {
+        const x = PAD.left + (i / denom) * innerW;
+        const y = PAD.top + innerH - ((p - minP) / range) * innerH;
+        return { x, y, price: p, time: timestamps[i], idx: i };
+      })
+    : [];
+
+  // Active point: either hovered or latest
+  const isHovering = hoverIdx !== null && points[hoverIdx] != null;
+  const activePt = isHovering
+    ? points[hoverIdx]
+    : points.length > 0
+    ? points[points.length - 1]
+    : null;
+
+  const activePrice = activePt ? activePt.price : 0;
+  const startPrice = prices[0] ?? 0;
+  const changeFromStart = activePt ? activePrice - startPrice : 0;
+  const changePercentFromStart =
+    startPrice > 0 ? (changeFromStart / startPrice) * 100 : 0;
+  const isPointUp = changeFromStart >= 0;
+
+  // Reset hover state when resetTrigger or date range changes
+  useEffect(() => {
+    setHoverIdx(null);
+    onHoverPointChange?.(null);
+  }, [resetTrigger, days, onHoverPointChange]);
+
+  // Sync active hover point to parent
+  useEffect(() => {
+    if (!onHoverPointChange) return;
+    if (isHovering && activePt) {
+      onHoverPointChange({
+        price: activePt.price,
+        time: activePt.time,
+        formattedTime: formatChartDate(activePt.time, days),
+        changeFromStart,
+        changePercentFromStart,
+        isPointUp,
+      });
+    } else {
+      onHoverPointChange(null);
+    }
+  }, [
+    isHovering,
+    activePt?.price,
+    activePt?.time,
+    days,
+    changeFromStart,
+    changePercentFromStart,
+    isPointUp,
+    onHoverPointChange,
+  ]);
 
   if (isLoading) {
     return (
@@ -139,26 +211,6 @@ function TrendChart({
     );
   }
 
-  const W = 600;
-  const H = 210;
-  const PAD = { top: 22, right: 18, bottom: 32, left: 60 };
-  const innerW = W - PAD.left - PAD.right;
-  const innerH = H - PAD.top - PAD.bottom;
-
-  const prices = data.map((d) => d[1]);
-  const timestamps = data.map((d) => d[0]);
-  const minP = Math.min(...prices);
-  const maxP = Math.max(...prices);
-  const range = maxP - minP || 1;
-  const count = prices.length;
-  const denom = count > 1 ? count - 1 : 1;
-
-  const points = prices.map((p, i) => {
-    const x = PAD.left + (i / denom) * innerW;
-    const y = PAD.top + innerH - ((p - minP) / range) * innerH;
-    return { x, y, price: p, time: timestamps[i], idx: i };
-  });
-
   const pathD = points
     .map((pt, i) => `${i === 0 ? "M" : "L"} ${pt.x.toFixed(2)} ${pt.y.toFixed(2)}`)
     .join(" ");
@@ -174,13 +226,9 @@ function TrendChart({
   const minIdx = prices.indexOf(minP);
   const maxIdx = prices.indexOf(maxP);
 
-  // Active point: either hovered or latest
-  const isHovering = hoverIdx !== null && points[hoverIdx] != null;
-  const activePt = isHovering ? points[hoverIdx] : points[points.length - 1];
-
   // Prices calculation across all units for active point
-  const activePrice = activePt.price;
   const purity = karat?.purity ?? 1;
+  const karatPricePerOz = activePrice * purity;
   const activePricePerGram = (activePrice / TROY_OZ_GRAMS) * purity;
 
   const activeUnitPrices = {
@@ -188,14 +236,9 @@ function TrendChart({
     chi: activePricePerGram * 3.75,
     hun: activePricePerGram * 0.375,
     g: activePricePerGram * 1,
-    oz: activePricePerGram * TROY_OZ_GRAMS,
+    oz: karatPricePerOz,
     kg: activePricePerGram * 1000,
   };
-
-  const startPrice = prices[0];
-  const changeFromStart = activePrice - startPrice;
-  const changePercentFromStart = startPrice > 0 ? (changeFromStart / startPrice) * 100 : 0;
-  const isPointUp = changeFromStart >= 0;
 
   // Y-axis labels
   const yLabels = [minP, minP + range * 0.25, minP + range * 0.5, minP + range * 0.75, maxP];
@@ -219,10 +262,14 @@ function TrendChart({
     setHoverIdx(safeIdx);
   };
 
-  const handlePointerLeave = (e) => {
-    if (e.pointerType === "mouse") {
-      setHoverIdx(null);
-    }
+  const handlePointerLeave = () => {
+    setHoverIdx(null);
+    onHoverPointChange?.(null);
+  };
+
+  const handleReset = () => {
+    setHoverIdx(null);
+    onHoverPointChange?.(null);
   };
 
   const DISPLAYED_UNITS = [
@@ -264,8 +311,8 @@ function TrendChart({
             {isHovering && (
               <button
                 type="button"
-                onClick={() => setHoverIdx(null)}
-                className="text-[10px] text-amber-800 bg-amber-100 hover:bg-amber-200 px-1.5 py-0.5 rounded font-medium transition-colors"
+                onClick={handleReset}
+                className="text-[10px] text-amber-800 bg-amber-100 hover:bg-amber-200 px-1.5 py-0.5 rounded font-medium transition-colors cursor-pointer"
                 title="Reset inspection"
               >
                 Reset
@@ -275,7 +322,7 @@ function TrendChart({
 
           <div className="flex items-center gap-2 text-xs">
             <span className="px-2 py-0.5 rounded-md bg-white border border-slate-200 font-semibold text-slate-700">
-              {karat.label} ({(karat.purity * 100).toFixed(1)}%)
+              {karat.label} ({karat.purity === 1 ? "100%" : `${(karat.purity * 100).toFixed(1)}%`})
             </span>
             <span
               className={`inline-flex items-center gap-0.5 px-2 py-0.5 rounded-md font-bold text-xs ${
@@ -544,25 +591,28 @@ function TrendChart({
               </g>
 
               {/* Y-axis price badge */}
-              <g transform={`translate(${PAD.left - 4}, ${activePt.y})`}>
+              <g transform={`translate(${PAD.left - 2}, ${activePt.y})`}>
                 <rect
-                  x="-50"
+                  x="-56"
                   y="-9"
-                  width="48"
+                  width="54"
                   height="17"
                   rx="4"
                   fill="#0f172a"
                 />
                 <text
-                  x="-26"
-                  y="3"
+                  x="-29"
+                  y="3.5"
                   textAnchor="middle"
                   fill="#ffffff"
-                  fontSize="8.5"
+                  fontSize="8"
                   fontWeight="600"
                   fontFamily="system-ui"
                 >
-                  ${activePt.price.toFixed(0)}
+                  ${activePt.price.toLocaleString(undefined, {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2,
+                  })}
                 </text>
               </g>
             </g>
@@ -582,7 +632,7 @@ function TrendChart({
         {/* ── Floating Hover Tooltip ── */}
         {isHovering && (
           <div
-            className="absolute pointer-events-none z-30 transition-transform duration-75 ease-out max-w-[260px] w-auto bg-slate-900/95 backdrop-blur-md text-white border border-slate-700/70 rounded-xl shadow-2xl p-3"
+            className="absolute pointer-events-none z-30 transition-transform duration-75 ease-out max-w-[270px] w-auto bg-slate-900/95 backdrop-blur-md text-white border border-slate-700/70 rounded-xl shadow-2xl p-3"
             style={{
               left: `${(activePt.x / W) * 100}%`,
               top: `${Math.max(12, Math.min(80, (activePt.y / H) * 100))}%`,
@@ -614,43 +664,40 @@ function TrendChart({
                 Spot Price ({karat.label})
               </div>
               <div className="text-base font-bold text-amber-400 tabular-nums">
-                ${activePrice.toLocaleString(undefined, {
-                  minimumFractionDigits: 2,
-                  maximumFractionDigits: 2,
-                })}
+                {formatPrice(currency === "USD" ? karatPricePerOz : karatPricePerOz * KHR_RATE, currency)}
                 <span className="text-xs font-normal text-slate-400 ml-1">/oz</span>
               </div>
               <div className="text-[10px] text-slate-400">
-                ≈ ៛{Math.round(activePrice * KHR_RATE).toLocaleString()} /oz
+                ≈ {formatPrice(currency === "USD" ? karatPricePerOz * KHR_RATE : karatPricePerOz, currency === "USD" ? "KHR" : "USD")} /oz
+                {karat.purity < 1 && (
+                  <span className="text-amber-400/80 ml-1">
+                    · 24K: ${activePrice.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                  </span>
+                )}
               </div>
             </div>
 
             {/* Cambodian & Metric Quick Unit Prices */}
             <div className="border-t border-slate-800/80 pt-2 space-y-1 text-xs">
-              <div className="flex items-center justify-between text-[11px]">
-                <span className="text-slate-400 font-medium">Damleung (ដំឡឹង):</span>
-                <span className="font-bold text-slate-100 tabular-nums">
-                  {formatPrice(activeUnitPrices.damleung, currency)}
-                </span>
-              </div>
-              <div className="flex items-center justify-between text-[11px]">
-                <span className="text-slate-400 font-medium">Chi (ជី):</span>
-                <span className="font-bold text-slate-100 tabular-nums">
-                  {formatPrice(activeUnitPrices.chi, currency)}
-                </span>
-              </div>
-              <div className="flex items-center justify-between text-[11px]">
-                <span className="text-slate-400 font-medium">Hun (ហ៊ុន):</span>
-                <span className="font-bold text-slate-100 tabular-nums">
-                  {formatPrice(activeUnitPrices.hun, currency)}
-                </span>
-              </div>
-              <div className="flex items-center justify-between text-[11px]">
-                <span className="text-slate-400 font-medium">Gram (1g):</span>
-                <span className="font-bold text-slate-100 tabular-nums">
-                  {formatPrice(activeUnitPrices.g, currency)}
-                </span>
-              </div>
+              {[
+                { label: "Damleung (ដំឡឹង)", key: "damleung" },
+                { label: "Chi (ជី)", key: "chi" },
+                { label: "Hun (ហ៊ុន)", key: "hun" },
+                { label: "Gram (1g)", key: "g" },
+                { label: "Troy Ounce", key: "oz" },
+              ].map(({ label, key }) => {
+                const val = activeUnitPrices[key];
+                const isUsdMode = currency === "USD";
+                const displayVal = isUsdMode ? val : val * KHR_RATE;
+                return (
+                  <div key={key} className="flex items-center justify-between text-[11px]">
+                    <span className="text-slate-400 font-medium">{label}:</span>
+                    <span className="font-bold text-slate-100 tabular-nums">
+                      {formatPrice(displayVal, currency)}
+                    </span>
+                  </div>
+                );
+              })}
             </div>
           </div>
         )}
@@ -675,6 +722,13 @@ export default function GoldPricePage() {
   const [weightUnit, setWeightUnit] = useState("oz");
   const [karatOpen, setKaratOpen] = useState(false);
   const [chartRangeIdx, setChartRangeIdx] = useState(1); // index into DATE_RANGES, default 7D
+  const [hoveredPoint, setHoveredPoint] = useState(null);
+  const [resetTrigger, setResetTrigger] = useState(0);
+
+  const handleResetInspection = useCallback(() => {
+    setHoveredPoint(null);
+    setResetTrigger((t) => t + 1);
+  }, []);
 
   // ── Fetchers ─────────────────────────────────────────────────────────────
 
@@ -789,10 +843,14 @@ export default function GoldPricePage() {
   const purityMultiplier = karat.purity;
   const currencyMultiplier = currency === "KHR" ? KHR_RATE : 1;
 
+  // Active point-in-time or live price
+  const isInspecting = hoveredPoint != null && hoveredPoint.price != null;
+  const activeSpotPricePerOz = isInspecting ? hoveredPoint.price : pricePerOz;
+
   const pricePerGram = useMemo(() => {
-    if (pricePerOz == null) return null;
-    return (pricePerOz / TROY_OZ_GRAMS) * purityMultiplier;
-  }, [pricePerOz, purityMultiplier]);
+    if (activeSpotPricePerOz == null) return null;
+    return (activeSpotPricePerOz / TROY_OZ_GRAMS) * purityMultiplier;
+  }, [activeSpotPricePerOz, purityMultiplier]);
 
   const inputWeight = parseFloat(weightInput) || 0;
   const selectedUnit = UNITS.find((u) => u.key === weightUnit);
@@ -868,33 +926,68 @@ export default function GoldPricePage() {
           </div>
 
           {/* ── Live Price Banner ───────────────────────────────────────── */}
-          <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-5 sm:p-6 relative overflow-hidden mb-6">
-            <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-yellow-400 via-amber-500 to-orange-500" />
+          <div className={`bg-white rounded-2xl shadow-sm border p-5 sm:p-6 relative overflow-hidden mb-6 transition-all ${
+            isInspecting ? "border-amber-300 ring-2 ring-amber-100 shadow-md" : "border-slate-200"
+          }`}>
+            <div className={`absolute top-0 left-0 w-full h-1 ${
+              isInspecting
+                ? "bg-gradient-to-r from-amber-400 via-orange-500 to-amber-600"
+                : "bg-gradient-to-r from-yellow-400 via-amber-500 to-orange-500"
+            }`} />
 
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
               <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2 mb-1">
+                <div className="flex items-center gap-2 mb-1 flex-wrap">
                   <span className="text-xs font-semibold uppercase tracking-wider text-slate-400">
-                    Gold Spot Price (XAU/USD)
+                    {isInspecting ? "Point-in-Time Gold Price (XAU/USD)" : "Gold Spot Price (XAU/USD)"}
                   </span>
-                  {loading && (
+                  {isInspecting ? (
+                    <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[11px] font-bold bg-amber-100 text-amber-900 border border-amber-300">
+                      <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" />
+                      Inspecting Point in Time
+                    </span>
+                  ) : loading && (
                     <RefreshCw className="w-3.5 h-3.5 text-amber-500 animate-spin" />
                   )}
                 </div>
 
-                <div className="flex items-baseline gap-3">
-                  {pricePerOz != null ? (
+                <div className="flex items-baseline gap-3 flex-wrap">
+                  {activeSpotPricePerOz != null ? (
                     <>
                       <span className="text-3xl sm:text-4xl font-bold text-slate-900 tabular-nums tracking-tight">
-                        ${pricePerOz.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                        ${activeSpotPricePerOz.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                       </span>
                       <span className="text-sm text-slate-400 font-medium">/oz t</span>
+                      {currency === "KHR" && (
+                        <span className="text-sm font-semibold text-amber-700 ml-1">
+                          (≈ ៛{Math.round(activeSpotPricePerOz * KHR_RATE).toLocaleString()})
+                        </span>
+                      )}
                     </>
                   ) : (
                     <span className="text-3xl font-bold text-slate-300">—</span>
                   )}
 
-                  {change24h != null && (
+                  {isInspecting ? (
+                    <span
+                      className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold ${
+                        hoveredPoint.isPointUp
+                          ? "bg-emerald-50 text-emerald-600 border border-emerald-200"
+                          : "bg-red-50 text-red-600 border border-red-200"
+                      }`}
+                    >
+                      {hoveredPoint.isPointUp ? (
+                        <TrendingUp className="w-3.5 h-3.5" />
+                      ) : (
+                        <TrendingDown className="w-3.5 h-3.5" />
+                      )}
+                      {hoveredPoint.isPointUp ? "+" : ""}
+                      {hoveredPoint.changePercentFromStart.toFixed(2)}%
+                      <span className="opacity-75 font-normal ml-0.5 hidden sm:inline">
+                        ({hoveredPoint.isPointUp ? "+" : ""}${hoveredPoint.changeFromStart.toFixed(2)})
+                      </span>
+                    </span>
+                  ) : change24h != null ? (
                     <span
                       className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold ${
                         change24h >= 0
@@ -910,17 +1003,33 @@ export default function GoldPricePage() {
                       {change24h >= 0 ? "+" : ""}
                       {change24h.toFixed(2)}%
                     </span>
-                  )}
+                  ) : null}
                 </div>
 
-                {lastUpdated && (
+                {isInspecting ? (
+                  <div className="flex items-center gap-2 mt-2 text-xs font-medium text-amber-800 flex-wrap">
+                    <Clock className="w-3.5 h-3.5 text-amber-600 shrink-0" />
+                    <span>Point in time: {hoveredPoint.formattedTime}</span>
+                    <span className="text-amber-300">·</span>
+                    <span className="text-slate-500 font-normal">
+                      Range: {DATE_RANGES[chartRangeIdx].label} ({DATE_RANGES[chartRangeIdx].days}d)
+                    </span>
+                    <button
+                      type="button"
+                      onClick={handleResetInspection}
+                      className="ml-2 text-[11px] text-amber-800 bg-amber-100 hover:bg-amber-200 px-2 py-0.5 rounded-md font-semibold transition-colors border border-amber-300 cursor-pointer"
+                    >
+                      Reset to Live
+                    </button>
+                  </div>
+                ) : lastUpdated ? (
                   <div className="flex items-center gap-1.5 mt-2 text-xs text-slate-400">
                     <Clock className="w-3 h-3" />
                     Updated {relativeTime(lastUpdated)}
                     <span className="text-slate-300">·</span>
                     <span>Source: CoinGecko (PAXG)</span>
                   </div>
-                )}
+                ) : null}
               </div>
 
               <button
@@ -929,7 +1038,7 @@ export default function GoldPricePage() {
                   fetchChart(true);
                 }}
                 disabled={loading}
-                className="inline-flex items-center gap-2 px-4 py-2.5 bg-slate-900 text-white text-sm font-medium rounded-xl hover:bg-slate-800 transition-all active:scale-95 disabled:opacity-50 shadow-sm self-start sm:self-center"
+                className="inline-flex items-center gap-2 px-4 py-2.5 bg-slate-900 text-white text-sm font-medium rounded-xl hover:bg-slate-800 transition-all active:scale-95 disabled:opacity-50 shadow-sm self-start sm:self-center cursor-pointer"
               >
                 <RefreshCw className={`w-4 h-4 ${loading ? "animate-spin" : ""}`} />
                 Refresh
@@ -957,11 +1066,17 @@ export default function GoldPricePage() {
           {/* ── Price Per Unit (with purity & currency controls) ───────── */}
           <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-5 sm:p-6 mb-6 relative overflow-visible">
             <div className="absolute top-0 left-0 w-full h-1 rounded-t-2xl bg-gradient-to-r from-amber-400 to-yellow-400" />
-            <h2 className="text-sm font-semibold text-slate-800 mb-4 flex items-center gap-2">
+            <h2 className="text-sm font-semibold text-slate-800 mb-4 flex items-center gap-2 flex-wrap">
               <ArrowUpDown className="w-4 h-4 text-amber-500" />
-              Price Per Unit
+              <span>Price Per Unit</span>
+              {isInspecting && (
+                <span className="text-xs font-semibold text-amber-800 bg-amber-100/90 border border-amber-300 px-2 py-0.5 rounded-md flex items-center gap-1.5 shadow-2xs">
+                  <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" />
+                  Point in time: {hoveredPoint.formattedTime}
+                </span>
+              )}
               <span className="ml-auto text-xs font-normal text-slate-400 bg-slate-100 px-2 py-0.5 rounded-full">
-                {karat.label} ({(karat.purity * 100).toFixed(1)}%)
+                {karat.label} ({karat.purity === 1 ? "100%" : `${(karat.purity * 100).toFixed(1)}%`})
               </span>
             </h2>
 
@@ -983,7 +1098,7 @@ export default function GoldPricePage() {
                       </span>
                       <div className="text-left">
                         <div className="font-semibold">{karat.label}</div>
-                        <div className="text-xs text-slate-400">{karat.desc} · {(karat.purity * 100).toFixed(1)}%</div>
+                        <div className="text-xs text-slate-400">{karat.desc} · {karat.purity === 1 ? "100%" : `${(karat.purity * 100).toFixed(1)}%`}</div>
                       </div>
                     </div>
                     <ChevronDown
@@ -1021,7 +1136,7 @@ export default function GoldPricePage() {
                               <div className="text-xs text-slate-400">{k.desc}</div>
                             </div>
                             <span className="ml-auto text-xs font-mono text-slate-400">
-                              {(k.purity * 100).toFixed(1)}%
+                              {k.purity === 1 ? "100%" : `${(k.purity * 100).toFixed(1)}%`}
                             </span>
                           </button>
                         ))}
@@ -1121,6 +1236,8 @@ export default function GoldPricePage() {
               currency={currency}
               karat={karat}
               days={DATE_RANGES[chartRangeIdx].days}
+              onHoverPointChange={setHoveredPoint}
+              resetTrigger={resetTrigger}
             />
           </div>
 
@@ -1169,8 +1286,15 @@ export default function GoldPricePage() {
                 animate={{ opacity: 1, scale: 1 }}
                 className="bg-gradient-to-r from-amber-50 to-yellow-50 border border-amber-200 rounded-xl px-5 py-4 mb-5"
               >
-                <div className="text-xs text-amber-700 font-medium mb-1">
-                  Total Value ({karat.label} · {inputWeight} {selectedUnit?.label})
+                <div className="text-xs text-amber-700 font-medium mb-1 flex items-center justify-between flex-wrap gap-1">
+                  <span>
+                    Total Value ({karat.label} · {inputWeight} {selectedUnit?.label})
+                  </span>
+                  {isInspecting && (
+                    <span className="text-[11px] font-semibold text-amber-800 bg-amber-100/90 px-2 py-0.5 rounded">
+                      At {hoveredPoint.formattedTime}
+                    </span>
+                  )}
                 </div>
                 <div className="text-2xl sm:text-3xl font-bold text-amber-900 tabular-nums">
                   {formatPrice(enteredPrice, currency)}
