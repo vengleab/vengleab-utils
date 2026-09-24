@@ -481,7 +481,7 @@ export default function CodeHighlighter() {
   const [prompt, setPrompt] = useState(DEFAULT_PROMPT);
 
   const [prismLoaded, setPrismLoaded] = useState(false);
-  const [html2canvasLoaded, setHtml2canvasLoaded] = useState(false);
+  const [renderersLoaded, setRenderersLoaded] = useState(false);
   const [loadedLanguages, setLoadedLanguages] = useState(new Set(['javascript', 'markup', 'css', 'clike']));
 
   // Mouse Drag Resizing
@@ -497,6 +497,7 @@ export default function CodeHighlighter() {
   const [formatted, setFormatted] = useState(false);
   const [copyingImage, setCopyingImage] = useState(false);
   const [exporting, setExporting] = useState(false);
+  const [copyNotice, setCopyNotice] = useState('');
 
   const previewRef = useRef(null);
   const textareaRef = useRef(null);
@@ -552,19 +553,37 @@ export default function CodeHighlighter() {
       document.body.appendChild(script);
     };
 
-    const loadHtml2Canvas = () => {
-      if (window.html2canvas) {
-        setHtml2canvasLoaded(true);
-        return;
+    const loadRenderers = () => {
+      // 1. Primary renderer: html-to-image (SVG foreignObject, natively supports Tailwind v4 & OKLCH)
+      if (!window.htmlToImage) {
+        const scriptImg = document.createElement('script');
+        scriptImg.src = 'https://cdnjs.cloudflare.com/ajax/libs/html-to-image/1.11.11/html-to-image.min.js';
+        scriptImg.onload = () => setRenderersLoaded(true);
+        scriptImg.onerror = () => {};
+        document.body.appendChild(scriptImg);
       }
-      const script = document.createElement('script');
-      script.src = 'https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js';
-      script.onload = () => setHtml2canvasLoaded(true);
-      document.body.appendChild(script);
+
+      // 2. Secondary renderer: html2canvas-pro (supports modern CSS color spaces & variables)
+      if (!window.html2canvas) {
+        const scriptH2C = document.createElement('script');
+        scriptH2C.src = 'https://cdn.jsdelivr.net/npm/html2canvas-pro@1.5.8/dist/html2canvas-pro.min.js';
+        scriptH2C.onload = () => setRenderersLoaded(true);
+        scriptH2C.onerror = () => {
+          const fallback = document.createElement('script');
+          fallback.src = 'https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js';
+          fallback.onload = () => setRenderersLoaded(true);
+          document.body.appendChild(fallback);
+        };
+        document.body.appendChild(scriptH2C);
+      }
+
+      if (window.htmlToImage || window.html2canvas) {
+        setRenderersLoaded(true);
+      }
     };
 
     loadPrismCore();
-    loadHtml2Canvas();
+    loadRenderers();
   }, []);
 
   // Optimized 60fps Drag Resize Handler (Zero Lag, 1:1 Pointer Tracking)
@@ -869,51 +888,181 @@ export default function CodeHighlighter() {
     }
   };
 
-  const captureSnapshot = () => {
-    const target = document.getElementById('snapshot-capture-area');
-    if (!html2canvasLoaded || !window.html2canvas || !target) {
-      return Promise.reject(new Error('Snapshot renderer is not ready'));
+  const ensureRenderersReady = () => {
+    if (typeof window === 'undefined') return Promise.reject(new Error('Window not available'));
+    if (window.htmlToImage || window.html2canvas) {
+      return Promise.resolve();
     }
-    return new Promise((resolve, reject) => {
-      setTimeout(() => {
-        window.html2canvas(target, {
-          scale: 3,
-          useCORS: true,
-          backgroundColor: null,
-          logging: false,
-        })
-          .then(resolve)
-          .catch(reject);
-      }, 150);
+    return new Promise((resolve) => {
+      let attempts = 0;
+      const interval = setInterval(() => {
+        attempts += 1;
+        if (window.htmlToImage || window.html2canvas || attempts > 25) {
+          clearInterval(interval);
+          resolve();
+        }
+      }, 100);
     });
   };
 
-  const downloadSnapshot = () => {
-    setExporting(true);
-    captureSnapshot()
-      .then((canvas) => {
-        const link = document.createElement('a');
-        link.download = isTerminal ? 'terminal-snapshot.png' : `code-snapshot-${language}.png`;
-        link.href = canvas.toDataURL('image/png');
-        link.click();
-      })
-      .catch(() => {})
-      .then(() => setExporting(false));
+  const generateSnapshotDataUrl = async () => {
+    await ensureRenderersReady();
+    const target = document.getElementById('snapshot-capture-area');
+    if (!target) throw new Error('Snapshot capture area not found');
+
+    // 1. Try html-to-image (Primary)
+    if (window.htmlToImage && typeof window.htmlToImage.toPng === 'function') {
+      try {
+        const dataUrl = await window.htmlToImage.toPng(target, {
+          pixelRatio: 2,
+          skipFonts: true,
+          cacheBust: true,
+          filter: (node) => !(node.getAttribute && node.getAttribute('data-snapshot-exclude') === 'true'),
+        });
+        if (dataUrl && dataUrl.startsWith('data:image/png')) {
+          return dataUrl;
+        }
+      } catch (err) {
+        console.warn('htmlToImage toPng error, falling back to html2canvas:', err);
+      }
+    }
+
+    // 2. Fallback to html2canvas / html2canvas-pro
+    if (window.html2canvas) {
+      const canvas = await window.html2canvas(target, {
+        scale: 2,
+        useCORS: true,
+        backgroundColor: null,
+        logging: false,
+        ignoreElements: (el) => el.getAttribute && el.getAttribute('data-snapshot-exclude') === 'true',
+      });
+      return canvas.toDataURL('image/png');
+    }
+
+    throw new Error('No snapshot renderer available');
   };
 
-  const copyImage = () => {
+  const generateSnapshotBlob = async () => {
+    await ensureRenderersReady();
+    const target = document.getElementById('snapshot-capture-area');
+    if (!target) throw new Error('Snapshot capture area not found');
+
+    // 1. Try html-to-image toBlob (Primary)
+    if (window.htmlToImage && typeof window.htmlToImage.toBlob === 'function') {
+      try {
+        const blob = await window.htmlToImage.toBlob(target, {
+          pixelRatio: 2,
+          skipFonts: true,
+          cacheBust: true,
+          filter: (node) => !(node.getAttribute && node.getAttribute('data-snapshot-exclude') === 'true'),
+        });
+        if (blob && blob.size > 0) {
+          return blob;
+        }
+      } catch (err) {
+        console.warn('htmlToImage toBlob error, falling back to html2canvas:', err);
+      }
+    }
+
+    // 2. Fallback to html2canvas canvas.toBlob
+    if (window.html2canvas) {
+      const canvas = await window.html2canvas(target, {
+        scale: 2,
+        useCORS: true,
+        backgroundColor: null,
+        logging: false,
+        ignoreElements: (el) => el.getAttribute && el.getAttribute('data-snapshot-exclude') === 'true',
+      });
+      return new Promise((resolve, reject) => {
+        canvas.toBlob((blob) => {
+          if (blob && blob.size > 0) resolve(blob);
+          else reject(new Error('Canvas produced an empty blob'));
+        }, 'image/png');
+      });
+    }
+
+    // 3. Last-resort fetch from dataUrl
+    const dataUrl = await generateSnapshotDataUrl();
+    const res = await fetch(dataUrl);
+    return await res.blob();
+  };
+
+  const downloadSnapshot = async () => {
+    setExporting(true);
+    try {
+      const dataUrl = await generateSnapshotDataUrl();
+      const link = document.createElement('a');
+      link.download = isTerminal ? 'terminal-snapshot.png' : `code-snapshot-${language}.png`;
+      link.href = dataUrl;
+      document.body.appendChild(link);
+      link.click();
+      setTimeout(() => {
+        if (document.body.contains(link)) {
+          document.body.removeChild(link);
+        }
+      }, 150);
+    } catch (err) {
+      console.error('Download snapshot failed:', err);
+      setCopyNotice('Failed to generate snapshot image.');
+      setTimeout(() => setCopyNotice(''), 3000);
+    } finally {
+      setExporting(false);
+    }
+  };
+
+  const copyImage = async () => {
     setCopyingImage(true);
-    captureSnapshot()
-      .then((canvas) => new Promise((resolve, reject) => {
-        canvas.toBlob((blob) => (blob ? resolve(blob) : reject(new Error('Empty canvas'))), 'image/png');
-      }))
-      .then((blob) => navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })]))
-      .then(() => {
+
+    try {
+      // Synchronously initiate blob creation to preserve transient user activation in Safari
+      const blobPromise = generateSnapshotBlob();
+
+      let writeSuccess = false;
+      if (typeof navigator !== 'undefined' && navigator.clipboard && typeof ClipboardItem !== 'undefined') {
+        try {
+          // Standard modern API: pass Promise directly to ClipboardItem
+          const item = new ClipboardItem({
+            'image/png': blobPromise,
+          });
+          await navigator.clipboard.write([item]);
+          writeSuccess = true;
+        } catch (promiseErr) {
+          // Fallback for browsers requiring resolved blob
+          try {
+            const blob = await blobPromise;
+            const item = new ClipboardItem({
+              'image/png': blob,
+            });
+            await navigator.clipboard.write([item]);
+            writeSuccess = true;
+          } catch (writeErr) {
+            console.warn('Clipboard write failed:', writeErr);
+          }
+        }
+      }
+
+      if (writeSuccess) {
         setCopiedImage(true);
         setTimeout(() => setCopiedImage(false), 2000);
-      })
-      .catch(() => {})
-      .then(() => setCopyingImage(false));
+      } else {
+        // Fallback: If clipboard write is denied or unsupported, download PNG instead
+        await downloadSnapshot();
+        setCopyNotice('Clipboard access restricted. Downloaded snapshot as PNG instead.');
+        setTimeout(() => setCopyNotice(''), 3500);
+      }
+    } catch (err) {
+      console.error('copyImage error caught:', err);
+      try {
+        await downloadSnapshot();
+        setCopyNotice('Clipboard access restricted. Downloaded snapshot as PNG instead.');
+        setTimeout(() => setCopyNotice(''), 3500);
+      } catch (e) {
+        setCopyNotice('Failed to capture snapshot.');
+        setTimeout(() => setCopyNotice(''), 3500);
+      }
+    } finally {
+      setCopyingImage(false);
+    }
   };
 
   const lines = code.split('\n');
@@ -1514,6 +1663,7 @@ export default function CodeHighlighter() {
                   <div
                     id="snapshot-capture-area"
                     className={`rounded-2xl flex items-center justify-center transition-all w-full max-w-full ${paddingObj.value} ${selectedBg.class}`}
+                    style={selectedBg.id !== 'none' ? { background: selectedBg.preview } : { backgroundColor: 'transparent' }}
                   >
                     {isTerminal ? (
                       /* Terminal Session Frame */
@@ -1610,6 +1760,7 @@ export default function CodeHighlighter() {
 
                         {/* Interactive Drag Resize Handle */}
                         <div
+                          data-snapshot-exclude="true"
                           onMouseDown={(e) => {
                             e.preventDefault();
                             setIsResizing(true);
@@ -1688,6 +1839,7 @@ export default function CodeHighlighter() {
 
                         {/* Interactive Drag Resize Handle */}
                         <div
+                          data-snapshot-exclude="true"
                           onMouseDown={(e) => {
                             e.preventDefault();
                             setIsResizing(true);
@@ -1710,7 +1862,7 @@ export default function CodeHighlighter() {
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     <button
                       onClick={downloadSnapshot}
-                      disabled={!html2canvasLoaded || exporting}
+                      disabled={exporting}
                       className={`flex items-center justify-center gap-2 py-3.5 px-4 rounded-2xl text-sm font-bold shadow-md transition-all ${
                         exporting
                           ? 'bg-slate-100 text-slate-400 border border-slate-200 cursor-not-allowed'
@@ -1732,7 +1884,7 @@ export default function CodeHighlighter() {
 
                     <button
                       onClick={copyImage}
-                      disabled={!html2canvasLoaded || copyingImage || exporting}
+                      disabled={copyingImage || exporting}
                       className={`flex items-center justify-center gap-2 py-3.5 px-4 rounded-2xl text-sm font-bold border transition-all ${
                         copiedImage
                           ? 'bg-emerald-50 text-emerald-600 border-emerald-200 shadow-xs'
@@ -1743,6 +1895,16 @@ export default function CodeHighlighter() {
                       {imageBtnLabel}
                     </button>
                   </div>
+
+                  {copyNotice && (
+                    <motion.div
+                      initial={{ opacity: 0, y: -4 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      className="p-2.5 text-xs rounded-xl bg-amber-50 text-amber-800 border border-amber-200 text-center font-medium"
+                    >
+                      {copyNotice}
+                    </motion.div>
+                  )}
 
                   {isTerminal && (
                     <button
