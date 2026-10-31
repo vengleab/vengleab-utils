@@ -1,7 +1,7 @@
 import React from 'react';
 import MaskedInput from 'react-text-mask';
 import createNumberMask from 'text-mask-addons/dist/createNumberMask';
-import _noop from 'lodash/noop';
+const _noop = () => {};
 
 const InputMast = ({
   mask = {}, onChange = _noop, value, ...props

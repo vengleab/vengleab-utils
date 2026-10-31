@@ -16,7 +16,6 @@ import {
   Sparkles,
   Grid,
 } from 'lucide-react';
-import shortid from 'shortid';
 import Layout from '../components/Layout';
 import PageContext from '../contexts/page';
 import { PAGE } from '../constants/PageURL';
@@ -721,7 +720,7 @@ export default function KeyboardTester() {
       setHistoryLog((prev) => [
         ...prev.slice(-49),
         {
-          id: shortid.generate(), code, key: keyName, time: timeStr,
+          id: crypto.randomUUID(), code, key: keyName, time: timeStr,
         },
       ]);
 

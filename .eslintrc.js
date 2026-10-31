@@ -6,7 +6,11 @@ module.exports = {
     'plugin:react/recommended',
     'plugin:import/react',
   ],
-  parser: 'babel-eslint',
+  parser: '@babel/eslint-parser',
+  parserOptions: {
+    requireConfigFile: false,
+    babelOptions: { presets: ['next/babel'] },
+  },
   rules: {
     'react/prop-types': 'off',
     'no-underscore-dangle': 'off',
