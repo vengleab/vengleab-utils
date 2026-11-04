@@ -1,17 +1,16 @@
 # vengleab-utils
 
-My web simple utilities
+A collection of browser-based utilities built with TanStack Start.
 
-This project is to run on now.sh
+Use Node.js 22.22 or newer and npm:
 
-To run in development
-
+```sh
+npm install
+npm run dev       # http://localhost:3001
+npm run typecheck
+npm run lint
+npm run build
+npm start         # production server on port 3001
 ```
-npm start
-```
 
-To run in production
-
-```
-npm run build && npm run prod
-```
+The Vercel deployment uses TanStack Start's Nitro integration. Tool subdomains under `svl-labs.uk` are handled by the server and router.
